@@ -2,6 +2,8 @@
 
 Pave.jsで作成したベクターパスをp5.riso.jsのリソグラフ印刷チャンネルに変換するp5.js用のライブラリです。p5.pattern.jsによるパターン描画にも対応しています。
 
+**[デモを見る](https://hirookagikko.github.io/p5.pave2riso/)**
+
 ## 依存関係
 
 このライブラリは以下に依存しています：
@@ -158,7 +160,7 @@ import { pave2Riso } from '../dist/p5.pave2riso.js'
 
 ### ソリッド塗り
 
-サンプルコード：[samples/sample.js](samples/sample.js)
+サンプルコード：[samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js)
 
 6つの円を使って、異なるチャンネルの組み合わせをデモンストレーション。
 
