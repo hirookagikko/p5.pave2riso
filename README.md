@@ -1,133 +1,135 @@
 # p5.pave2riso
 
-Pave.jsで作成したベクターパスをp5.riso.jsのリソグラフ印刷チャンネルに変換するp5.js用のライブラリです。p5.pattern.jsによるパターン描画にも対応しています。
+*Read this in other languages: [English](README.md), [日本語](README.ja.md)*
 
-## 依存関係
+A p5.js library that converts vector paths created with Pave.js into p5.riso.js Risograph print channels. Also supports pattern drawing with p5.pattern.js.
 
-このライブラリは以下に依存しています：
+## Dependencies
 
-- **[p5.js](https://p5js.org/)** - クリエイティブコーディングのためのJavaScriptライブラリ
-- **[Pave.js](https://github.com/baku89/pave)** (MIT) by Baku Hashimoto - ベクターパス操作
-- **[Linearly](https://github.com/baku89/linearly)** (MIT) by Baku Hashimoto - ベクター演算（Pave.jsの依存関係）
-- **[p5.riso.js](https://github.com/antiboredom/p5.riso)** (ANTI-CAPITALIST) by Sam Lavigne and Tega Brain - Risograph印刷シミュレーション
-- **[p5.pattern.js](https://github.com/SYM380/p5.pattern)** (MIT) by Taichi Sayama - パターン描画（オプション）
+This library depends on:
 
-## 主な特徴
+- **[p5.js](https://p5js.org/)** - JavaScript library for creative coding
+- **[Pave.js](https://github.com/baku89/pave)** (MIT) by Baku Hashimoto - Vector path operations
+- **[Linearly](https://github.com/baku89/linearly)** (MIT) by Baku Hashimoto - Vector math (Pave.js dependency)
+- **[p5.riso.js](https://github.com/antiboredom/p5.riso)** (ANTI-CAPITALIST) by Sam Lavigne and Tega Brain - Risograph print simulation
+- **[p5.pattern.js](https://github.com/SYM380/p5.pattern)** (MIT) by Taichi Sayama - Pattern drawing (optional)
 
-### 1. リソグラフの印刷モード
-- **overprint**: インクを重ねて印刷（デフォルト）
-  - 全チャンネルで塗りとストロークが重なる
+## Key Features
 
-- **cutout**: パス領域を削除してから印刷
-  - ソリッドな形状で全チャンネルからパス領域を削除
-  - その後、指定チャンネルに塗り/ストロークを適用
+### 1. Risograph Print Modes
+- **overprint**: Overlay inks (default)
+  - Fill and stroke overlap across all channels
 
-- **join**: パス領域を塗りの濃度・パターンに応じて削除してから印刷
-  - **ソリッド塗り**: 完全に削除（cutoutと同じ挙動）
-  - **パターン塗り**: パターンの模様（濃淡）に応じて削除
-  - **グラデーション塗り**: グラデーションの濃度に応じて削除
-  - **画像塗り**: 画像の濃度に応じて削除
+- **cutout**: Remove path region before printing
+  - Remove path region from all channels with solid shape
+  - Then apply fill/stroke to specified channels
 
-### 2. 多様な塗りタイプ
-- **ソリッド**: チャンネルごとのインク濃度（0-100%）で塗りつぶし
-- **パターン**: p5.patternライブラリを使用したパターン塗り
-- **グラデーション**: 線形・放射・円錐グラデーション
-- **画像**: 画像を塗りとして使用（位置調整、スケール、回転対応）
+- **join**: Remove path region according to fill density/pattern before printing
+  - **Solid fill**: Completely remove (same as cutout)
+  - **Pattern fill**: Remove according to pattern (density)
+  - **Gradient fill**: Remove according to gradient density
+  - **Image fill**: Remove according to image density
 
-### 3. 多様なストロークタイプ
-- **ソリッド**: 単色の線
-- **破線**: カスタマイズ可能な破線パターン
-- **パターン**: パターンで描く線
-- **グラデーション**: グラデーションで描く線
+### 2. Diverse Fill Types
+- **Solid**: Fill with ink density (0-100%) per channel
+- **Pattern**: Pattern fill using p5.pattern library
+- **Gradient**: Linear, radial, and conic gradients
+- **Image**: Use images as fill (position adjustment, scale, rotation support)
 
-### 4. エフェクト対応
-- **フィルター**: 画像処理フィルター適用
-- **ハーフトーン**: 網点表現
-- **ディザリング**: ディザパターンによる階調表現
+### 3. Diverse Stroke Types
+- **Solid**: Single color line
+- **Dashed**: Customizable dashed line patterns
+- **Pattern**: Lines drawn with patterns
+- **Gradient**: Lines drawn with gradients
 
-## アーキテクチャ
+### 4. Effect Support
+- **Filter**: Apply image processing filters
+- **Halftone**: Halftone dot expression
+- **Dithering**: Gradation expression with dither patterns
 
-### 処理フロー
+## Architecture
 
-1. **バリデーション**: 必須パラメータ（path, canvasSize, channels, mode）をチェック
-2. **GraphicsPipelineの初期化**: p5.Graphicsオブジェクトの管理と準備
-3. **クリッピングパスの適用**: オプションのクリッピングパスを設定
-4. **印刷モードの適用**: overprint/cutout/joinモードに応じた前処理
-5. **塗りの描画**: 設定に応じて適切な塗りレンダラーを実行
-6. **ストロークの描画**: 設定に応じて適切なストロークレンダラーを実行
-7. **クリッピングの解除**: クリッピングパスを解放
-8. **クリーンアップ**: 一時的なグラフィックスリソースを破棄
+### Processing Flow
 
-### 主要コンポーネント
+1. **Validation**: Check required parameters (path, canvasSize, channels, mode)
+2. **GraphicsPipeline Initialization**: Manage and prepare p5.Graphics objects
+3. **Apply Clipping Path**: Set optional clipping path
+4. **Apply Print Mode**: Pre-process according to overprint/cutout/join mode
+5. **Draw Fill**: Execute appropriate fill renderer based on settings
+6. **Draw Stroke**: Execute appropriate stroke renderer based on settings
+7. **Release Clipping**: Release clipping path
+8. **Cleanup**: Dispose temporary graphics resources
+
+### Main Components
 
 ```
 src/
-├── core.ts                    # pave2Riso()メイン関数
+├── core.ts                    # pave2Riso() main function
 ├── graphics/
-│   └── GraphicsPipeline.ts   # グラフィックス処理の中心
+│   └── GraphicsPipeline.ts   # Graphics processing hub
 ├── modes/
-│   └── modes.ts              # 印刷モード処理
+│   └── modes.ts              # Print mode processing
 ├── renderers/
-│   ├── fills/                # 塗りレンダラー
+│   ├── fills/                # Fill renderers
 │   │   ├── solid.ts
 │   │   ├── pattern.ts
 │   │   ├── gradient.ts
 │   │   └── image.ts
-│   └── strokes/              # ストロークレンダラー
+│   └── strokes/              # Stroke renderers
 │       ├── solid.ts
 │       ├── dashed.ts
 │       ├── pattern.ts
 │       └── gradient.ts
 ├── channels/
-│   └── operations.ts         # エフェクト処理
-├── types/                    # 型定義
-├── utils/                    # ユーティリティ
-└── validation/               # バリデーション
+│   └── operations.ts         # Effect processing
+├── types/                    # Type definitions
+├── utils/                    # Utilities
+└── validation/               # Validation
 ```
 
-**主な役割**:
-- **pave2Riso()**: 全体の処理を統括
-- **GraphicsPipeline**: p5.Graphicsオブジェクトの作成・管理、Paveパスの描画、クリッピング処理
-- **モード処理**: 印刷モードごとの描画前処理
-- **レンダラー**: 塗りタイプ別・ストロークタイプ別の描画実装
-- **エフェクト処理**: フィルター、ハーフトーン、ディザリングの適用
+**Main Roles**:
+- **pave2Riso()**: Orchestrates overall processing
+- **GraphicsPipeline**: Create/manage p5.Graphics objects, draw Pave paths, handle clipping
+- **Mode Processing**: Pre-draw processing for each print mode
+- **Renderers**: Drawing implementation by fill type and stroke type
+- **Effect Processing**: Apply filters, halftone, dithering
 
-### 型安全な設計
+### Type-Safe Design
 
-- **塗りとストロークの設定**: `type`フィールドで種類を指定すると、それに応じた設定項目が自動的に決まる（TypeScriptのDiscriminated Unions）
-- **インク濃度**: 0-100%の範囲でチェックされ、型安全に管理される（Branded Types）
+- **Fill and Stroke Settings**: When you specify the `type` field, the corresponding configuration items are automatically determined (TypeScript Discriminated Unions)
+- **Ink Density**: Checked in 0-100% range and managed type-safely (Branded Types)
 
-## インストール
+## Installation
 
-### ローカルビルド
+### Local Build
 
 ```bash
-# リポジトリをクローン
+# Clone repository
 git clone https://github.com/hirookagikko/p5.pave2riso.git
 cd p5.pave2riso
 
-# 依存関係をインストール
+# Install dependencies
 npm install
 
-# ビルド
+# Build
 npm run build
 ```
 
-ビルド後、`dist/p5.pave2riso.js`を使用します。
+After building, use `dist/p5.pave2riso.js`.
 
-### GitHubから直接読み込み
+### Load Directly from GitHub
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/hirookagikko/p5.pave2riso@main/dist/p5.pave2riso.js"></script>
 ```
 
-### HTMLテンプレート
+### HTML Template
 
-※p5.riso.jsはダウンロードして任意の場所に配置
+*Note: Download p5.riso.js and place it in any location*
 
 ```html
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -144,47 +146,47 @@ npm run build
 </html>
 ```
 
-## 使用例
+## Usage Examples
 
-### 基本的な使い方
+### Basic Usage
 
 ```javascript
-// ESモジュールとしてpave, linearlyをインポート
+// Import pave and linearly as ES modules
 import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
 import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly/+esm'
-// pave2Risoをインポート
+// Import pave2Riso
 import { pave2Riso } from '../dist/p5.pave2riso.js'
 ```
 
-### ソリッド塗り
+### Solid Fill
 
-サンプルコード：[samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js) | **[デモを見る](https://hirookagikko.github.io/p5.pave2riso/)**
+Sample code: [samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js) | **[View Demo](https://hirookagikko.github.io/p5.pave2riso/)**
 
-6つの円を使って、異なるチャンネルの組み合わせをデモンストレーション。
+Demonstrates different channel combinations using 6 circles.
 
-### パターン塗り
+### Pattern Fill
 
-（準備中）
+(Coming soon)
 
-### グラデーション塗り
+### Gradient Fill
 
-（準備中）
+(Coming soon)
 
-### 画像塗り
+### Image Fill
 
-（準備中）
+(Coming soon)
 
-### ストローク
+### Stroke
 
-（準備中）
+(Coming soon)
 
-### 印刷モード
+### Print Modes
 
-（準備中）
+(Coming soon)
 
-### エフェクト
+### Effects
 
-（準備中）
+(Coming soon)
 
 ## License
 
