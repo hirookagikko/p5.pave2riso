@@ -188,6 +188,71 @@ Demonstrates different channel combinations using 6 circles.
 
 (Coming soon)
 
+### Factory Function (p2r)
+
+**New in v1.1.0**: The `p2r` factory function simplifies code when making multiple `pave2Riso()` calls by pre-binding `channels` and `canvasSize`.
+
+```javascript
+import { p2r } from '../dist/p5.pave2riso.js'
+
+// Setup once
+const render = p2r({ channels, canvasSize: [width, height] })
+
+// Use multiple times without repeating context
+render({
+  path: myPath,
+  fill: { type: 'solid', channelVals: [100, 0, 0] },
+  mode: 'overprint'
+})
+
+render({
+  path: anotherPath,
+  fill: { type: 'pattern', PTN: 'stripe', patternArgs: [20] },
+  mode: 'cutout'
+})
+```
+
+### Pathfinder Utilities
+
+**New in v1.1.0**: Boolean operations for combining and manipulating paths.
+
+```javascript
+import { PathIntersect, PathExclude, isPathsOverlap } from '../dist/p5.pave2riso.js'
+
+// Boolean intersection (overlapping region)
+const intersected = PathIntersect(pathA, pathB)
+
+// Boolean exclusion (symmetric difference)
+const excluded = PathExclude(pathA, pathB)
+
+// Check if paths overlap
+if (isPathsOverlap(pathA, pathB)) {
+  // paths have overlapping region
+}
+```
+
+### Font Utilities
+
+**New in v1.1.0**: Convert OpenType.js font paths to Pave.js paths.
+
+```javascript
+import { ot2pave } from '../dist/p5.pave2riso.js'
+
+// Convert font glyph to Pave path
+const font = opentype.load('font.ttf')
+const glyph = font.charToGlyph('A')
+const commands = glyph.getPath(0, 0, 72).commands
+const pavePath = ot2pave(commands)
+
+// Use with pave2Riso
+pave2Riso({
+  path: pavePath,
+  channels: myChannels,
+  canvasSize: [width, height],
+  fill: { type: 'solid', channelVals: [100, 0, 0] }
+})
+```
+
 ## License
 
 MIT License - see LICENSE file
