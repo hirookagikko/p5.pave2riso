@@ -156,6 +156,10 @@ import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+
 import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly/+esm'
 // pave2Risoをインポート
 import { pave2Riso } from '../dist/p5.pave2riso.js'
+
+// 重要: Pathとvec2を内部ラッパーのためにグローバルスコープで利用可能にする
+window.Path = Path
+window.vec2 = vec2
 ```
 
 ### ソリッド塗り

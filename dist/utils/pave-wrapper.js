@@ -106,13 +106,12 @@ export function closePath(path, options) {
     return Path.close(path, options);
 }
 /**
- * Type-safe wrapper for Path.empty
+ * Type-safe wrapper for creating an empty path
  *
- * @returns Empty path
+ * @returns Empty path (circle with radius 0)
  */
 export function createEmptyPath() {
-    const Path = getPath();
-    return Path.empty();
+    return createCircle([0, 0], 0);
 }
 /**
  * Type-safe wrapper for Path.unite

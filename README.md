@@ -156,6 +156,10 @@ import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+
 import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly/+esm'
 // Import pave2Riso
 import { pave2Riso } from '../dist/p5.pave2riso.js'
+
+// IMPORTANT: Make Path and vec2 available globally for internal wrappers
+window.Path = Path
+window.vec2 = vec2
 ```
 
 ### Solid Fill
