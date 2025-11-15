@@ -188,6 +188,73 @@ import { pave2Riso } from '../dist/p5.pave2riso.js'
 
 （準備中）
 
+## v1.1.0の新機能
+
+### Factory Function (p2r)
+
+**v1.1.0の新機能**: `p2r`ファクトリー関数は、`pave2Riso()`を複数回呼び出す際のコードを簡潔にします。`channels`と`canvasSize`を事前にバインドすることで、繰り返しの記述を削減できます。
+
+```javascript
+import { p2r } from '../dist/p5.pave2riso.js'
+
+// 初回のセットアップ
+const render = p2r({ channels, canvasSize: [width, height] })
+
+// コンテキストを繰り返し指定せずに複数回使用
+render({
+  path: myPath,
+  fill: { type: 'solid', channelVals: [100, 0, 0] },
+  mode: 'overprint'
+})
+
+render({
+  path: anotherPath,
+  fill: { type: 'pattern', PTN: 'stripe', patternArgs: [20] },
+  mode: 'cutout'
+})
+```
+
+### Pathfinder Utilities
+
+**v1.1.0の新機能**: パスを結合・操作するためのブール演算機能。
+
+```javascript
+import { PathIntersect, PathExclude, isPathsOverlap } from '../dist/p5.pave2riso.js'
+
+// ブール積（重なり領域）
+const intersected = PathIntersect(pathA, pathB)
+
+// ブール差（対称差分）
+const excluded = PathExclude(pathA, pathB)
+
+// パスの重なりをチェック
+if (isPathsOverlap(pathA, pathB)) {
+  // パスに重なり領域がある
+}
+```
+
+### Font Utilities
+
+**v1.1.0の新機能**: OpenType.jsのフォントパスをPave.jsのパスに変換。
+
+```javascript
+import { ot2pave } from '../dist/p5.pave2riso.js'
+
+// フォントのグリフをPaveパスに変換
+const font = opentype.load('font.ttf')
+const glyph = font.charToGlyph('A')
+const commands = glyph.getPath(0, 0, 72).commands
+const pavePath = ot2pave(commands)
+
+// pave2Risoで使用
+pave2Riso({
+  path: pavePath,
+  channels: myChannels,
+  canvasSize: [width, height],
+  fill: { type: 'solid', channelVals: [100, 0, 0] }
+})
+```
+
 ## License
 
 MIT License - see LICENSE file
