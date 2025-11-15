@@ -19,5 +19,5 @@ export type P2ROptions = Omit<Pave2RisoOptions, 'channels' | 'canvasSize'>;
  * render({ path: myPath, fill: { color: blue, channelVals: [100, 0, 0] } })
  * ```
  */
-export declare const p2r: (context: P2RContext) => (ops: P2ROptions) => void;
+export declare const p2r: (context: P2RContext) => ((ops: P2ROptions) => void);
 //# sourceMappingURL=factory.d.ts.map

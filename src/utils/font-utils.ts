@@ -6,6 +6,17 @@
  */
 
 import type { PavePath } from '../types/core.js'
+import {
+  getPathBounds,
+  createLine,
+  createCubicBezier,
+  createQuadraticBezier,
+  joinPaths,
+  closePath,
+  createEmptyPath,
+  unitePaths,
+  subtractPaths
+} from './pave-wrapper.js'
 
 /**
  * OpenType.js command types
@@ -55,21 +66,6 @@ type BoundsRelation = 'CONTAINED' | 'OVERLAP' | 'INDEPENDENT'
  */
 type PathOperation = 'SUBTRACT' | 'UNITE'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Path = any
-
-/**
- * Get Path from global context
- */
-const getPath = (): Path => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Path = (globalThis as any).Path
-  if (!Path) {
-    throw new Error('Path from pave.js is not available. Make sure pave.js is loaded.')
-  }
-  return Path
-}
-
 /**
  * Calculates the area of a path using bounding box approximation
  *
@@ -77,10 +73,8 @@ const getPath = (): Path => {
  * @returns Approximate area
  */
 const getPathArea = (path: PavePath): number => {
-  const Path = getPath()
-
-  if (!path || !path.curves || path.curves.length === 0) return 0
-  const bounds = Path.bounds(path)
+  if (!path?.curves || path.curves.length === 0) return 0
+  const bounds = getPathBounds(path)
   const width = bounds[1][0] - bounds[0][0]
   const height = bounds[1][1] - bounds[0][1]
   return width * height
@@ -97,9 +91,12 @@ const getPathArea = (path: PavePath): number => {
  * @returns Signed area (positive = CCW, negative = CW)
  */
 const getPathWindingDirection = (path: PavePath): number => {
-  if (!path || !path.curves || path.curves.length === 0) return 0
+  if (!path?.curves || path.curves.length === 0) return 0
 
   let signedArea = 0
+
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+  /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
   // 各curveのポイントを取得して面積を計算
   for (let i = 0; i < path.curves.length; i++) {
@@ -121,9 +118,9 @@ const getPathWindingDirection = (path: PavePath): number => {
           y1 = segment[1]
         } else if (segment && typeof segment === 'object') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          x1 = (segment as any).x ?? (segment as any)[0]
+          x1 = (segment).x ?? (segment)[0]
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          y1 = (segment as any).y ?? (segment as any)[1]
+          y1 = (segment).y ?? (segment)[1]
         }
 
         if (Array.isArray(nextSegment) && nextSegment.length >= 2) {
@@ -131,9 +128,9 @@ const getPathWindingDirection = (path: PavePath): number => {
           y2 = nextSegment[1]
         } else if (nextSegment && typeof nextSegment === 'object') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          x2 = (nextSegment as any).x ?? (nextSegment as any)[0]
+          x2 = (nextSegment).x ?? (nextSegment)[0]
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          y2 = (nextSegment as any).y ?? (nextSegment as any)[1]
+          y2 = (nextSegment).y ?? (nextSegment)[1]
         }
 
         if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
@@ -172,6 +169,9 @@ const getPathWindingDirection = (path: PavePath): number => {
   // 負の値 = 反時計回り (CCW) = 穴
   // したがって符号を反転して返す
   return -signedArea
+
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment */
+  /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 }
 
 /**
@@ -230,14 +230,12 @@ const determinePathOperation = (
   largerOriginalWinding: number | null = null,
   smallerOriginalWinding: number | null = null
 ): PathOperation => {
-  const Path = getPath()
-
-  const largerBounds = Path.bounds(largerPath)
-  const smallerBounds = Path.bounds(smallerPath)
+  const largerBounds = getPathBounds(largerPath)
+  const smallerBounds = getPathBounds(smallerPath)
   const largerArea = getPathArea(largerPath)
   const smallerArea = getPathArea(smallerPath)
-  const largerWinding = largerOriginalWinding !== null ? largerOriginalWinding : getPathWindingDirection(largerPath)
-  const smallerWinding = smallerOriginalWinding !== null ? smallerOriginalWinding : getPathWindingDirection(smallerPath)
+  const largerWinding = largerOriginalWinding ?? getPathWindingDirection(largerPath)
+  const smallerWinding = smallerOriginalWinding ?? getPathWindingDirection(smallerPath)
 
   const relation = checkBoundsRelation(largerBounds, smallerBounds)
   const areaRatio = smallerArea / largerArea
@@ -260,8 +258,10 @@ const determinePathOperation = (
     // より正確な包含判定：SUBTRACTを試して、実際に穴として機能するかチェック
     let fullyContained = true
     try {
-      const subtracted = Path.subtract(largerPath, [smallerPath])
-      if (subtracted && subtracted.curves && subtracted.curves.length > 0) {
+      // External library interface (pave.js) - return values are typed but ESLint sees them as any
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
+      const subtracted = subtractPaths(largerPath, [smallerPath])
+      if (subtracted?.curves && subtracted.curves.length > 0) {
         // SUBTRACTの結果のcurve数が増えたら、実際に穴として機能している
         const largerCurves = largerPath.curves ? largerPath.curves.length : 0
         const subtractedCurves = subtracted.curves ? subtracted.curves.length : 0
@@ -274,6 +274,7 @@ const determinePathOperation = (
         console.log(`    Subtract resulted in empty path - smaller is outside`)
         console.log(`    Fully contained: ${fullyContained}`)
       }
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
     } catch (e) {
       console.warn(`    Warning: Path.subtract check failed, using bounds-based判定`, (e as Error).message)
       // エラーの場合はbounding boxベースの判定にフォールバック
@@ -344,8 +345,7 @@ const determinePathOperation = (
  * ```
  */
 export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): PavePath => {
-  const Path = getPath()
-  const debugPaths = options.debugPaths || null
+  const debugPaths = options.debugPaths ?? null
 
   // フェーズ1: 全パスを収集
   const allPaths: PathInfo[] = []
@@ -361,10 +361,12 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
       case 'M': // MoveTo
         break
       case 'Z': { // ClosePath
-        const newPath = Path.close(Path.join(tempPath), {fuse: false, group: -1})
+        // External library interface (pave.js) - return values are typed but ESLint sees them as any
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+        const newPath = closePath(joinPaths(tempPath), {fuse: false, group: -1})
         const newArea = getPathArea(newPath)
         const newWinding = getPathWindingDirection(newPath)
-        const newBounds = Path.bounds(newPath)
+        const newBounds = getPathBounds(newPath)
 
         allPaths.push({
           path: newPath,
@@ -384,16 +386,19 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
             bounds: newBounds
           })
         }
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 
         tempPath = []
         break
       }
       case 'L': // LineTo
-        tempPath.push(Path.line(presentPos, [cmd.x, cmd.y]))
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        tempPath.push(createLine(presentPos, [cmd.x, cmd.y]))
         break
       case 'C': // CubicBezier
         if (cmd.x1 !== undefined && cmd.y1 !== undefined && cmd.x2 !== undefined && cmd.y2 !== undefined) {
-          tempPath.push(Path.cubicBezier(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          tempPath.push(createCubicBezier(
             presentPos,
             [cmd.x1, cmd.y1],
             [cmd.x2, cmd.y2],
@@ -403,7 +408,8 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
         break
       case 'Q': // QuadraticBezier
         if (cmd.x1 !== undefined && cmd.y1 !== undefined) {
-          tempPath.push(Path.quadraticBezier(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          tempPath.push(createQuadraticBezier(
             presentPos,
             [cmd.x1, cmd.y1],
             [cmd.x, cmd.y]
@@ -419,7 +425,9 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
   // パスが1つもない場合は空のパスを返す
   if (allPaths.length === 0) {
     console.warn('⚠️ No paths found in commands')
-    return Path.empty()
+    // External library interface (pave.js) - return values are typed but ESLint sees them as any
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return createEmptyPath()
   }
 
   // フェーズ2: 面積の大きい順にソート
@@ -427,12 +435,14 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
   allPaths.sort((a, b) => b.area - a.area)
 
   for (let i = 0; i < allPaths.length; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const path = allPaths[i]!
     console.log(`Sorted[${i}]: area=${path.area.toFixed(2)}, winding=${path.winding > 0 ? 'CCW' : 'CW'}`)
   }
 
   // フェーズ3: 最大パスをベースに設定（巻き方向に関わらず無条件でsolid扱い）
   console.log('\n=== PHASE 3: Setting base path (largest) ===')
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const firstPath = allPaths[0]!
   let result = firstPath.path
   const basePathOriginalWinding = firstPath.winding // 最初の要素の元の巻き方向を保持
@@ -442,6 +452,7 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
   // フェーズ4: 逐次統合
   console.log('\n=== PHASE 4: Sequential integration ===')
   for (let i = 1; i < allPaths.length; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const currentPath = allPaths[i]!
     console.log(`\n--- Processing path ${i}/${allPaths.length - 1} ---`)
     console.log(`  Current path: area=${currentPath.area.toFixed(2)}, winding=${currentPath.winding > 0 ? 'CCW' : 'CW'}`)
@@ -453,22 +464,28 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
 
     if (operation === 'SUBTRACT') {
       const before = result
-      result = Path.subtract(result, [currentPath.path])
+      // External library interface (pave.js) - return values are typed but ESLint sees them as any
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+      result = subtractPaths(result, [currentPath.path])
 
       // 結果が空でないかチェック
-      if (!result || !result.curves || result.curves.length === 0) {
+      if (!result?.curves || result.curves.length === 0) {
         console.warn('⚠️ SUBTRACT resulted in empty path, keeping previous result')
         result = before
       }
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     } else if (operation === 'UNITE') {
       const before = result
-      result = Path.unite([result, currentPath.path])
+      // External library interface (pave.js) - return values are typed but ESLint sees them as any
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+      result = unitePaths([result, currentPath.path])
 
       // 結果が空でないかチェック
-      if (!result || !result.curves || result.curves.length === 0) {
+      if (!result?.curves || result.curves.length === 0) {
         console.warn('⚠️ UNITE resulted in empty path, keeping previous result')
         result = before
       }
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     }
   }
 

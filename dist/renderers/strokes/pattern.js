@@ -12,12 +12,23 @@ export const renderPatternStroke = (stroke, pipeline) => {
     ensurePTNAvailable();
     const options = pipeline.getOptions();
     const path = options.path;
+    // Vec2 array index access - external library interface (linearly)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gSize = pipeline.getSize();
     const baseG = pipeline.getBaseGraphics();
-    // パターングラフィックスの作成
+    // Vec2 array index access - external library interface (linearly)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const patG = pipeline.createGraphics(gSize[0], gSize[1]);
+    const gSizeWidth = gSize[0];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const gSizeHeight = gSize[1];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const gPosX = gPos[0];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const gPosY = gPos[1];
+    // パターングラフィックスの作成
+    const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight);
     patG.noFill();
     patG.strokeWeight(stroke.strokeWeight);
     patG.patternAngle(stroke.patternAngle ?? 0);
@@ -27,12 +38,10 @@ export const renderPatternStroke = (stroke, pipeline) => {
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
     patG.pattern(patternFn(...stroke.patternArgs));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    patG.rectPattern(0, 0, gSize[0], gSize[1]);
+    patG.rectPattern(0, 0, gSizeWidth, gSizeHeight);
     // ベースグラフィックスにパターンを適用
     pipeline.drawPathToCanvas(path, baseG.drawingContext);
     baseG.drawingContext.clip();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    baseG.image(patG, gPos[0], gPos[1]);
+    baseG.image(patG, gPosX, gPosY);
 };
 //# sourceMappingURL=pattern.js.map

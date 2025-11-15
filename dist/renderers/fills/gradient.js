@@ -43,7 +43,10 @@ export const renderGradientFill = (fill, pipeline) => {
     const options = pipeline.getOptions();
     const { channels, filter, halftone, dither, mode } = options;
     const path = options.path;
+    // Vec2 array index access - external library interface (linearly)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gSize = pipeline.getSize();
     if (!fill.colorStops)
         return;
@@ -53,11 +56,18 @@ export const renderGradientFill = (fill, pipeline) => {
             console.warn(`Invalid channel index: ${colorStop.channel}`);
             return;
         }
+        // Vec2 array index access - external library interface (linearly)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const gSizeWidth = gSize[0];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const gSizeHeight = gSize[1];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const gPosX = gPos[0];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const gPosY = gPos[1];
         // グラデーショングラフィックスの作成
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const gradBaseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const gradG = pipeline.createGraphics(gSize[0], gSize[1]);
+        const gradG = pipeline.createGraphics(gSizeWidth, gSizeHeight);
         gradBaseG.background(255);
         gradG.noStroke();
         gradG.background(255);
@@ -65,46 +75,39 @@ export const renderGradientFill = (fill, pipeline) => {
         let grad;
         switch (fill.gradientType) {
             case 'linear': {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const coords = getGradientCoords(fill.gradientDirection, gSize[0], gSize[1]);
+                const coords = getGradientCoords(fill.gradientDirection, gSizeWidth, gSizeHeight);
                 grad = gradG.drawingContext.createLinearGradient(...coords);
                 break;
             }
             case 'radial': {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const cx = gSize[0] / 2;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const cy = gSize[1] / 2;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const innerRadius = gSize[0] * 0.1;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const outerRadius = gSize[0] / 2;
+                const cx = gSizeWidth / 2;
+                const cy = gSizeHeight / 2;
+                const innerRadius = gSizeWidth * 0.1;
+                const outerRadius = gSizeWidth / 2;
                 grad = gradG.drawingContext.createRadialGradient(cx, cy, innerRadius, cx, cy, outerRadius);
                 break;
             }
             case 'conic': {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const cx = gSize[0] / 2;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const cy = gSize[1] / 2;
+                const cx = gSizeWidth / 2;
+                const cy = gSizeHeight / 2;
                 grad = gradG.drawingContext.createConicGradient(0, cx, cy);
                 break;
             }
         }
         // カラーストップの追加
         colorStop.stops.forEach((stop) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const c = color(255 - createInkDepth(stop.depth), 255 - createInkDepth(stop.depth), 255 - createInkDepth(stop.depth));
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             grad.addColorStop(stop.position / 100, c.toString());
         });
         // グラデーションを描画
         gradG.drawingContext.fillStyle = grad;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        gradG.rect(0, 0, gSize[0], gSize[1]);
+        gradG.rect(0, 0, gSizeWidth, gSizeHeight);
         // クリッピングとエフェクト適用
         pipeline.drawPathToCanvas(path, gradBaseG.drawingContext);
         gradBaseG.drawingContext.clip();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        gradBaseG.image(gradG, gPos[0], gPos[1]);
+        gradBaseG.image(gradG, gPosX, gPosY);
         const finalG = applyEffects(applyFilters(gradBaseG, filter), halftone, dither);
         // JOINモードの場合は全チャンネルから削除
         if (mode === 'join') {

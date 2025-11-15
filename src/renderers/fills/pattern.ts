@@ -22,12 +22,24 @@ export const renderPatternFill = (
   const options = pipeline.getOptions()
   const { channels, filter, halftone, dither, mode } = options
   const path = options.path
+  // Vec2 array index access - external library interface (linearly)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const gPos = pipeline.getPosition()
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const gSize = pipeline.getSize()
 
-  // パターングラフィックスの作成
+  // Vec2 array index access - external library interface (linearly)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const patG = pipeline.createGraphics(gSize[0] as number, gSize[1] as number)
+  const gSizeWidth = gSize[0]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gSizeHeight = gSize[1]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gPosX = gPos[0]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gPosY = gPos[1]
+
+  // パターングラフィックスの作成
+  const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight)
   patG.background(255)
   patG.noStroke()
   patG.patternAngle(fill.patternAngle ?? 0)
@@ -37,8 +49,7 @@ export const renderPatternFill = (
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
   patG.pattern(patternFn(...fill.patternArgs))
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  patG.rectPattern(0, 0, gSize[0] as number, gSize[1] as number)
+  patG.rectPattern(0, 0, gSizeWidth, gSizeHeight)
 
   // フィルター適用
   const filteredPatG = applyFilters(patG, filter)
@@ -47,8 +58,7 @@ export const renderPatternFill = (
   let baseG = pipeline.getBaseGraphics()
   pipeline.drawPathToCanvas(path, baseG.drawingContext)
   baseG.drawingContext.clip()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  baseG.image(filteredPatG, gPos[0] as number, gPos[1] as number)
+  baseG.image(filteredPatG, gPosX, gPosY)
 
   // エフェクト適用
   baseG = applyEffects(baseG, halftone, dither)

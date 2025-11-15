@@ -63,8 +63,12 @@ export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void =>
       // joinモードはfill/strokeレンダラー内で処理される
       break
 
-    default:
-      console.warn(`Unknown mode: ${mode}. Using overprint.`)
+    default: {
+      // Exhaustive check: この行が実行されることは型システム上あり得ない
+      const _exhaustiveCheck: never = mode
+      console.warn(`Unknown mode: ${String(_exhaustiveCheck)}. Using overprint.`)
+      break
+    }
   }
 }
 

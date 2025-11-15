@@ -6,26 +6,12 @@
  */
 
 import type { PavePath } from '../types/core.js'
-
-/**
- * Path type from pave.js
- * Since pave.js doesn't provide TypeScript types, we'll use any for the Path constructor
- * but wrap all operations in type-safe interfaces.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PathConstructor = any
-
-/**
- * Get Path constructor from global context
- */
-const getPathConstructor = (): PathConstructor => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Path = (globalThis as any).Path
-  if (!Path) {
-    throw new Error('Path from pave.js is not available. Make sure pave.js is loaded.')
-  }
-  return Path
-}
+import {
+  createCircle,
+  subtractPaths,
+  unitePaths,
+  getPathBounds
+} from './pave-wrapper.js'
 
 /**
  * Type guard to check if a path has curves
@@ -55,8 +41,9 @@ function hasCurves(path: PavePath): path is PavePath & { curves: unknown[] } {
  * ```
  */
 export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
-  const Path = getPathConstructor()
-  const emptyPath = Path.circle([0, 0], 0)
+  // External library interface (pave.js) - return values are typed but ESLint sees them as any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+  const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
     console.warn("PathIntersect: pathA または pathB が無効です。")
@@ -65,19 +52,19 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
 
   try {
     // 両方のPath.subtract操作をtry-catchで囲む
-    const diff = Path.subtract(pathA, [pathB])
+    const diff = subtractPaths(pathA, [pathB])
     if (!diff || !hasCurves(diff) || diff.curves.length === 0) {
       console.warn("PathIntersect: 差がないか、無効なパスです。")
       return emptyPath
     }
-    const intersected = Path.subtract(pathA, [diff])
+    const intersected = subtractPaths(pathA, [diff])
     return intersected
   } catch (e) {
     // Path.subtractでエラーが発生した場合（完全重複、完全分離など）
     if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
       // Path.uniteで完全重複か完全分離かを判定
       try {
-        const united = Path.unite([pathA, pathB])
+        const united = unitePaths([pathA, pathB])
         // 結合後のcurves数が元のpathAと同じなら完全重複
         if (hasCurves(united) && hasCurves(pathA) && united.curves.length === pathA.curves.length) {
           console.warn("PathIntersect: パス同士が完全重複しています。元のパスを返します。")
@@ -97,6 +84,7 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
       throw e
     }
   }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 }
 
 /**
@@ -118,15 +106,16 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
  * ```
  */
 export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
-  const Path = getPathConstructor()
-  const emptyPath = Path.circle([0, 0], 0)
+  // External library interface (pave.js) - return values are typed but ESLint sees them as any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+  const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
     console.warn("PathExclude: pathA または pathB が無効です。")
     return emptyPath
   }
 
-  const united = Path.unite([pathA, pathB])
+  const united = unitePaths([pathA, pathB])
   if (!united || !hasCurves(united)) {
     console.warn("PathExclude: 統合されたパスが無効です。")
     return emptyPath
@@ -139,7 +128,7 @@ export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
   }
 
   try {
-    const excluded = Path.subtract(united, [intersected])
+    const excluded = subtractPaths(united, [intersected])
     if (!excluded || !hasCurves(excluded)) {
       console.warn("PathExclude: 除外されたパスが無効です。")
       return emptyPath
@@ -155,6 +144,7 @@ export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
       throw e
     }
   }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 }
 
 /**
@@ -177,8 +167,6 @@ export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
  * ```
  */
 export const isPathsOverlap = (pathA: PavePath, pathB: PavePath): boolean => {
-  const Path = getPathConstructor()
-
   // パスの有効性チェック
   if (!pathA || !pathB || !hasCurves(pathA) || !hasCurves(pathB)) {
     console.warn("isPathsOverlap: 無効なパスが渡されました")
@@ -188,12 +176,15 @@ export const isPathsOverlap = (pathA: PavePath, pathB: PavePath): boolean => {
   console.log(`  Checking overlap: pathA curves=${pathA.curves.length}, pathB curves=${pathB.curves.length}`)
 
   try {
-    const subtracted = Path.subtract(pathA, [pathB]) // 実際にsubtractしたパス
+    // External library interface (pave.js) - return values are typed but ESLint sees them as any
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+    const subtracted = subtractPaths(pathA, [pathB]) // 実際にsubtractしたパス
 
     if (!hasCurves(subtracted)) {
       console.log(`  → Subtracted path has no curves`)
       return false
     }
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 
     console.log(`  subtracted curves: ${subtracted.curves.length}`)
 
@@ -211,11 +202,13 @@ export const isPathsOverlap = (pathA: PavePath, pathB: PavePath): boolean => {
       console.warn("⚠️ isPathsOverlap: Path.subtractでエラー発生。バウンディングボックスで判定します", e.message)
 
       // バウンディングボックスを取得
-      const boundsA = Path.bounds(pathA)
-      const boundsB = Path.bounds(pathB)
+      const boundsA = getPathBounds(pathA)
+      const boundsB = getPathBounds(pathB)
 
-      console.log(`  boundsA: [${boundsA[0]}, ${boundsA[1]}]`)
-      console.log(`  boundsB: [${boundsB[0]}, ${boundsB[1]}]`)
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      console.log(`  boundsA: [${boundsA[0].join(', ')}, ${boundsA[1].join(', ')}]`)
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      console.log(`  boundsB: [${boundsB[0].join(', ')}, ${boundsB[1].join(', ')}]`)
 
       // バウンディングボックスの重なりをチェック
       const overlapX = boundsA[0][0] < boundsB[1][0] && boundsA[1][0] > boundsB[0][0]

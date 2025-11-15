@@ -5,6 +5,9 @@
 import type { FillConfig } from './fill.js'
 import type { StrokeConfig } from './stroke.js'
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js'
+import type { PavePath } from './pave.js'
+
+export type { PavePath }
 
 /**
  * レンダリングモード
@@ -16,24 +19,6 @@ export type RenderMode = 'overprint' | 'cutout' | 'join'
  * Curves can be arrays or objects with vertices
  */
 export type PaveCurve = unknown[]
-
-/**
- * Pave Pathオブジェクト（@baku89/pave）
- *
- * pave.jsのPathオブジェクトの型定義。
- * 実際のライブラリには型定義がないため、使用されているプロパティのみを定義。
- */
-export interface PavePath {
-  /**
-   * Path の curve セグメント配列
-   */
-  curves?: PaveCurve[]
-
-  /**
-   * その他のプロパティは動的に追加される可能性がある
-   */
-  [key: string]: unknown
-}
 
 /**
  * Type guard to check if a value has curves property

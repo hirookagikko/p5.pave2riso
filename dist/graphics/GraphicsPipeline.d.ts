@@ -3,8 +3,9 @@
  *
  * pave2Risoの主要なGraphics処理を管理するクラス
  */
-import type { Pave2RisoOptions, PavePath } from '../types/core.js';
-import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly/+esm';
+import type { Pave2RisoOptions } from '../types/core.js';
+import type { PavePath } from '../types/pave.js';
+import type { Vec2 } from '../types/linearly.js';
 /**
  * GraphicsPipelineクラス
  *
@@ -43,8 +44,8 @@ export declare class GraphicsPipeline {
      */
     getOptions(): Pave2RisoOptions;
     getPathBounds(): [[number, number], [number, number]];
-    getPosition(): ReturnType<typeof vec2.of>;
-    getSize(): ReturnType<typeof vec2.of>;
+    getPosition(): Vec2;
+    getSize(): Vec2;
     getBaseGraphics(): p5.Graphics;
     setBaseGraphics(g: p5.Graphics): void;
     /**

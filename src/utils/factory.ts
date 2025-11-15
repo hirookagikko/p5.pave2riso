@@ -23,6 +23,6 @@ export type P2ROptions = Omit<Pave2RisoOptions, 'channels' | 'canvasSize'>
  * render({ path: myPath, fill: { color: blue, channelVals: [100, 0, 0] } })
  * ```
  */
-export const p2r = (context: P2RContext) => {
-  return (ops: P2ROptions) => pave2Riso({ ...context, ...ops })
+export const p2r = (context: P2RContext): ((ops: P2ROptions) => void) => {
+  return (ops: P2ROptions): void => pave2Riso({ ...context, ...ops })
 }

@@ -3,11 +3,8 @@
  *
  * pave2Risoの主要なGraphics処理を管理するクラス
  */
-// Pave.jsとlinearlyをCDNからインポート
-// @ts-expect-error - CDN経由でインポート
-import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm';
-// @ts-expect-error - CDN経由でインポート
-import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly/+esm';
+import { getPathBounds, drawPathToCanvas } from '../utils/pave-wrapper.js';
+import { createVec2 } from '../utils/vec2-wrapper.js';
 /**
  * GraphicsPipelineクラス
  *
@@ -18,13 +15,12 @@ export class GraphicsPipeline {
         this.graphicsToCleanup = [];
         this.options = options;
         // Pave.jsのPath.bounds()を使用してパスの境界を取得
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.pathBounds = Path.bounds(options.path);
+        this.pathBounds = getPathBounds(options.path);
         // vec2を使用して位置とサイズを計算
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.gPos = vec2.of(this.pathBounds[0][0], this.pathBounds[0][1]);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.gSize = vec2.of(this.pathBounds[1][0] - this.pathBounds[0][0], this.pathBounds[1][1] - this.pathBounds[0][1]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+        this.gPos = createVec2(this.pathBounds[0][0], this.pathBounds[0][1]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+        this.gSize = createVec2(this.pathBounds[1][0] - this.pathBounds[0][0], this.pathBounds[1][1] - this.pathBounds[0][1]);
         // ベースGraphicsの作成
         this.baseG = createGraphics(options.canvasSize[0], options.canvasSize[1]);
         this.baseG.pixelDensity(1);
@@ -52,7 +48,7 @@ export class GraphicsPipeline {
         if (clippingPath) {
             channels.forEach((channel) => {
                 channel.push();
-                Path.drawToCanvas(clippingPath, channel.drawingContext);
+                drawPathToCanvas(clippingPath, channel.drawingContext);
                 channel.drawingContext.clip();
             });
         }
@@ -103,9 +99,7 @@ export class GraphicsPipeline {
      * パスをCanvasに描画（Pave.js APIのラッパー）
      */
     drawPathToCanvas(path, context) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        ;
-        Path.drawToCanvas(path, context);
+        drawPathToCanvas(path, context);
     }
 }
 //# sourceMappingURL=GraphicsPipeline.js.map

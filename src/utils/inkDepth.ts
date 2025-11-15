@@ -22,7 +22,7 @@ export type InkDepth = number & { readonly __brand: 'InkDepth' }
 export const createInkDepth = (value: number): InkDepth => {
   // p5.jsのmap関数を使用: map(value, start1, stop1, start2, stop2)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  return Math.round(map(value, 0, 100, 0, 255) as number) as InkDepth
+  return Math.round(map(value, 0, 100, 0, 255)) as InkDepth
 }
 
 /**

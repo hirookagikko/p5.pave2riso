@@ -58,12 +58,20 @@ export const renderImageFill = (fill, pipeline) => {
     const options = pipeline.getOptions();
     const { channels, filter, halftone, dither, mode } = options;
     const path = options.path;
+    // Vec2 array index access - external library interface (linearly)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gSize = pipeline.getSize();
+    // Vec2 array index access - external library interface (linearly)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const tw = gSize[0];
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const th = gSize[1];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const gPosX = gPos[0];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const gPosY = gPos[1];
     const iw = img.width;
     const ih = img.height;
     // パラメータのデフォルト値
@@ -78,10 +86,8 @@ export const renderImageFill = (fill, pipeline) => {
     // アライメントの計算
     const ax = normalizeAlignX(alignX);
     const ay = normalizeAlignY(alignY);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    let dx = gPos[0] + (tw - dw) * ax + (offset[0] || 0);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    let dy = gPos[1] + (th - dh) * ay + (offset[1] || 0);
+    const dx = gPosX + (tw - dw) * ax + (offset[0] || 0);
+    const dy = gPosY + (th - dh) * ay + (offset[1] || 0);
     // 画像グラフィックスの作成
     const imgBaseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
     imgBaseG.background(255);
