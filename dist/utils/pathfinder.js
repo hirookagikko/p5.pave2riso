@@ -139,8 +139,10 @@ export const PathExclude = (pathA, pathB) => {
 /**
  * Checks whether two paths overlap
  *
- * Uses Path.subtract to detect if paths share any area.
- * Falls back to bounding box overlap detection if Path.subtract fails.
+ * Uses PathIntersect to compute the intersection and checks if the result
+ * has a non-zero area. This is more reliable than checking curve count changes,
+ * which fails for cases like partially overlapping circles (where a crescent
+ * shape still has the same curve count as the original circle).
  *
  * @param pathA - First path
  * @param pathB - Second path
@@ -161,49 +163,25 @@ export const isPathsOverlap = (pathA, pathB) => {
         console.warn("isPathsOverlap: 無効なパスが渡されました");
         return false;
     }
-    console.log(`  Checking overlap: pathA curves=${pathA.curves.length}, pathB curves=${pathB.curves.length}`);
+    // PathIntersect を使って交差部分を計算
+    const intersection = PathIntersect(pathA, pathB);
+    // 交差部分が空かどうかをチェック
+    if (!hasCurves(intersection) || intersection.curves.length === 0) {
+        return false;
+    }
+    // 交差部分の bounds をチェックして、実質的に面積があるか確認
+    // (半径0の円などの退化したケースを除外)
     try {
-        // External library interface (pave.js) - return values are typed but ESLint sees them as any
-        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-        const subtracted = subtractPaths(pathA, [pathB]); // 実際にsubtractしたパス
-        if (!hasCurves(subtracted)) {
-            console.log(`  → Subtracted path has no curves`);
-            return false;
-        }
-        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-        console.log(`  subtracted curves: ${subtracted.curves.length}`);
-        // pathAとsubtractしたパスのcurvesの数が違う場合は重なっている
-        if (subtracted.curves.length !== pathA.curves.length) {
-            console.log(`  → Overlap detected (curves changed: ${pathA.curves.length} → ${subtracted.curves.length})`);
-            return true;
-        }
-        else {
-            console.log(`  → No overlap (curves unchanged: ${pathA.curves.length})`);
-            return false;
-        }
+        const bounds = getPathBounds(intersection);
+        const width = bounds[1][0] - bounds[0][0];
+        const height = bounds[1][1] - bounds[0][1];
+        // 面積が実質的に0より大きいかチェック (浮動小数点誤差を考慮)
+        return width > 1e-10 && height > 1e-10;
     }
     catch (e) {
-        // Path.subtractでエラーが発生した場合、バウンディングボックスで重なりを判定
-        if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
-            console.warn("⚠️ isPathsOverlap: Path.subtractでエラー発生。バウンディングボックスで判定します", e.message);
-            // バウンディングボックスを取得
-            const boundsA = getPathBounds(pathA);
-            const boundsB = getPathBounds(pathB);
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            console.log(`  boundsA: [${boundsA[0].join(', ')}, ${boundsA[1].join(', ')}]`);
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            console.log(`  boundsB: [${boundsB[0].join(', ')}, ${boundsB[1].join(', ')}]`);
-            // バウンディングボックスの重なりをチェック
-            const overlapX = boundsA[0][0] < boundsB[1][0] && boundsA[1][0] > boundsB[0][0];
-            const overlapY = boundsA[0][1] < boundsB[1][1] && boundsA[1][1] > boundsB[0][1];
-            const boundsOverlap = overlapX && overlapY;
-            console.log(`  → Bounds overlap: ${boundsOverlap}`);
-            return boundsOverlap;
-        }
-        else {
-            // 予期しないエラーの場合は再スロー
-            throw e;
-        }
+        // bounds 取得に失敗した場合は false を返す
+        console.warn("⚠️ isPathsOverlap: 交差部分の bounds 取得に失敗", e);
+        return false;
     }
 };
 //# sourceMappingURL=pathfinder.js.map

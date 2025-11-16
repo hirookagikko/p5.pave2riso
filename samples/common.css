@@ -1,0 +1,261 @@
+/**
+ * Common styles for p5.pave2riso sample pages
+ * Theme colors: #56B879 (green), #C6ADD2 (lavender), #C88C2D (orange), #ECECEB (background)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Source+Code+Pro:wght@400;500&display=swap');
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  font-weight: 300;
+  background: #ECECEB;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #ECECEB;
+  border-bottom: 1px solid #56B879;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header h1 {
+  font-family: "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  margin: 0;
+  line-height: 1;
+  color: #56B879;
+}
+
+/* Sample navigation dropdown */
+.sample-nav {
+  position: relative;
+}
+
+.nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  color: #56B879;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 300;
+  transition: all 0.2s;
+  font-family: "Inter", sans-serif;
+}
+
+.nav-toggle .menu-icon {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.nav-toggle:hover {
+  opacity: 0.7;
+}
+
+.nav-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ECECEB;
+  border: 1px solid #56B879;
+  border-radius: 12px;
+  list-style: none;
+  padding: 0;
+  min-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s;
+}
+
+.nav-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav-menu li {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid #56B879;
+}
+
+.nav-menu li:last-child {
+  border-bottom: none;
+}
+
+.nav-menu a {
+  display: block;
+  padding: 10px 16px;
+  color: #56B879;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.nav-menu a:hover {
+  background: #56B879;
+  color: #ECECEB;
+}
+
+.nav-menu a.active {
+  color: #56B879;
+  font-weight: 300;
+  background: rgba(86, 184, 121, 0.1);
+}
+
+.nav-menu li:first-child a {
+  border-radius: 12px 12px 0 0;
+}
+
+.nav-menu li:last-child a {
+  border-radius: 0 0 12px 12px;
+}
+
+.nav-menu li:first-child:last-child a {
+  border-radius: 12px;
+}
+
+#export-btn {
+  padding: 8px 16px;
+  background: none;
+  color: #56B879;
+  border: 1px solid #56B879;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 300;
+  font-family: "Inter", sans-serif;
+  transition: all 0.2s;
+}
+
+#export-btn:hover {
+  background: #56B879;
+  color: #ECECEB;
+  transform: translateY(-1px);
+}
+
+/* Main container */
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Canvas area */
+.canvas-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  position: sticky;
+  top: 65px;
+  align-self: flex-start;
+}
+
+.canvas-area canvas {
+  max-width: 100%;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Code area */
+.code-area {
+  background: #352F2E;
+  color: #f8f8f2;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.code-area pre {
+  margin: 0;
+  font-family: 'Source Code Pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.code-area code {
+  font-family: inherit;
+}
+
+.code-area .comment {
+  color: #C6ADD2;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .canvas-area {
+    position: static;
+    gap: 12px;
+  }
+
+  header {
+    padding: 12px 16px;
+  }
+
+  header h1 {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .nav-toggle {
+    padding: 0;
+    font-size: 14px;
+  }
+
+  .nav-menu {
+    min-width: 180px;
+  }
+
+  .nav-menu a {
+    padding: 11px 16px;
+    font-size: 14px;
+  }
+
+  #export-btn {
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+
+  .code-area {
+    padding: 16px;
+  }
+
+  .code-area pre {
+    font-size: 12px;
+  }
+}

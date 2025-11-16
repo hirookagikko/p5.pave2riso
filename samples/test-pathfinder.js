@@ -223,16 +223,16 @@ window.draw = () => {
   pop()
 
   // Case 3: Partial overlap
-  // NOTE: Known bug - isPathsOverlap returns false for partial circle overlaps
-  // The function checks if curves count changes after subtract, but a crescent
-  // (circle minus partial overlap) is still 1 curve, same as the original circle
+  // FIXED: Previously returned false due to relying on curve count changes.
+  // Now uses PathIntersect to compute actual intersection area, which correctly
+  // detects partial overlaps (e.g., crescent shapes from overlapping circles).
   y += margin * 3
 
   const circle9 = Path.circle([margin * 2, y], radius)
   const circle10 = Path.circle([margin * 2 + radius * 0.5, y], radius)
 
   const overlap3 = isPathsOverlap(circle9, circle10)
-  console.log('Partially overlapping circles overlap:', overlap3) // Should be true, but returns false due to bug
+  console.log('Partially overlapping circles overlap:', overlap3) // Should be true, now correctly returns true
 
   pave2Riso({
     channels,

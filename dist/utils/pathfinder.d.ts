@@ -48,8 +48,10 @@ export declare const PathExclude: (pathA: PavePath, pathB: PavePath) => PavePath
 /**
  * Checks whether two paths overlap
  *
- * Uses Path.subtract to detect if paths share any area.
- * Falls back to bounding box overlap detection if Path.subtract fails.
+ * Uses PathIntersect to compute the intersection and checks if the result
+ * has a non-zero area. This is more reliable than checking curve count changes,
+ * which fails for cases like partially overlapping circles (where a crescent
+ * shape still has the same curve count as the original circle).
  *
  * @param pathA - First path
  * @param pathB - Second path
