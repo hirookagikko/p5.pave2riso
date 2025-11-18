@@ -90,6 +90,9 @@ export interface PatternFillConfig {
 
   /**
    * パターンの回転角度（度数法）
+   * @example
+   * patternAngle: 45  // 45度回転
+   * patternAngle: 90  // 90度回転
    */
   patternAngle?: number
 

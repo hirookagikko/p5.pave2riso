@@ -5,6 +5,7 @@
 import type { PatternStrokeConfig } from '../../types/stroke.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { ensurePTNAvailable } from '../../channels/operations.js'
+import { degreesToRadians } from '../../utils/angleConverter.js'
 
 /**
  * パターンStrokeをレンダリング
@@ -41,7 +42,8 @@ export const renderPatternStroke = (
   const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight)
   patG.noFill()
   patG.strokeWeight(stroke.strokeWeight)
-  patG.patternAngle(stroke.patternAngle ?? 0)
+  // patternAngleは度数法で指定されているのでラジアンに変換
+  patG.patternAngle(degreesToRadians(stroke.patternAngle ?? 0))
   const patternFn = PTN[stroke.PTN]
   if (!patternFn) {
     throw new Error(`Pattern '${stroke.PTN}' not found in PTN object`)

@@ -194,7 +194,7 @@ header h1 {
 
 .code-area pre {
   margin: 0;
-  font-family: 'Source Code Pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-family: 'Source Code Pro', ui-monospace, Menlo, Monaco, Consolas, monospace;
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;

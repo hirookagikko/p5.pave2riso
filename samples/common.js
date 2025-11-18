@@ -5,7 +5,8 @@ const currentPage = window.location.pathname.split('/').pop().replace('.html', '
 fetch(currentPage)
   .then(response => response.text())
   .then(code => {
-    const highlighted = code.replace(/^(\s*)\/\/(.+)$/gm, '$1<span class="comment">//$2</span>')
+    // Highlight both line-start and inline comments
+    const highlighted = code.replace(/(^|\s)(\/\/.+)$/gm, '$1<span class="comment">$2</span>')
     document.getElementById('source-code').innerHTML = highlighted
   })
 
@@ -26,4 +27,25 @@ document.addEventListener('click', () => {
 // Prevent closing when clicking inside menu
 navMenu.addEventListener('click', (e) => {
   e.stopPropagation()
+})
+
+// Export button handler with custom filenames
+document.getElementById('export-btn').addEventListener('click', () => {
+  // Get page title and convert to filename-safe format
+  const pageTitle = document.title.split('/')[0].trim() // Take first part before '/'
+  const baseName = pageTitle
+    .toLowerCase()
+    .replace(/\s+/g, '-')  // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '')  // Remove non-alphanumeric chars except hyphens
+
+  // Export each channel with custom filename
+  if (window.risoChannels && window.risoChannels.length > 0) {
+    window.risoChannels.forEach((ch) => {
+      const colorName = ch.channelName || ch.channelIndex
+      ch.export(`${baseName}-${colorName}.png`)
+    })
+    console.log(`Exported as ${baseName}-[color].png`)
+  } else {
+    console.error('Riso channels not found. Make sure setup() has run.')
+  }
 })

@@ -88,6 +88,54 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
 }
 
 /**
+ * Subtracts pathB from pathA (boolean NOT operation)
+ *
+ * Returns a new path containing the area of pathA with pathB removed.
+ * This is a simplified wrapper around Path.subtract(A, [B]).
+ *
+ * @param pathA - Base path to subtract from
+ * @param pathB - Path to subtract
+ * @returns Subtracted path, or empty path on error
+ *
+ * @example
+ * ```typescript
+ * const circle = Path.circle([100, 100], 50)
+ * const rect = Path.rect([75, 75], [50, 50])
+ * const result = PathSubtract(circle, rect)
+ * // Returns circle with rect removed
+ * ```
+ */
+export const PathSubtract = (pathA: PavePath, pathB: PavePath): PavePath => {
+  // External library interface (pave.js) - return values are typed but ESLint sees them as any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+  const emptyPath = createCircle([0, 0], 0)
+
+  if (!pathA || !pathB) {
+    console.warn("PathSubtract: pathA または pathB が無効です。")
+    return emptyPath
+  }
+
+  try {
+    const result = subtractPaths(pathA, [pathB])
+    if (!result || !hasCurves(result)) {
+      console.warn("PathSubtract: 結果のパスが無効です。")
+      return emptyPath
+    }
+    return result
+  } catch (e) {
+    // Path.subtractでエラーが発生した場合
+    if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
+      console.warn("PathSubtract: パス減算に失敗しました。空パスを返します。")
+      return emptyPath
+    } else {
+      // 予期しないエラーの場合は再スローする
+      throw e
+    }
+  }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+}
+
+/**
  * Computes the symmetric difference of two paths (boolean XOR operation)
  *
  * Returns a new path containing areas that are in either path but not in both.

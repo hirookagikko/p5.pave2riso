@@ -27,6 +27,25 @@ import type { PavePath } from '../types/core.js';
  */
 export declare const PathIntersect: (pathA: PavePath, pathB: PavePath) => PavePath;
 /**
+ * Subtracts pathB from pathA (boolean NOT operation)
+ *
+ * Returns a new path containing the area of pathA with pathB removed.
+ * This is a simplified wrapper around Path.subtract(A, [B]).
+ *
+ * @param pathA - Base path to subtract from
+ * @param pathB - Path to subtract
+ * @returns Subtracted path, or empty path on error
+ *
+ * @example
+ * ```typescript
+ * const circle = Path.circle([100, 100], 50)
+ * const rect = Path.rect([75, 75], [50, 50])
+ * const result = PathSubtract(circle, rect)
+ * // Returns circle with rect removed
+ * ```
+ */
+export declare const PathSubtract: (pathA: PavePath, pathB: PavePath) => PavePath;
+/**
  * Computes the symmetric difference of two paths (boolean XOR operation)
  *
  * Returns a new path containing areas that are in either path but not in both.

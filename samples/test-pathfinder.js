@@ -4,30 +4,40 @@
  * Tests PathIntersect, PathExclude, and isPathsOverlap functions
  */
 
-import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
-import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
-import { PathIntersect, PathExclude, isPathsOverlap, pave2Riso } from '../dist/p5.pave2riso.js'
+import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
+import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
+import { p2r, PathIntersect, PathExclude, PathSubtract, isPathsOverlap } from '../dist/p5.pave2riso.js'
 
-// Make Path and vec2 available globally for wrappers
+// Make Path, mat2d, Distort and vec2 available globally
 window.Path = Path
+window.mat2d = mat2d
+window.Distort = Distort
 window.vec2 = vec2
 
 let channels = []
+let render
 
 window.setup = () => {
-  createCanvas(1600, 1600)
+  createCanvas(3508, 2480) // A4 at 300dpi
   pixelDensity(1)
+
+  // Set angle mode to DEGREES for testing
+  angleMode(DEGREES)
 
   // Initialize Riso channels
   channels = [
-    new Riso('red'),
-    new Riso('blue'),
-    new Riso('black')
+    new Riso('bubblegum'),
+    new Riso('violet'),
+    new Riso('metallicgold')
   ]
 
-  document.getElementById('export-btn').addEventListener('click', () => {
-    exportRiso()
-    console.log('Exported!')
+  // Expose channels globally for common.js export functionality
+  window.risoChannels = channels
+
+  // p2r factory - bind channels and canvas size once
+  render = p2r({
+    channels,
+    canvasSize: [width, height]
   })
 
   noLoop()
@@ -35,81 +45,32 @@ window.setup = () => {
 
 window.draw = () => {
   background(255)
-
   channels.forEach(ch => ch.clear())
 
-  const radius = width * 0.06
-  const margin = width * 0.08
+  const radius = height / 3
+  const offset = width / 10
 
-  // ============================================
-  // Test 1: PathIntersect - Intersection of two overlapping paths
-  // ============================================
+  // base circle
+  const theCenter = vec2.of(width / 2, height / 2)
+  const baseCircle = Path.circle(theCenter, radius)
 
-  let y = margin
+  // left & right circle
+  let leftCircle = Path.transform(baseCircle, mat2d.fromTranslation([-offset, 0]))
+  let rightCircle = Path.transform(baseCircle, mat2d.fromTranslation([offset, 0]))
+  leftCircle = Path.distort(leftCircle, Distort.wave(100, 400, 0, 45))
 
-  // Original shapes
-  const circle1 = Path.circle([margin * 2, y], radius)
-  const circle2 = Path.circle([margin * 2 + radius, y], radius)
+  // intersect
+  const intersected = PathIntersect(leftCircle, rightCircle)
+  const intersectedOffset = Path.transform(intersected, mat2d.fromTranslation(-100, -100))
 
-  // Draw originals in red and blue
-  pave2Riso({
-    channels,
-    path: circle1,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [100, 0, 0]
-    },
-    mode: 'overprint'
-  })
+  // subtract
+  const subtracted = PathSubtract(leftCircle, intersected)
 
-  pave2Riso({
-    channels,
-    path: circle2,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [0, 100, 0]
-    },
-    mode: 'overprint'
-  })
+  // exclude
+  const excluded = PathExclude(leftCircle, rightCircle)
 
-  // Result: Intersection (overlapping area only)
-  const intersected = PathIntersect(circle1, circle2)
-  pave2Riso({
-    channels,
+  render({
     path: intersected,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [0, 0, 100]
-    },
-    mode: 'overprint'
-  })
-
-  // Label for this test (draw result in-place, overlapping original shapes)
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text('PathIntersect', margin, y - margin * 0.5)
-  pop()
-
-  // ============================================
-  // Test 2: PathExclude - Symmetric difference (XOR)
-  // ============================================
-
-  y += margin * 3
-
-  const circle3 = Path.circle([margin * 2, y], radius)
-  const circle4 = Path.circle([margin * 2 + radius, y], radius)
-
-  // Draw originals
-  pave2Riso({
-    channels,
-    path: circle3,
-    canvasSize: [width, height],
     fill: {
       type: 'solid',
       channelVals: [100, 0, 0]
@@ -117,10 +78,28 @@ window.draw = () => {
     mode: 'overprint'
   })
 
-  pave2Riso({
-    channels,
-    path: circle4,
-    canvasSize: [width, height],
+  render({
+    path: intersectedOffset,
+    clippingPath: intersected,
+    fill: {
+      type: 'solid',
+      channelVals: [0, 100, 0]
+    },
+    filter: [
+      {
+        filterType: 'invert'
+      },
+      {
+        filterType: 'blur',
+        filterArgs: [50]
+      }
+    ],
+    halftone: { halftoneArgs: ['circle', 20, 45, 255] },
+    mode: 'overprint'
+  })
+
+  render({
+    path: subtracted,
     fill: {
       type: 'solid',
       channelVals: [0, 100, 0]
@@ -128,180 +107,17 @@ window.draw = () => {
     mode: 'overprint'
   })
 
-  // Result: Symmetric difference
-  const excluded = PathExclude(circle3, circle4)
-  pave2Riso({
-    channels,
+  render({
     path: excluded,
-    canvasSize: [width, height],
     fill: {
-      type: 'solid',
+      type: 'pattern',
+      PTN: 'stripe',
+      patternAngle: 45,
+      patternArgs: [100],
       channelVals: [0, 0, 100]
     },
-    mode: 'overprint'
+    mode: 'join'
   })
-
-  // Label
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text('PathExclude', margin, y - margin * 0.5)
-  pop()
-
-  // ============================================
-  // Test 3: Edge Cases
-  // ============================================
-
-  y += margin * 3
-
-  // Case 1: Complete separation (no overlap)
-  const circle5 = Path.circle([margin * 2, y], radius)
-  const circle6 = Path.circle([margin * 2 + radius * 3, y], radius)
-
-  const overlap1 = isPathsOverlap(circle5, circle6)
-  console.log('Completely separated circles overlap:', overlap1) // Should be false
-
-  pave2Riso({
-    channels,
-    path: circle5,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [100, 0, 0]
-    },
-    mode: 'overprint'
-  })
-
-  pave2Riso({
-    channels,
-    path: circle6,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [0, 100, 0]
-    },
-    mode: 'overprint'
-  })
-
-  // Draw text label
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text(`No overlap: ${overlap1}`, margin, y - margin * 0.5)
-  pop()
-
-  // Case 2: Complete overlap (identical circles)
-  y += margin * 3
-
-  const circle7 = Path.circle([margin * 2, y], radius)
-  const circle8 = Path.circle([margin * 2, y], radius)
-
-  const overlap2 = isPathsOverlap(circle7, circle8)
-  console.log('Identical circles overlap:', overlap2) // Should be true
-
-  pave2Riso({
-    channels,
-    path: circle7,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [100, 100, 0]
-    },
-    mode: 'overprint'
-  })
-
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text(`Complete overlap: ${overlap2}`, margin, y - margin * 0.5)
-  pop()
-
-  // Case 3: Partial overlap
-  // FIXED: Previously returned false due to relying on curve count changes.
-  // Now uses PathIntersect to compute actual intersection area, which correctly
-  // detects partial overlaps (e.g., crescent shapes from overlapping circles).
-  y += margin * 3
-
-  const circle9 = Path.circle([margin * 2, y], radius)
-  const circle10 = Path.circle([margin * 2 + radius * 0.5, y], radius)
-
-  const overlap3 = isPathsOverlap(circle9, circle10)
-  console.log('Partially overlapping circles overlap:', overlap3) // Should be true, now correctly returns true
-
-  pave2Riso({
-    channels,
-    path: circle9,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [100, 0, 0]
-    },
-    mode: 'overprint'
-  })
-
-  pave2Riso({
-    channels,
-    path: circle10,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [0, 100, 0]
-    },
-    mode: 'overprint'
-  })
-
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text(`Partial overlap: ${overlap3}`, margin, y - margin * 0.5)
-  pop()
-
-  // Case 4: One contains the other
-  y += margin * 3
-
-  const circle11 = Path.circle([margin * 2, y], radius)
-  const circle12 = Path.circle([margin * 2, y], radius * 0.5)
-
-  const overlap4 = isPathsOverlap(circle11, circle12)
-  console.log('Nested circles overlap:', overlap4) // Should be true
-
-  pave2Riso({
-    channels,
-    path: circle11,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [100, 0, 0]
-    },
-    mode: 'overprint'
-  })
-
-  pave2Riso({
-    channels,
-    path: circle12,
-    canvasSize: [width, height],
-    fill: {
-      type: 'solid',
-      channelVals: [0, 100, 0]
-    },
-    mode: 'overprint'
-  })
-
-  push()
-  fill(0)
-  noStroke()
-  textSize(32)
-  textAlign(LEFT, CENTER)
-  text(`Nested (one contains other): ${overlap4}`, margin, y - margin * 0.5)
-  pop()
 
   drawRiso()
 }

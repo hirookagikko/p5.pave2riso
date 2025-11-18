@@ -3,6 +3,7 @@
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/operations.js';
+import { degreesToRadians } from '../../utils/angleConverter.js';
 /**
  * パターンFillをレンダリング
  *
@@ -32,7 +33,8 @@ export const renderPatternFill = (fill, pipeline) => {
     const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight);
     patG.background(255);
     patG.noStroke();
-    patG.patternAngle(fill.patternAngle ?? 0);
+    // patternAngleは度数法で指定されているのでラジアンに変換
+    patG.patternAngle(degreesToRadians(fill.patternAngle ?? 0));
     const patternFn = PTN[fill.PTN];
     if (!patternFn) {
         throw new Error(`Pattern '${fill.PTN}' not found in PTN object`);

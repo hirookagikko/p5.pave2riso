@@ -1,12 +1,14 @@
 // Hello Circles / 丸が出てうれしい
-// A minimal example showing how p2r factory function simplifies your code
+// A minimal example showing how p2r factory function
 
-import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
-import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
+import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
+import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
 import { p2r } from '../dist/p5.pave2riso.js'
 
-// Make Path and vec2 available globally
+// Make Path, mat2d, Distort and vec2 available globally
 window.Path = Path
+window.mat2d = mat2d
+window.Distort = Distort
 window.vec2 = vec2
 
 let channels = []
@@ -19,19 +21,17 @@ window.setup = () => {
   // Initialize Riso channels
   channels = [
     new Riso('red'),
-    new Riso('blue'),
-    new Riso('black')
+    new Riso('green'),
+    new Riso('yellow')
   ]
 
-  // ✨ Create p2r factory - bind channels and canvas size once!
+  // Expose channels globally for common.js export functionality
+  window.risoChannels = channels
+
+  // p2r factory - bind channels and canvas size once
   render = p2r({
     channels,
     canvasSize: [width, height]
-  })
-
-  document.getElementById('export-btn').addEventListener('click', () => {
-    exportRiso()
-    console.log('Exported!')
   })
 
   noLoop()
@@ -41,37 +41,47 @@ window.draw = () => {
   background(255)
   channels.forEach(ch => ch.clear())
 
-  // 🎨 Draw circles with the factory function
-  // No need to repeat channels and canvasSize every time!
+  // Draw the base circle with the factory function
+  const baseCircle = Path.circle([0, 1240], 800)
 
-  // Red circle
-  render({
-    path: Path.circle([877, 1240], 400),
-    fill: {
-      type: 'solid',
-      channelVals: [100, 0, 0]
-    },
-    mode: 'overprint'
-  })
+  // Define circles as data (x positions and colors)
+  // Overlapping circles to create color mixing effect
+  const centerX = width / 2
+  const spacing = 650  // Subtle overlap
 
-  // Blue circle
-  render({
-    path: Path.circle([1754, 1240], 400),
-    fill: {
-      type: 'solid',
-      channelVals: [0, 100, 0]
-    },
-    mode: 'overprint'
-  })
+  const circles = [
+    { x: centerX - spacing, color: [100, 0, 0] },   // Red
+    { x: centerX, color: [0, 100, 0] },              // Green
+    { x: centerX + spacing, color: [0, 0, 100] }     // Yellow
+  ]
 
-  // Black circle
-  render({
-    path: Path.circle([2631, 1240], 400),
-    fill: {
-      type: 'solid',
-      channelVals: [0, 0, 100]
-    },
-    mode: 'overprint'
+  // Draw all circles by transforming the base circle and applying wave
+  circles.forEach((circle, i) => {
+    const transform = mat2d.fromTranslation([circle.x, 0])
+    let finalCircle = Path.transform(baseCircle, transform)
+
+    // Apply wave distortion with progressively different parameters
+    // wave(amplitude, width, phase, angle, origin)
+    const waveAmplitude = 15 + i * 10   // Gradually increase amplitude: 15, 25, 35
+    const waveWidth = 100 - i * 20      // Gradually decrease wavelength: 100, 80, 60
+    const waveAngle = i * 30            // Rotate wave direction: 0°, 30°, 60°
+
+    finalCircle = Path.distort(
+      finalCircle,
+      Distort.wave(waveAmplitude, waveWidth, 0, waveAngle)
+    )
+
+    // Last circle uses cutout mode to create knockout effect
+    const mode = i === circles.length - 1 ? 'cutout' : 'overprint'
+
+    render({
+      path: finalCircle,
+      fill: {
+        type: 'solid',
+        channelVals: circle.color
+      },
+      mode
+    })
   })
 
   drawRiso()

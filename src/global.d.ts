@@ -45,6 +45,10 @@ declare global {
     }
     halftoneImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
     ditherImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
+    // p5.js angle mode
+    _angleMode?: string
+    DEGREES?: string
+    RADIANS?: string
   }
 
   // p5.jsグローバル関数
@@ -62,6 +66,8 @@ declare global {
   const ROUND: string
   const SQUARE: string
   const PROJECT: string
+  const DEGREES: string
+  const RADIANS: string
 
   // p5.pattern型定義
   interface PTNObject {

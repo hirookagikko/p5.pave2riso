@@ -15,7 +15,7 @@ export { p2r } from './utils/factory.js'
 export type { P2RContext, P2ROptions } from './utils/factory.js'
 
 // Pathfinder utilities
-export { PathIntersect, PathExclude, isPathsOverlap } from './utils/pathfinder.js'
+export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap } from './utils/pathfinder.js'
 
 // Font utilities
 export { ot2pave } from './utils/font-utils.js'
