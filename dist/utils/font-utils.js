@@ -268,8 +268,37 @@ export const ot2pave = (commands, options = {}) => {
         if (!cmd)
             continue;
         switch (cmd.type) {
-            case 'M': // MoveTo
+            case 'M': { // MoveTo
+                // If we have accumulated paths and encounter a new MoveTo,
+                // the previous path is implicitly closed (for OpenType.js without explicit Z commands)
+                if (tempPath.length > 0) {
+                    // External library interface (pave.js) - return values are typed but ESLint sees them as any
+                    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+                    const newPath = closePath(joinPaths(tempPath), { fuse: false, group: -1 });
+                    const newArea = getPathArea(newPath);
+                    const newWinding = getPathWindingDirection(newPath);
+                    const newBounds = getPathBounds(newPath);
+                    allPaths.push({
+                        path: newPath,
+                        area: newArea,
+                        winding: newWinding,
+                        bounds: newBounds
+                    });
+                    console.log(`Path ${allPaths.length} (implicit close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'}`);
+                    // デバッグモード：個別パスを記録
+                    if (debugPaths) {
+                        debugPaths.push({
+                            path: newPath,
+                            area: newArea,
+                            winding: newWinding,
+                            bounds: newBounds
+                        });
+                    }
+                    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+                    tempPath = [];
+                }
                 break;
+            }
             case 'Z': { // ClosePath
                 // External library interface (pave.js) - return values are typed but ESLint sees them as any
                 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
@@ -317,6 +346,32 @@ export const ot2pave = (commands, options = {}) => {
                 break;
         }
         presentPos = [cmd.x, cmd.y];
+    }
+    // After processing all commands, close any remaining path
+    if (tempPath.length > 0) {
+        // External library interface (pave.js) - return values are typed but ESLint sees them as any
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+        const newPath = closePath(joinPaths(tempPath), { fuse: false, group: -1 });
+        const newArea = getPathArea(newPath);
+        const newWinding = getPathWindingDirection(newPath);
+        const newBounds = getPathBounds(newPath);
+        allPaths.push({
+            path: newPath,
+            area: newArea,
+            winding: newWinding,
+            bounds: newBounds
+        });
+        console.log(`Path ${allPaths.length} (final close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'}`);
+        // デバッグモード：個別パスを記録
+        if (debugPaths) {
+            debugPaths.push({
+                path: newPath,
+                area: newArea,
+                winding: newWinding,
+                bounds: newBounds
+            });
+        }
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     }
     // パスが1つもない場合は空のパスを返す
     if (allPaths.length === 0) {

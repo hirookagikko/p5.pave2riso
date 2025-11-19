@@ -5,8 +5,12 @@ const currentPage = window.location.pathname.split('/').pop().replace('.html', '
 fetch(currentPage)
   .then(response => response.text())
   .then(code => {
-    // Highlight both line-start and inline comments
-    const highlighted = code.replace(/(^|\s)(\/\/.+)$/gm, '$1<span class="comment">$2</span>')
+    // Highlight both single-line and multi-line comments
+    let highlighted = code
+    // First, highlight multi-line comments /* ... */
+    highlighted = highlighted.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="comment">$1</span>')
+    // Then, highlight single-line comments //
+    highlighted = highlighted.replace(/(^|\s)(\/\/.+)$/gm, '$1<span class="comment">$2</span>')
     document.getElementById('source-code').innerHTML = highlighted
   })
 
