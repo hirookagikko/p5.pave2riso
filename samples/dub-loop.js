@@ -107,7 +107,7 @@ function initDubPath() {
   const baseSpacing = fontSize * 0.2 // Tighter spacing for overlapping characters
 
   // Generate paths for "Dubbing" with random transformations
-  const chars = ['D', 'O', 'N', 'U']
+  const chars = ['i', 'a', 'v', 't']
   const paths = chars.map((char, i) => {
     // Each character gets a different width value (wdth axis: 25-151)
     const width = random(25, 151)
@@ -147,6 +147,13 @@ function initDubPath() {
   const offsetY = centerY - (bounds[0][1] + bounds[1][1]) / 2
 
   dubPath = Path.transform(dubPath, mat2d.fromTranslation([offsetX, offsetY]))
+
+  // Apply twirl effect
+  // dubPath = Path.distort(dubPath, Distort.twirl([centerX, centerY], width * 0.5, 90, t => t * t * (3 - 2 * t)))
+
+  // Apply light wave effect
+  // dubPath = Path.subdivide(dubPath, 5)
+  // dubPath = Path.distort(dubPath, Distort.wave(2, 5, 0, 45, [centerX, centerY]))
 
   fontsReady = true
 }

@@ -245,8 +245,10 @@ const determinePathOperation = (
   console.log(`  determinePathOperation:`)
   console.log(`    Relation: ${relation}`)
   console.log(`    Area ratio: ${areaRatio.toFixed(3)}`)
-  console.log(`    Larger winding: ${largerWinding > 0 ? 'CW' : 'CCW'}${largerOriginalWinding !== null ? ' (original)' : ''}`)
-  console.log(`    Smaller winding: ${smallerWinding > 0 ? 'CW' : 'CCW'}`)
+  console.log(`    Larger bounds: [${largerBounds[0][0].toFixed(1)}, ${largerBounds[0][1].toFixed(1)}] to [${largerBounds[1][0].toFixed(1)}, ${largerBounds[1][1].toFixed(1)}]`)
+  console.log(`    Smaller bounds: [${smallerBounds[0][0].toFixed(1)}, ${smallerBounds[0][1].toFixed(1)}] to [${smallerBounds[1][0].toFixed(1)}, ${smallerBounds[1][1].toFixed(1)}]`)
+  console.log(`    Larger winding: ${largerWinding > 0 ? 'CCW' : 'CW'}${largerOriginalWinding !== null ? ' (original)' : ''} (value: ${largerWinding.toFixed(2)})`)
+  console.log(`    Smaller winding: ${smallerWinding > 0 ? 'CCW' : 'CW'} (value: ${smallerWinding.toFixed(2)})`)
   console.log(`    Windings same: ${windingsSame}`)
 
   if (relation === 'INDEPENDENT') {
@@ -376,7 +378,7 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
             bounds: newBounds
           })
 
-          console.log(`Path ${allPaths.length} (implicit close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'}`)
+          console.log(`Path ${allPaths.length} (implicit close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`)
 
           // デバッグモード：個別パスを記録
           if (debugPaths) {
@@ -408,7 +410,7 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
           bounds: newBounds
         })
 
-        console.log(`Path ${allPaths.length}: area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'}`)
+        console.log(`Path ${allPaths.length}: area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`)
 
         // デバッグモード：個別パスを記録
         if (debugPaths) {
@@ -450,9 +452,13 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
         }
         break
       default:
+        console.warn(`Unknown command type: ${cmd.type}`, cmd)
         break
     }
-    presentPos = [cmd.x, cmd.y]
+    // Update position only if the command has valid x, y coordinates
+    if (cmd.x !== undefined && cmd.y !== undefined) {
+      presentPos = [cmd.x, cmd.y]
+    }
   }
 
   // After processing all commands, close any remaining path
@@ -471,7 +477,7 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
       bounds: newBounds
     })
 
-    console.log(`Path ${allPaths.length} (final close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'}`)
+    console.log(`Path ${allPaths.length} (final close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`)
 
     // デバッグモード：個別パスを記録
     if (debugPaths) {
@@ -500,7 +506,7 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
   for (let i = 0; i < allPaths.length; i++) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const path = allPaths[i]!
-    console.log(`Sorted[${i}]: area=${path.area.toFixed(2)}, winding=${path.winding > 0 ? 'CCW' : 'CW'}`)
+    console.log(`Sorted[${i}]: area=${path.area.toFixed(2)}, winding=${path.winding > 0 ? 'CCW' : 'CW'} (value: ${path.winding.toFixed(2)})`)
   }
 
   // フェーズ3: 最大パスをベースに設定（巻き方向に関わらず無条件でsolid扱い）
@@ -508,8 +514,8 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const firstPath = allPaths[0]!
   let result = firstPath.path
-  const basePathOriginalWinding = firstPath.winding // 最初の要素の元の巻き方向を保持
-  console.log(`Base path: area=${firstPath.area.toFixed(2)}, winding=${firstPath.winding > 0 ? 'CCW' : 'CW'}`)
+  let resultWinding = firstPath.winding // 結果パスの巻き方向を追跡
+  console.log(`Base path: area=${firstPath.area.toFixed(2)}, winding=${firstPath.winding > 0 ? 'CCW' : 'CW'} (value: ${firstPath.winding.toFixed(2)})`)
   console.log('Note: Largest path is always treated as solid (base), regardless of winding direction')
 
   // フェーズ4: 逐次統合
@@ -518,15 +524,17 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const currentPath = allPaths[i]!
     console.log(`\n--- Processing path ${i}/${allPaths.length - 1} ---`)
-    console.log(`  Current path: area=${currentPath.area.toFixed(2)}, winding=${currentPath.winding > 0 ? 'CCW' : 'CW'}`)
+    console.log(`  Current path: area=${currentPath.area.toFixed(2)}, winding=${currentPath.winding > 0 ? 'CCW' : 'CW'} (value: ${currentPath.winding.toFixed(2)})`)
+    console.log(`  Result winding before operation: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)})`)
 
-    // 最初の統合（i=1）では、元の巻き方向を渡す
-    const largerOriginalWinding = (i === 1) ? basePathOriginalWinding : null
+    // 常に追跡している巻き方向を使用（元の巻き方向を保持）
+    const largerOriginalWinding = resultWinding
     const smallerOriginalWinding = currentPath.winding // 常に元の巻き方向を使用
     const operation = determinePathOperation(result, currentPath.path, largerOriginalWinding, smallerOriginalWinding)
 
     if (operation === 'SUBTRACT') {
       const before = result
+      const beforeWinding = resultWinding
       // External library interface (pave.js) - return values are typed but ESLint sees them as any
       /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
       result = subtractPaths(result, [currentPath.path])
@@ -535,10 +543,17 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
       if (!result?.curves || result.curves.length === 0) {
         console.warn('⚠️ SUBTRACT resulted in empty path, keeping previous result')
         result = before
+      } else {
+        // 結果の巻き方向を更新（Pave.jsがパスを正規化する可能性があるため）
+        resultWinding = getPathWindingDirection(result)
+        const resultArea = getPathArea(result)
+        console.log(`  Result winding after SUBTRACT: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`)
+        console.log(`  Result area: ${resultArea.toFixed(2)}, curves: ${result.curves ? result.curves.length : 0}`)
       }
       /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     } else if (operation === 'UNITE') {
       const before = result
+      const beforeWinding = resultWinding
       // External library interface (pave.js) - return values are typed but ESLint sees them as any
       /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
       result = unitePaths([result, currentPath.path])
@@ -547,6 +562,13 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
       if (!result?.curves || result.curves.length === 0) {
         console.warn('⚠️ UNITE resulted in empty path, keeping previous result')
         result = before
+      } else {
+        // 結果の巻き方向を更新（Pave.jsがパスを正規化する可能性があるため）
+        resultWinding = getPathWindingDirection(result)
+        const resultArea = getPathArea(result)
+        const beforeArea = getPathArea(before)
+        console.log(`  Result winding after UNITE: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`)
+        console.log(`  Result area: ${resultArea.toFixed(2)} (before: ${beforeArea.toFixed(2)}), curves: ${result.curves ? result.curves.length : 0}`)
       }
       /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     }
