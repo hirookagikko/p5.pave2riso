@@ -86,4 +86,46 @@ export declare const PathExclude: (pathA: PavePath, pathB: PavePath) => PavePath
  * ```
  */
 export declare const isPathsOverlap: (pathA: PavePath, pathB: PavePath) => boolean;
+/**
+ * Offset a path by a given distance using paperjs-offset
+ *
+ * This function works around Pave.js's Path.offset issue by:
+ * 1. Converting Pave path to Paper.js 0.12.4 path
+ * 2. Applying PaperOffset.offset
+ * 3. Converting result back to Pave path
+ *
+ * IMPORTANT: Requires paper.js 0.12.4 and paperjs-offset 1.0.8 to be loaded:
+ * ```html
+ * <script type="importmap">
+ * {
+ *   "imports": {
+ *     "paper": "https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm",
+ *     "paperjs-offset": "https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm"
+ *   }
+ * }
+ * </script>
+ * <script type="module">
+ *   import paper from 'paper'
+ *   import { PaperOffset } from 'paperjs-offset'
+ *   window.paper = paper
+ *   window.PaperOffset = PaperOffset
+ * </script>
+ * ```
+ *
+ * @param path - Pave.js path to offset
+ * @param distance - Offset distance (positive = outward, negative = inward)
+ * @param options - Optional settings for join and cap style
+ * @returns Offset path, or original path if offset fails
+ *
+ * @example
+ * ```typescript
+ * const rect = Path.rect([100, 100], [300, 200])
+ * const expanded = PathOffset(rect, 20) // 20px outward
+ * const shrunk = PathOffset(rect, -10) // 10px inward
+ * ```
+ */
+export declare const PathOffset: (path: PavePath, distance: number, options?: {
+    join?: "miter" | "bevel" | "round";
+    cap?: "butt" | "round" | "square";
+}) => PavePath;
 //# sourceMappingURL=pathfinder.d.ts.map

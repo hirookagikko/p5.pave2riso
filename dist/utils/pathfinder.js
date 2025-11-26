@@ -4,7 +4,7 @@
  * These functions provide safe wrappers around pave.js Path operations
  * with comprehensive error handling and edge case detection.
  */
-import { createCircle, subtractPaths, unitePaths, getPathBounds } from './pave-wrapper.js';
+import { createCircle, subtractPaths, unitePaths, getPathBounds, getPath } from './pave-wrapper.js';
 /**
  * Type guard to check if a path has curves
  */
@@ -229,6 +229,219 @@ export const isPathsOverlap = (pathA, pathB) => {
         // bounds 取得に失敗した場合は false を返す
         console.warn("⚠️ isPathsOverlap: 交差部分の bounds 取得に失敗", e);
         return false;
+    }
+};
+// ============================================
+// PathOffset: Path offset using paperjs-offset
+// ============================================
+// Internal state for Paper.js initialization
+let paperInitialized = false;
+/**
+ * Initialize Paper.js if not already initialized
+ */
+function ensurePaperInitialized() {
+    if (typeof paper === 'undefined') {
+        return false;
+    }
+    if (!paperInitialized) {
+        paper.setup(document.createElement('canvas'));
+        paperInitialized = true;
+    }
+    return true;
+}
+/**
+ * Convert Pave.js path to Paper.js 0.12.4 path
+ * @internal
+ */
+function paveToPaper(pavePath) {
+    if (typeof paper === 'undefined') {
+        return null;
+    }
+    try {
+        const PathGlobal = getPath();
+        const pathData = PathGlobal.toSVGString(pavePath);
+        if (!pathData) {
+            console.warn('PathOffset: Empty path data');
+            return null;
+        }
+        // Create a full SVG element for proper import
+        const svgString = `<svg><path d="${pathData}"/></svg>`;
+        // Use importSVG which properly initializes all path properties including curves
+        const imported = paper.project.importSVG(svgString);
+        // Get the actual path from the imported group
+        let resultPath = null;
+        if (imported.children && imported.children.length > 0) {
+            // SVG import creates a group, get the first path child
+            const child = imported.children[0];
+            if (child) {
+                // Clone the path before removing the parent to preserve it
+                const cloneMethod = child.clone;
+                if (typeof cloneMethod === 'function') {
+                    resultPath = cloneMethod.call(child);
+                }
+                else {
+                    resultPath = child;
+                }
+            }
+        }
+        else if ('firstChild' in imported && imported.firstChild) {
+            const cloneMethod = imported.firstChild.clone;
+            if (typeof cloneMethod === 'function') {
+                resultPath = cloneMethod.call(imported.firstChild);
+            }
+            else {
+                resultPath = imported.firstChild;
+            }
+        }
+        else {
+            resultPath = imported;
+        }
+        // Remove the imported group from the project to avoid memory leaks
+        // (the cloned path is now independent)
+        if (typeof imported.remove === 'function') {
+            imported.remove();
+        }
+        return resultPath;
+    }
+    catch (e) {
+        console.warn('PathOffset: Pave→Paper conversion failed', e);
+        return null;
+    }
+}
+/**
+ * Convert Paper.js path to Pave.js path via segment iteration
+ * This avoids SVG V/H commands that Pave.js doesn't support
+ * @internal
+ */
+function paperToPave(paperPath) {
+    const curves = [];
+    // Handle CompoundPath (multiple children) or single Path
+    const paths = paperPath.children ? paperPath.children : [paperPath];
+    for (const path of paths) {
+        const vertices = [];
+        const segments = path.segments;
+        for (let i = 0; i < segments.length; i++) {
+            const seg = segments[i];
+            if (!seg)
+                continue;
+            const point = [seg.point.x, seg.point.y];
+            if (i === 0) {
+                vertices.push({ point, command: 'L' });
+            }
+            else {
+                const prevSeg = segments[i - 1];
+                if (!prevSeg)
+                    continue;
+                const hasHandles = !prevSeg.handleOut.isZero() || !seg.handleIn.isZero();
+                if (hasHandles) {
+                    const cp1 = [
+                        prevSeg.point.x + prevSeg.handleOut.x,
+                        prevSeg.point.y + prevSeg.handleOut.y
+                    ];
+                    const cp2 = [
+                        seg.point.x + seg.handleIn.x,
+                        seg.point.y + seg.handleIn.y
+                    ];
+                    vertices.push({ point, command: 'C', args: [cp1, cp2] });
+                }
+                else {
+                    vertices.push({ point, command: 'L' });
+                }
+            }
+        }
+        // Handle closing segment for closed paths
+        if (path.closed && segments.length > 0 && vertices.length > 0) {
+            const lastSeg = segments[segments.length - 1];
+            const firstSeg = segments[0];
+            const firstVertex = vertices[0];
+            if (lastSeg && firstSeg && firstVertex) {
+                const hasHandles = !lastSeg.handleOut.isZero() || !firstSeg.handleIn.isZero();
+                if (hasHandles) {
+                    const cp1 = [
+                        lastSeg.point.x + lastSeg.handleOut.x,
+                        lastSeg.point.y + lastSeg.handleOut.y
+                    ];
+                    const cp2 = [
+                        firstSeg.point.x + firstSeg.handleIn.x,
+                        firstSeg.point.y + firstSeg.handleIn.y
+                    ];
+                    vertices[0] = { point: firstVertex.point, command: 'C', args: [cp1, cp2] };
+                }
+            }
+        }
+        curves.push({ vertices, closed: path.closed });
+    }
+    return { curves };
+}
+/**
+ * Offset a path by a given distance using paperjs-offset
+ *
+ * This function works around Pave.js's Path.offset issue by:
+ * 1. Converting Pave path to Paper.js 0.12.4 path
+ * 2. Applying PaperOffset.offset
+ * 3. Converting result back to Pave path
+ *
+ * IMPORTANT: Requires paper.js 0.12.4 and paperjs-offset 1.0.8 to be loaded:
+ * ```html
+ * <script type="importmap">
+ * {
+ *   "imports": {
+ *     "paper": "https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm",
+ *     "paperjs-offset": "https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm"
+ *   }
+ * }
+ * </script>
+ * <script type="module">
+ *   import paper from 'paper'
+ *   import { PaperOffset } from 'paperjs-offset'
+ *   window.paper = paper
+ *   window.PaperOffset = PaperOffset
+ * </script>
+ * ```
+ *
+ * @param path - Pave.js path to offset
+ * @param distance - Offset distance (positive = outward, negative = inward)
+ * @param options - Optional settings for join and cap style
+ * @returns Offset path, or original path if offset fails
+ *
+ * @example
+ * ```typescript
+ * const rect = Path.rect([100, 100], [300, 200])
+ * const expanded = PathOffset(rect, 20) // 20px outward
+ * const shrunk = PathOffset(rect, -10) // 10px inward
+ * ```
+ */
+export const PathOffset = (path, distance, options) => {
+    // Check if dependencies are available
+    if (typeof paper === 'undefined') {
+        console.warn('PathOffset: paper.js 0.12.4 is not loaded. Returning original path.');
+        return path;
+    }
+    if (typeof PaperOffset === 'undefined') {
+        console.warn('PathOffset: paperjs-offset is not loaded. Returning original path.');
+        return path;
+    }
+    // Ensure Paper.js is initialized
+    if (!ensurePaperInitialized()) {
+        console.warn('PathOffset: Failed to initialize Paper.js. Returning original path.');
+        return path;
+    }
+    // Convert Pave path to Paper.js path
+    const paperPath = paveToPaper(path);
+    if (!paperPath) {
+        console.warn('PathOffset: Failed to convert path. Returning original path.');
+        return path;
+    }
+    try {
+        // Apply offset using paperjs-offset
+        const offsetted = PaperOffset.offset(paperPath, distance, options);
+        // Convert back to Pave path
+        const result = paperToPave(offsetted);
+        return result;
+    }
+    catch (e) {
+        console.warn('PathOffset: Offset operation failed', e);
+        return path;
     }
 };
 //# sourceMappingURL=pathfinder.js.map
