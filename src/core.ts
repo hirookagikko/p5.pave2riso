@@ -77,10 +77,45 @@ export const pave2Riso = (options: Pave2RisoOptions): void => {
           pipeline,
           options.stroke.strokeWeight,
           options.stroke.dashArgs,
-          options.stroke.strokeCap
+          options.stroke.strokeCap,
+          options.stroke.strokeJoin
         )
-      } else if (options.stroke.type === 'solid' || options.stroke.type === 'pattern') {
-        applyStrokeModePreprocess(options.mode, pipeline, options.stroke.strokeWeight)
+      } else if (options.stroke.type === 'solid') {
+        applyStrokeModePreprocess(
+          options.mode,
+          pipeline,
+          options.stroke.strokeWeight,
+          undefined,  // dashArgs
+          options.stroke.strokeCap,
+          options.stroke.strokeJoin
+        )
+      } else if (options.stroke.type === 'pattern') {
+        // joinモードの場合はパターンレンダラー内で処理（柄だけを消去）
+        // cutoutモードの場合のみ前処理で消去
+        if (options.mode !== 'join') {
+          applyStrokeModePreprocess(
+            options.mode,
+            pipeline,
+            options.stroke.strokeWeight,
+            options.stroke.dashArgs,
+            options.stroke.strokeCap,
+            options.stroke.strokeJoin
+          )
+        }
+      } else if (options.stroke.type === 'gradient') {
+        // cutoutモード: patternと同様に前処理でerase
+        // （透明部分はレンダラー内でsolidGを使って白で埋める）
+        if (options.mode === 'cutout') {
+          applyStrokeModePreprocess(
+            options.mode,
+            pipeline,
+            options.stroke.strokeWeight,
+            options.stroke.dashArgs,
+            options.stroke.strokeCap,
+            options.stroke.strokeJoin
+          )
+        }
+        // joinモード: レンダラー内でgradGを使ってREMOVE
       }
 
       // Strokeレンダリング

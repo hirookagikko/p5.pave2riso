@@ -79,14 +79,16 @@ export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void =>
  * @param pipeline - GraphicsPipeline
  * @param strokeWeight - ストロークの太さ
  * @param dashArgs - 破線パターン（dashedの場合）
- * @param strokeCap - ストロークキャップ（dashedの場合）
+ * @param strokeCap - ストロークキャップ
+ * @param strokeJoin - ストロークジョイン
  */
 export const applyStrokeModePreprocess = (
   mode: RenderMode,
   pipeline: GraphicsPipeline,
   strokeWeight: number,
   dashArgs?: number[],
-  strokeCap?: string
+  strokeCap?: string,
+  strokeJoin?: string
 ): void => {
   if (mode === 'cutout' || mode === 'join') {
     const options = pipeline.getOptions()
@@ -100,10 +102,22 @@ export const applyStrokeModePreprocess = (
       channel.stroke(255)
       channel.strokeWeight(strokeWeight)
 
+      // strokeCapとstrokeJoinを適用
+      if (strokeCap) {
+        channel.strokeCap(strokeCap)
+      }
+      if (strokeJoin) {
+        channel.strokeJoin(strokeJoin)
+      }
+
+      // 破線の場合はCanvas APIで設定
       if (dashArgs) {
         channel.drawingContext.setLineDash(dashArgs)
         if (strokeCap) {
           channel.drawingContext.lineCap = strokeCap as CanvasLineCap
+        }
+        if (strokeJoin) {
+          channel.drawingContext.lineJoin = strokeJoin as CanvasLineJoin
         }
       }
 

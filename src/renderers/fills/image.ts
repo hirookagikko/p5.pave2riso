@@ -115,6 +115,7 @@ export const renderImageFill = (
   // 画像グラフィックスの作成
   const imgBaseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
   imgBaseG.background(255)
+  imgBaseG.drawingContext.save()
   pipeline.drawPathToCanvas(path, imgBaseG.drawingContext)
   imgBaseG.drawingContext.clip()
 
@@ -130,16 +131,34 @@ export const renderImageFill = (
     imgBaseG.image(img, dx, dy, dw, dh)
   }
   imgBaseG.pop()
+  imgBaseG.drawingContext.restore()
+
+  // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
+  let filteredG = applyFilters(imgBaseG, filter)
 
   // エフェクト適用
-  const finalG = applyEffects(applyFilters(imgBaseG, filter), halftone, dither)
+  // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+  let drawX = 0
+  let drawY = 0
+  if (halftone || dither) {
+    const { canvasSize } = options
+    const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2))
+    const offsetX = Math.floor((diagonal - canvasSize[0]) / 2)
+    const offsetY = Math.floor((diagonal - canvasSize[1]) / 2)
+    const fullG = pipeline.createGraphics(diagonal, diagonal)
+    fullG.background(255)
+    fullG.image(filteredG, offsetX, offsetY)
+    filteredG = applyEffects(fullG, halftone, dither)
+    drawX = -offsetX
+    drawY = -offsetY
+  }
 
   // joinモードの場合は全チャンネルから削除
   if (mode === 'join') {
     channels.forEach((channel) => {
       channel.push()
       channel.blendMode(REMOVE)
-      channel.image(finalG, 0, 0)
+      channel.image(filteredG, drawX, drawY)
       channel.pop()
     })
   }
@@ -150,7 +169,7 @@ export const renderImageFill = (
     if (channelVal !== undefined && channelVal > 0) {
       channel.push()
       channel.fill(createInkDepth(channelVal))
-      channel.image(finalG, 0, 0)
+      channel.image(filteredG, drawX, drawY)
       channel.pop()
     }
   })

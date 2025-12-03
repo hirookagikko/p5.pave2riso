@@ -2,10 +2,15 @@
  * Stroke設定のDiscriminated Union型定義
  */
 import type { ColorStop, GradientType } from './fill.js';
+import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js';
 /**
- * ストロークキャップスタイル
+ * ストロークキャップスタイル（線の端の形状）
  */
 export type StrokeCap = 'round' | 'square' | 'butt';
+/**
+ * ストロークジョインスタイル（線の角の形状）
+ */
+export type StrokeJoin = 'miter' | 'bevel' | 'round';
 /**
  * ベタ塗りStroke設定
  */
@@ -20,9 +25,25 @@ export interface SolidStrokeConfig {
      */
     channelVals: number[];
     /**
-     * ストロークキャップスタイル
+     * ストロークキャップスタイル（線の端の形状）
      */
     strokeCap?: StrokeCap;
+    /**
+     * ストロークジョインスタイル（線の角の形状）
+     */
+    strokeJoin?: StrokeJoin;
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * 破線Stroke設定
@@ -42,9 +63,25 @@ export interface DashedStrokeConfig {
      */
     dashArgs: number[];
     /**
-     * ストロークキャップスタイル
+     * ストロークキャップスタイル（線の端の形状）
      */
     strokeCap: StrokeCap;
+    /**
+     * ストロークジョインスタイル（線の角の形状）
+     */
+    strokeJoin?: StrokeJoin;
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * パターンStroke設定
@@ -55,6 +92,10 @@ export interface PatternStrokeConfig {
      * ストロークの太さ（ピクセル）
      */
     strokeWeight: number;
+    /**
+     * 各チャンネルのインク濃度（0-100）
+     */
+    channelVals: number[];
     /**
      * パターン名（PTNオブジェクトのキー）
      */
@@ -70,6 +111,31 @@ export interface PatternStrokeConfig {
      * patternAngle: 90  // 90度回転
      */
     patternAngle?: number;
+    /**
+     * 破線パターン [lineLength, gapLength]
+     * 指定すると破線パターンストロークになる
+     */
+    dashArgs?: number[];
+    /**
+     * ストロークキャップスタイル（線の端の形状）
+     */
+    strokeCap?: StrokeCap;
+    /**
+     * ストロークジョインスタイル（線の角の形状）
+     */
+    strokeJoin?: StrokeJoin;
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * グラデーションStroke設定
@@ -88,6 +154,31 @@ export interface GradientStrokeConfig {
      * カラーストップ
      */
     colorStops: ColorStop[];
+    /**
+     * 破線パターン [lineLength, gapLength]
+     * 指定すると破線グラデーションストロークになる
+     */
+    dashArgs?: number[];
+    /**
+     * ストロークキャップスタイル（線の端の形状）
+     */
+    strokeCap?: StrokeCap;
+    /**
+     * ストロークジョインスタイル（線の角の形状）
+     */
+    strokeJoin?: StrokeJoin;
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * Stroke設定のDiscriminated Union

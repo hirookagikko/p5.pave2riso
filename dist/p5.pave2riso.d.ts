@@ -11,6 +11,6 @@ export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset } 
 export { ot2pave } from './utils/font-utils.js';
 export type { Pave2RisoOptions, RenderMode, PavePath } from './types/core.js';
 export type { FillConfig, SolidFillConfig, PatternFillConfig, GradientFillConfig, ImageFillConfig, GradientType, GradientDirection, ColorStop, ImageFit, AlignX, AlignY } from './types/fill.js';
-export type { StrokeConfig, SolidStrokeConfig, DashedStrokeConfig, PatternStrokeConfig, GradientStrokeConfig, StrokeCap } from './types/stroke.js';
+export type { StrokeConfig, SolidStrokeConfig, DashedStrokeConfig, PatternStrokeConfig, GradientStrokeConfig, StrokeCap, StrokeJoin } from './types/stroke.js';
 export type { FilterConfig, HalftoneConfig, DitherConfig, FilterType } from './types/effects.js';
 //# sourceMappingURL=index.d.ts.map

@@ -63,11 +63,14 @@ declare global {
   // p5.js定数
   const BLEND: string
   const REMOVE: string
+  const MULTIPLY: string
   const ROUND: string
   const SQUARE: string
   const PROJECT: string
   const DEGREES: string
   const RADIANS: string
+  const MITER: string
+  const BEVEL: string
 
   // p5.pattern型定義
   interface PTNObject {
@@ -102,6 +105,7 @@ declare global {
       noStroke(): void
       strokeWeight(weight: number): void
       strokeCap(cap: string): void
+      strokeJoin(join: string): void
 
       // 画像操作
       image(img: p5.Graphics | p5.Image, x: number, y: number, w?: number, h?: number): void

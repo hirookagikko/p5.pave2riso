@@ -21,37 +21,58 @@ export const renderSolidFill = (
   const { channels, filter, halftone, dither, mode } = options
   const path = options.path
 
+  // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
+  const { canvasSize } = options
+  const usesDiagonalBuffer = halftone || dither
+  const diagonal = usesDiagonalBuffer ? Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2)) : 0
+  const diagonalOffsetX = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[0]) / 2) : 0
+  const diagonalOffsetY = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[1]) / 2) : 0
+
   // JOINモードの場合は全チャンネルから削除
   if (mode === 'join') {
     if (filter) {
       // フィルター適用パス
-      let eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
+      let eraseG = pipeline.createGraphics(canvasSize[0], canvasSize[1])
       eraseG.background(255)
       eraseG.fill(0)
       eraseG.noStroke()
       pipeline.drawPathToCanvas(path, eraseG.drawingContext)
       eraseG.drawingContext.fill()
       eraseG = applyFilters(eraseG, filter)
-      eraseG = applyEffects(eraseG, halftone, dither)
+
+      // halftone/dither使用時は対角線バッファを使用
+      let drawX = 0
+      let drawY = 0
+      if (usesDiagonalBuffer) {
+        const fullG = pipeline.createGraphics(diagonal, diagonal)
+        fullG.background(255)
+        fullG.image(eraseG, diagonalOffsetX, diagonalOffsetY)
+        eraseG = applyEffects(fullG, halftone, dither)
+        drawX = -diagonalOffsetX
+        drawY = -diagonalOffsetY
+      }
 
       channels.forEach((channel) => {
         channel.push()
         channel.fill(255)
         channel.noStroke()
         channel.blendMode(REMOVE)
-        channel.image(eraseG, 0, 0)
+        channel.image(eraseG, drawX, drawY)
         channel.blendMode(BLEND)
         channel.pop()
       })
     } else if (halftone && typeof window.halftoneImage === 'function') {
-      // ハーフトーン適用パス
-      const eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
+      // ハーフトーン適用パス - 対角線バッファを使用
+      const eraseG = pipeline.createGraphics(diagonal, diagonal)
       eraseG.push()
       eraseG.background(255)
       eraseG.noStroke()
       eraseG.fill(0)
+      eraseG.drawingContext.save()
+      eraseG.drawingContext.translate(diagonalOffsetX, diagonalOffsetY)
       pipeline.drawPathToCanvas(path, eraseG.drawingContext)
       eraseG.drawingContext.fill()
+      eraseG.drawingContext.restore()
       eraseG.pop()
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const halftoned = window.halftoneImage(eraseG, ...halftone.halftoneArgs)
@@ -60,19 +81,22 @@ export const renderSolidFill = (
         channel.push()
         channel.blendMode(REMOVE)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        channel.image(halftoned, 0, 0)
+        channel.image(halftoned, -diagonalOffsetX, -diagonalOffsetY)
         channel.blendMode(BLEND)
         channel.pop()
       })
     } else if (dither && typeof window.ditherImage === 'function') {
-      // ディザー適用パス
-      const eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
+      // ディザー適用パス - 対角線バッファを使用
+      const eraseG = pipeline.createGraphics(diagonal, diagonal)
       eraseG.push()
       eraseG.background(255)
       eraseG.noStroke()
       eraseG.fill(0)
+      eraseG.drawingContext.save()
+      eraseG.drawingContext.translate(diagonalOffsetX, diagonalOffsetY)
       pipeline.drawPathToCanvas(path, eraseG.drawingContext)
       eraseG.drawingContext.fill()
+      eraseG.drawingContext.restore()
       eraseG.pop()
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const dithered = window.ditherImage(eraseG, ...dither.ditherArgs)
@@ -81,7 +105,7 @@ export const renderSolidFill = (
         channel.push()
         channel.blendMode(REMOVE)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        channel.image(dithered, 0, 0)
+        channel.image(dithered, -diagonalOffsetX, -diagonalOffsetY)
         channel.blendMode(BLEND)
         channel.pop()
       })
@@ -110,7 +134,18 @@ export const renderSolidFill = (
     baseG.drawingContext.fill()
     baseG.pop()
     baseG = applyFilters(baseG, filter)
-    baseG = applyEffects(baseG, halftone, dither)
+
+    // halftone/dither使用時は対角線バッファを使用
+    let drawX = 0
+    let drawY = 0
+    if (usesDiagonalBuffer) {
+      const fullG = pipeline.createGraphics(diagonal, diagonal)
+      fullG.background(255)
+      fullG.image(baseG, diagonalOffsetX, diagonalOffsetY)
+      baseG = applyEffects(fullG, halftone, dither)
+      drawX = -diagonalOffsetX
+      drawY = -diagonalOffsetY
+    }
     pipeline.setBaseGraphics(baseG)
 
     channels.forEach((channel, i) => {
@@ -118,19 +153,22 @@ export const renderSolidFill = (
       if (channelVal !== undefined && channelVal > 0) {
         channel.push()
         channel.fill(createInkDepth(channelVal))
-        channel.image(baseG, 0, 0)
+        channel.image(baseG, drawX, drawY)
         channel.pop()
       }
     })
   } else if (halftone && typeof window.halftoneImage === 'function') {
-    // ハーフトーン専用パス
-    const solidG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
+    // ハーフトーン専用パス - 対角線バッファを使用
+    const solidG = pipeline.createGraphics(diagonal, diagonal)
     solidG.push()
     solidG.background(255)
     solidG.noStroke()
     solidG.fill(0)
+    solidG.drawingContext.save()
+    solidG.drawingContext.translate(diagonalOffsetX, diagonalOffsetY)
     pipeline.drawPathToCanvas(path, solidG.drawingContext)
     solidG.drawingContext.fill()
+    solidG.drawingContext.restore()
     solidG.pop()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const halftoned = window.halftoneImage(solidG, ...halftone.halftoneArgs)
@@ -141,19 +179,22 @@ export const renderSolidFill = (
         channel.push()
         channel.fill(createInkDepth(channelVal))
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        channel.image(halftoned, 0, 0)
+        channel.image(halftoned, -diagonalOffsetX, -diagonalOffsetY)
         channel.pop()
       }
     })
   } else if (dither && typeof window.ditherImage === 'function') {
-    // ディザー専用パス
-    const solidG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
+    // ディザー専用パス - 対角線バッファを使用
+    const solidG = pipeline.createGraphics(diagonal, diagonal)
     solidG.push()
     solidG.background(255)
     solidG.noStroke()
     solidG.fill(0)
+    solidG.drawingContext.save()
+    solidG.drawingContext.translate(diagonalOffsetX, diagonalOffsetY)
     pipeline.drawPathToCanvas(path, solidG.drawingContext)
     solidG.drawingContext.fill()
+    solidG.drawingContext.restore()
     solidG.pop()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const dithered = window.ditherImage(solidG, ...dither.ditherArgs)
@@ -164,7 +205,7 @@ export const renderSolidFill = (
         channel.push()
         channel.fill(createInkDepth(channelVal))
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        channel.image(dithered, 0, 0)
+        channel.image(dithered, -diagonalOffsetX, -diagonalOffsetY)
         channel.pop()
       }
     })

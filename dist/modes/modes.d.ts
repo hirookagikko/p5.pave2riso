@@ -17,7 +17,8 @@ export declare const applyMode: (mode: RenderMode, pipeline: GraphicsPipeline) =
  * @param pipeline - GraphicsPipeline
  * @param strokeWeight - ストロークの太さ
  * @param dashArgs - 破線パターン（dashedの場合）
- * @param strokeCap - ストロークキャップ（dashedの場合）
+ * @param strokeCap - ストロークキャップ
+ * @param strokeJoin - ストロークジョイン
  */
-export declare const applyStrokeModePreprocess: (mode: RenderMode, pipeline: GraphicsPipeline, strokeWeight: number, dashArgs?: number[], strokeCap?: string) => void;
+export declare const applyStrokeModePreprocess: (mode: RenderMode, pipeline: GraphicsPipeline, strokeWeight: number, dashArgs?: number[], strokeCap?: string, strokeJoin?: string) => void;
 //# sourceMappingURL=modes.d.ts.map

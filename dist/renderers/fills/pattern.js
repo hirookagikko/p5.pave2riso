@@ -42,22 +42,38 @@ export const renderPatternFill = (fill, pipeline) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
     patG.pattern(patternFn(...fill.patternArgs));
     patG.rectPattern(0, 0, gSizeWidth, gSizeHeight);
-    // フィルター適用
-    const filteredPatG = applyFilters(patG, filter);
-    // ベースグラフィックスにパターンを適用
+    // ベースグラフィックスにパターンを適用（クリップ後にfilter適用するためここではfilterなし）
     let baseG = pipeline.getBaseGraphics();
+    baseG.drawingContext.save();
     pipeline.drawPathToCanvas(path, baseG.drawingContext);
     baseG.drawingContext.clip();
-    baseG.image(filteredPatG, gPosX, gPosY);
+    baseG.image(patG, gPosX, gPosY);
+    baseG.drawingContext.restore();
+    // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
+    baseG = applyFilters(baseG, filter);
     // エフェクト適用
-    baseG = applyEffects(baseG, halftone, dither);
+    // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+    let drawX = 0;
+    let drawY = 0;
+    if (halftone || dither) {
+        const { canvasSize } = options;
+        const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
+        const offsetX = Math.floor((diagonal - canvasSize[0]) / 2);
+        const offsetY = Math.floor((diagonal - canvasSize[1]) / 2);
+        const fullG = pipeline.createGraphics(diagonal, diagonal);
+        fullG.background(255);
+        fullG.image(baseG, offsetX, offsetY);
+        baseG = applyEffects(fullG, halftone, dither);
+        drawX = -offsetX;
+        drawY = -offsetY;
+    }
     pipeline.setBaseGraphics(baseG);
     // joinモードの場合は全チャンネルから削除
     if (mode === 'join') {
         channels.forEach((channel) => {
             channel.push();
             channel.blendMode(REMOVE);
-            channel.image(baseG, 0, 0);
+            channel.image(baseG, drawX, drawY);
             channel.pop();
         });
     }
@@ -67,7 +83,7 @@ export const renderPatternFill = (fill, pipeline) => {
         if (channelVal !== undefined && channelVal > 0) {
             channel.push();
             channel.fill(createInkDepth(channelVal));
-            channel.image(baseG, 0, 0);
+            channel.image(baseG, drawX, drawY);
             channel.pop();
         }
     });

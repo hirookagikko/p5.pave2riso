@@ -41,6 +41,7 @@ export type {
   DashedStrokeConfig,
   PatternStrokeConfig,
   GradientStrokeConfig,
-  StrokeCap
+  StrokeCap,
+  StrokeJoin
 } from './types/stroke.js'
 export type { FilterConfig, HalftoneConfig, DitherConfig, FilterType } from './types/effects.js'

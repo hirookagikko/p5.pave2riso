@@ -2,13 +2,83 @@
  * パターンStrokeレンダラー
  */
 
-import type { PatternStrokeConfig } from '../../types/stroke.js'
+import type { PatternStrokeConfig, StrokeCap, StrokeJoin } from '../../types/stroke.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
-import { ensurePTNAvailable } from '../../channels/operations.js'
+import { ensurePTNAvailable, applyFilters, applyEffects } from '../../channels/operations.js'
 import { degreesToRadians } from '../../utils/angleConverter.js'
+import { createInkDepth } from '../../utils/inkDepth.js'
+
+/**
+ * strokeCap文字列をp5.js定数に変換
+ */
+const getStrokeCapConstant = (cap: StrokeCap | undefined): string => {
+  switch (cap) {
+    case 'round':
+      return ROUND
+    case 'square':
+      return SQUARE
+    case 'butt':
+      return SQUARE  // p5.jsにはBUTTがないのでSQUAREを使用（本来はPROJECT）
+    default:
+      return ROUND  // デフォルトはROUND
+  }
+}
+
+/**
+ * strokeJoin文字列をp5.js定数に変換
+ */
+const getStrokeJoinConstant = (join: StrokeJoin | undefined): string => {
+  switch (join) {
+    case 'miter':
+      return MITER
+    case 'bevel':
+      return BEVEL
+    case 'round':
+      return ROUND
+    default:
+      return MITER  // デフォルトはMITER
+  }
+}
+
+/**
+ * strokeCap文字列をCanvas APIのlineCap値に変換
+ */
+const getCanvasLineCap = (cap: StrokeCap | undefined): CanvasLineCap => {
+  switch (cap) {
+    case 'round':
+      return 'round'
+    case 'square':
+      return 'square'
+    case 'butt':
+      return 'butt'
+    default:
+      return 'round'  // デフォルトはround
+  }
+}
+
+/**
+ * strokeJoin文字列をCanvas APIのlineJoin値に変換
+ */
+const getCanvasLineJoin = (join: StrokeJoin | undefined): CanvasLineJoin => {
+  switch (join) {
+    case 'miter':
+      return 'miter'
+    case 'bevel':
+      return 'bevel'
+    case 'round':
+      return 'round'
+    default:
+      return 'miter'  // デフォルトはmiter
+  }
+}
 
 /**
  * パターンStrokeをレンダリング
+ *
+ * destination-in 方式:
+ * 1. パターングラフィックスを作成（全面にパターン描画）
+ * 2. destination-in でストローク形状に切り抜き
+ * 3. 各チャンネルに転送
  *
  * @param stroke - パターンStroke設定
  * @param pipeline - GraphicsPipeline
@@ -20,28 +90,26 @@ export const renderPatternStroke = (
   ensurePTNAvailable()
 
   const options = pipeline.getOptions()
+  const { channels } = options
   const path = options.path
-  // Vec2 array index access - external library interface (linearly)
+
+  // パス境界 + strokeWeight でグラフィックスサイズを計算
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const gPos = pipeline.getPosition()
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const gSize = pipeline.getSize()
-  const baseG = pipeline.getBaseGraphics()
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gPosX = gPos[0] - stroke.strokeWeight
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gPosY = gPos[1] - stroke.strokeWeight
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gWidth = (gSize[0]) + stroke.strokeWeight * 2
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gHeight = (gSize[1]) + stroke.strokeWeight * 2
 
-  // Vec2 array index access - external library interface (linearly)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gSizeWidth = gSize[0]
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gSizeHeight = gSize[1]
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gPosX = gPos[0]
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gPosY = gPos[1]
-
-  // パターングラフィックスの作成
-  const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight)
-  patG.noFill()
-  patG.strokeWeight(stroke.strokeWeight)
+  // 1. パターングラフィックス作成（パス境界 + strokeWeight サイズ）
+  const patG = pipeline.createGraphics(gWidth, gHeight)
+  patG.background(255)
   // patternAngleは度数法で指定されているのでラジアンに変換
   patG.patternAngle(degreesToRadians(stroke.patternAngle ?? 0))
   const patternFn = PTN[stroke.PTN]
@@ -50,10 +118,85 @@ export const renderPatternStroke = (
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
   patG.pattern(patternFn(...stroke.patternArgs))
-  patG.rectPattern(0, 0, gSizeWidth, gSizeHeight)
+  patG.rectPattern(0, 0, gWidth, gHeight)
 
-  // ベースグラフィックスにパターンを適用
-  pipeline.drawPathToCanvas(path, baseG.drawingContext)
-  baseG.drawingContext.clip()
-  baseG.image(patG, gPosX, gPosY)
+  // 2. destination-in でストローク形状に切り抜き
+  // パターンの上にストローク形状を描画し、重なる部分だけパターンを残す
+  patG.drawingContext.globalCompositeOperation = 'destination-in'
+  patG.noFill()
+  patG.stroke(0)  // 色は関係ない、形状のみ
+  patG.strokeWeight(stroke.strokeWeight)
+  patG.strokeCap(getStrokeCapConstant(stroke.strokeCap))
+  patG.strokeJoin(getStrokeJoinConstant(stroke.strokeJoin))
+  patG.drawingContext.lineCap = getCanvasLineCap(stroke.strokeCap)
+  patG.drawingContext.lineJoin = getCanvasLineJoin(stroke.strokeJoin)
+  // 破線パターンの適用
+  if (stroke.dashArgs) {
+    patG.drawingContext.setLineDash(stroke.dashArgs)
+  }
+  // パス座標をグラフィックス座標に変換
+  patG.drawingContext.save()
+  patG.drawingContext.translate(-gPosX, -gPosY)
+  pipeline.drawPathToCanvas(path, patG.drawingContext)
+  patG.drawingContext.stroke()
+  patG.drawingContext.restore()
+  // 破線パターンのリセット
+  if (stroke.dashArgs) {
+    patG.drawingContext.setLineDash([])
+  }
+
+  // 透明部分を白で塗りつぶし（バリ防止）
+  // destination-over: 既存ピクセルの下に描画
+  patG.drawingContext.globalCompositeOperation = 'destination-over'
+  patG.drawingContext.fillStyle = 'white'
+  patG.drawingContext.fillRect(0, 0, gWidth, gHeight)
+  patG.drawingContext.globalCompositeOperation = 'source-over'
+
+  // エフェクト適用
+  let finalPatG: p5.Graphics = patG
+  const { canvasSize } = options
+
+  if (stroke.filter) {
+    finalPatG = applyFilters(finalPatG, stroke.filter)
+  }
+
+  // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
+  // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
+  let drawPosX = gPosX
+  let drawPosY = gPosY
+  if (stroke.halftone || stroke.dither) {
+    const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2))
+    const offsetX = Math.floor((diagonal - canvasSize[0]) / 2)
+    const offsetY = Math.floor((diagonal - canvasSize[1]) / 2)
+    const fullG = pipeline.createGraphics(diagonal, diagonal)
+    fullG.background(255)
+    fullG.image(finalPatG, gPosX + offsetX, gPosY + offsetY)
+    finalPatG = applyEffects(fullG, stroke.halftone, stroke.dither)
+    drawPosX = -offsetX
+    drawPosY = -offsetY
+  }
+
+  // 3. 各チャンネルに転送
+  const mode = options.mode
+
+  if (mode === 'join') {
+    // joinモード: パターンの柄を全チャンネルから削除（blendMode REMOVE）
+    channels.forEach((channel) => {
+      channel.push()
+      channel.blendMode(REMOVE)
+      channel.image(finalPatG, drawPosX, drawPosY)
+      channel.pop()
+    })
+  }
+
+  // 各チャンネルに適用（joinモードでも描画する）
+  channels.forEach((channel, i) => {
+    const channelVal = stroke.channelVals[i]
+    if (channelVal !== undefined && channelVal > 0) {
+      channel.push()
+      channel.fill(createInkDepth(channelVal))
+      channel.image(finalPatG, drawPosX, drawPosY)
+      channel.pop()
+    }
+  })
 }

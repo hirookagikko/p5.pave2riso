@@ -105,16 +105,35 @@ export const renderGradientFill = (fill, pipeline) => {
         gradG.drawingContext.fillStyle = grad;
         gradG.rect(0, 0, gSizeWidth, gSizeHeight);
         // クリッピングとエフェクト適用
+        gradBaseG.drawingContext.save();
         pipeline.drawPathToCanvas(path, gradBaseG.drawingContext);
         gradBaseG.drawingContext.clip();
         gradBaseG.image(gradG, gPosX, gPosY);
-        const finalG = applyEffects(applyFilters(gradBaseG, filter), halftone, dither);
+        gradBaseG.drawingContext.restore();
+        // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
+        let filteredG = applyFilters(gradBaseG, filter);
+        // エフェクト適用
+        // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+        let drawX = 0;
+        let drawY = 0;
+        if (halftone || dither) {
+            const { canvasSize } = options;
+            const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
+            const offsetX = Math.floor((diagonal - canvasSize[0]) / 2);
+            const offsetY = Math.floor((diagonal - canvasSize[1]) / 2);
+            const fullG = pipeline.createGraphics(diagonal, diagonal);
+            fullG.background(255);
+            fullG.image(filteredG, offsetX, offsetY);
+            filteredG = applyEffects(fullG, halftone, dither);
+            drawX = -offsetX;
+            drawY = -offsetY;
+        }
         // JOINモードの場合は全チャンネルから削除
         if (mode === 'join') {
             channels.forEach((channel) => {
                 channel.push();
                 channel.blendMode(REMOVE);
-                channel.image(finalG, 0, 0);
+                channel.image(filteredG, drawX, drawY);
                 channel.pop();
             });
         }
@@ -122,7 +141,7 @@ export const renderGradientFill = (fill, pipeline) => {
         const channel = channels[colorStop.channel];
         if (channel) {
             channel.push();
-            channel.image(finalG, 0, 0);
+            channel.image(filteredG, drawX, drawY);
             channel.pop();
         }
     });
