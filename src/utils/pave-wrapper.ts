@@ -1,9 +1,10 @@
 /**
  * Type-safe wrappers for Pave.js operations
  *
- * Provides a centralized, typed interface to the Pave.js library
- * loaded via CDN. All external Path operations should go through
- * these wrappers to ensure type safety.
+ * Provides a centralized, typed interface to the Pave.js library.
+ * Supports both dependency injection and global fallback for backward compatibility.
+ *
+ * @module utils/pave-wrapper
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -14,16 +15,46 @@
 import type { PavePath, PavePathStatic } from '../types/pave.js'
 
 /**
- * Get Path constructor from global context with type safety
+ * Cached Path instance for dependency injection
+ * @internal
+ */
+let cachedPath: PavePathStatic | null = null
+
+/**
+ * Inject Path dependency
  *
- * @returns Path constructor from global scope
- * @throws Error if Path is not available
+ * Use this to explicitly set the Path dependency instead of relying on globals.
+ * Called automatically by `createP5Pave2Riso()`.
+ *
+ * @param path - Path constructor from Pave.js
+ */
+export function setPath(path: PavePathStatic): void {
+  cachedPath = path
+}
+
+/**
+ * Reset Path dependency to null
+ *
+ * Useful for testing to clear injected dependencies.
+ */
+export function resetPath(): void {
+  cachedPath = null
+}
+
+/**
+ * Get Path constructor with dependency injection support
+ *
+ * Priority:
+ * 1. Injected dependency (via setPath)
+ * 2. Global Path variable (backward compatibility)
+ *
+ * @returns Path constructor
+ * @throws Error if Path is not available from either source
  */
 export function getPath(): PavePathStatic {
-  if (typeof Path === 'undefined') {
-    throw new Error('Path from pave.js is not available. Make sure pave.js is loaded.')
-  }
-  return Path
+  if (cachedPath) return cachedPath
+  if (typeof Path !== 'undefined') return Path
+  throw new Error('Path from pave.js is not available. Make sure pave.js is loaded or use createP5Pave2Riso() to inject dependencies.')
 }
 
 /**

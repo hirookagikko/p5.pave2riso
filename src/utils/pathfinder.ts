@@ -13,8 +13,9 @@ import {
   getPathBounds,
   getPath
 } from './pave-wrapper.js'
+import { getPaper, getPaperOffset } from './paper-wrapper.js'
 
-// External dependencies for PathOffset (loaded via CDN)
+// External dependencies for PathOffset (loaded via CDN or via DI)
 // paper.js 0.12.4: https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm
 // paperjs-offset 1.0.8: https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm
 
@@ -38,29 +39,7 @@ interface PaperPath {
   children?: PaperPath[]
 }
 
-interface PaperProject {
-  importSVG: (svg: string) => PaperPath
-  activeLayer: { removeChildren: () => void }
-}
-
-interface PaperStatic {
-  setup: (canvas: HTMLCanvasElement) => void
-  project: PaperProject
-  Path: {
-    new (pathData: string): PaperPath
-    Rectangle: new (rect: { from: [number, number]; to: [number, number] }) => PaperPath
-  }
-  CompoundPath: new (pathData: string) => PaperPath
-}
-
-interface PaperOffsetStatic {
-  offset: (path: PaperPath, distance: number, options?: { join?: string; cap?: string }) => PaperPath
-}
-
-// Get paper.js from global scope (must be Paper.js 0.12.4 for compatibility with paperjs-offset)
-declare const paper: PaperStatic | undefined
-// Get PaperOffset from global scope
-declare const PaperOffset: PaperOffsetStatic | undefined
+// Note: paper and PaperOffset are accessed via paper-wrapper.ts which handles DI and global fallback
 
 /**
  * Type guard to check if a path has curves
@@ -307,11 +286,12 @@ let paperInitialized = false
  * Initialize Paper.js if not already initialized
  */
 function ensurePaperInitialized(): boolean {
-  if (typeof paper === 'undefined') {
+  const paperInstance = getPaper()
+  if (!paperInstance) {
     return false
   }
   if (!paperInitialized) {
-    paper.setup(document.createElement('canvas'))
+    paperInstance.setup(document.createElement('canvas'))
     paperInitialized = true
   }
   return true
@@ -322,7 +302,8 @@ function ensurePaperInitialized(): boolean {
  * @internal
  */
 function paveToPaper(pavePath: PavePath): PaperPath | null {
-  if (typeof paper === 'undefined') {
+  const paperInstance = getPaper()
+  if (!paperInstance) {
     return null
   }
   try {
@@ -338,7 +319,7 @@ function paveToPaper(pavePath: PavePath): PaperPath | null {
     const svgString = `<svg><path d="${pathData}"/></svg>`
 
     // Use importSVG which properly initializes all path properties including curves
-    const imported = paper.project.importSVG(svgString) as PaperPath & {
+    const imported = paperInstance.project.importSVG(svgString) as PaperPath & {
       firstChild?: PaperPath
       remove?: () => void
     }
@@ -511,11 +492,13 @@ export const PathOffset = (
   options?: { join?: 'miter' | 'bevel' | 'round'; cap?: 'butt' | 'round' | 'square' }
 ): PavePath => {
   // Check if dependencies are available
-  if (typeof paper === 'undefined') {
+  const paperInstance = getPaper()
+  const paperOffsetInstance = getPaperOffset()
+  if (!paperInstance) {
     console.warn('PathOffset: paper.js 0.12.4 is not loaded. Returning original path.')
     return path
   }
-  if (typeof PaperOffset === 'undefined') {
+  if (!paperOffsetInstance) {
     console.warn('PathOffset: paperjs-offset is not loaded. Returning original path.')
     return path
   }
@@ -535,7 +518,7 @@ export const PathOffset = (
 
   try {
     // Apply offset using paperjs-offset
-    const offsetted = PaperOffset.offset(paperPath, distance, options)
+    const offsetted = paperOffsetInstance.offset(paperPath, distance, options)
 
     // Convert back to Pave path
     const result = paperToPave(offsetted)

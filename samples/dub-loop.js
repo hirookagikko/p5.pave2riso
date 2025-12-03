@@ -1,19 +1,21 @@
 /**
  * DUB Loop
  *
- * Creates "DUB" typography that appears to fly from bottom-right to top-left
- * with overlapping layers and varying ink distribution
+ * Creates typography that appears to fly from bottom-right to top-left
  */
 
 import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
 import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
-import { p2r, ot2pave } from '../dist/p5.pave2riso.js'
+import { createP5Pave2Riso } from '../dist/p5.pave2riso.js'
+import paper from 'https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm'
+import { PaperOffset } from 'https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm'
 
-// Make utilities available globally
-window.Path = Path
-window.mat2d = mat2d
-window.Distort = Distort
-window.vec2 = vec2
+// Initialize p5.pave2riso with dependencies using DI pattern
+const { p2r, ot2pave, PathOffset } = createP5Pave2Riso({ Path, vec2 })
+
+// Make paper utilities available globally
+window.paper = paper
+window.PaperOffset = PaperOffset
 
 let channels = []
 let render
@@ -22,7 +24,7 @@ let dubPath = null
 let fontsReady = false
 
 // Number of layers (bottom-right to top-left)
-const LAYERS = 50
+const LAYERS = 10
 
 // Helper function to generate a character path with variable font settings
 const getCharPath = (char, x, y, fontSize, width = 100, slant = 0) => {
@@ -51,7 +53,7 @@ window.preload = async () => {
     return
   }
 
-  const fontPath = '../fonts/Google_Sans_Flex/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf'
+  const fontPath = '../fonts/Zen_Antique_Soft/ZenAntiqueSoft-Regular.ttf'
 
   try {
     const response = await fetch(fontPath)
@@ -107,7 +109,7 @@ function initDubPath() {
   const baseSpacing = fontSize * 0.2 // Tighter spacing for overlapping characters
 
   // Generate paths for "Dubbing" with random transformations
-  const chars = ['i', 'a', 'v', 't']
+  const chars = ['a', 'a', 'v', 't']
   const paths = chars.map((char, i) => {
     // Each character gets a different width value (wdth axis: 25-151)
     const width = random(25, 151)
@@ -138,6 +140,7 @@ function initDubPath() {
   }
 
   dubPath = Path.unite(paths)
+  dubPath = PathOffset(dubPath, 100, {join: 'round'})
 
   // Center the combined path on canvas
   const bounds = Path.bounds(dubPath)

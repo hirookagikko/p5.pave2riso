@@ -4,7 +4,12 @@
  * Public API exports
  */
 
-// メイン関数
+// Dependency Injection factory (recommended for ESM)
+export { createP5Pave2Riso } from './create.js'
+export type { P5Pave2RisoInstance, OpenTypeCommand } from './create.js'
+export type { P5Pave2RisoDeps } from './types/dependencies.js'
+
+// メイン関数 (backward compatible - uses global variables)
 export { pave2Riso } from './core.js'
 
 // ユーティリティ

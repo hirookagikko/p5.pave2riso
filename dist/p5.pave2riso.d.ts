@@ -3,6 +3,9 @@
  *
  * Public API exports
  */
+export { createP5Pave2Riso } from './create.js';
+export type { P5Pave2RisoInstance, OpenTypeCommand } from './create.js';
+export type { P5Pave2RisoDeps } from './types/dependencies.js';
 export { pave2Riso } from './core.js';
 export { createInkDepth } from './utils/inkDepth.js';
 export { p2r } from './utils/factory.js';

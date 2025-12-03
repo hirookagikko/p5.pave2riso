@@ -6,13 +6,9 @@
 
 import { Path, Distort } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
 import { mat2d, vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
-import { p2r, PathIntersect, PathExclude, PathSubtract, isPathsOverlap } from '../dist/p5.pave2riso.js'
+import { createP5Pave2Riso } from '../dist/p5.pave2riso.js'
 
-// Make Path, mat2d, Distort and vec2 available globally
-window.Path = Path
-window.mat2d = mat2d
-window.Distort = Distort
-window.vec2 = vec2
+const { p2r, PathIntersect, PathExclude, PathSubtract, isPathsOverlap } = createP5Pave2Riso({ Path, vec2 })
 
 let channels = []
 let render

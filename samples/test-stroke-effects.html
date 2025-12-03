@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stroke Effects Test - p5.pave2riso</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/antiboredom/p5.riso@master/lib/p5.riso.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>p5.pave2riso</h1>
+    <nav class="sample-nav">
+      <button class="nav-toggle" id="nav-toggle" type="button">
+        Samples <span class="menu-icon">&#9662;</span>
+      </button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="hello-circles.html">Hello Circles</a></li>
+        <li><a href="test-pathfinder.html">Pathfinder Test</a></li>
+        <li><a href="test-font-pathfinder.html">Font Pathfinder Test</a></li>
+        <li><a href="dub-loop.html">DUB Loop</a></li>
+        <li><a href="dub-loop-static.html">DUB Loop (Static)</a></li>
+        <li><a href="test-stroke-all.html">Stroke All Test</a></li>
+        <li><a href="test-stroke-gradient.html">Stroke Gradient Test</a></li>
+        <li><a href="test-fill-stroke-combo.html">Fill+Stroke Combo</a></li>
+        <li><a href="test-stroke-effects.html" class="active">Stroke Effects</a></li>
+        <li><a href="test-fill-effects.html">Fill Effects</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="canvas-area">
+      <main></main>
+      <button id="export-btn" type="button">Export Riso PNGs</button>
+    </div>
+    <div class="code-area">
+      <pre><code id="source-code"></code></pre>
+    </div>
+  </div>
+
+  <script type="module" src="test-stroke-effects.js"></script>
+  <script type="module" src="common.js"></script>
+</body>
+</html>

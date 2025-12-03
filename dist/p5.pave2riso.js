@@ -3,7 +3,9 @@
  *
  * Public API exports
  */
-// メイン関数
+// Dependency Injection factory (recommended for ESM)
+export { createP5Pave2Riso } from './create.js';
+// メイン関数 (backward compatible - uses global variables)
 export { pave2Riso } from './core.js';
 // ユーティリティ
 export { createInkDepth } from './utils/inkDepth.js';

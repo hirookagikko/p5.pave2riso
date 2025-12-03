@@ -1,16 +1,36 @@
 /**
  * Type-safe wrappers for Pave.js operations
  *
- * Provides a centralized, typed interface to the Pave.js library
- * loaded via CDN. All external Path operations should go through
- * these wrappers to ensure type safety.
+ * Provides a centralized, typed interface to the Pave.js library.
+ * Supports both dependency injection and global fallback for backward compatibility.
+ *
+ * @module utils/pave-wrapper
  */
 import type { PavePath, PavePathStatic } from '../types/pave.js';
 /**
- * Get Path constructor from global context with type safety
+ * Inject Path dependency
  *
- * @returns Path constructor from global scope
- * @throws Error if Path is not available
+ * Use this to explicitly set the Path dependency instead of relying on globals.
+ * Called automatically by `createP5Pave2Riso()`.
+ *
+ * @param path - Path constructor from Pave.js
+ */
+export declare function setPath(path: PavePathStatic): void;
+/**
+ * Reset Path dependency to null
+ *
+ * Useful for testing to clear injected dependencies.
+ */
+export declare function resetPath(): void;
+/**
+ * Get Path constructor with dependency injection support
+ *
+ * Priority:
+ * 1. Injected dependency (via setPath)
+ * 2. Global Path variable (backward compatibility)
+ *
+ * @returns Path constructor
+ * @throws Error if Path is not available from either source
  */
 export declare function getPath(): PavePathStatic;
 /**

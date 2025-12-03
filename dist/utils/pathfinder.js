@@ -5,6 +5,8 @@
  * with comprehensive error handling and edge case detection.
  */
 import { createCircle, subtractPaths, unitePaths, getPathBounds, getPath } from './pave-wrapper.js';
+import { getPaper, getPaperOffset } from './paper-wrapper.js';
+// Note: paper and PaperOffset are accessed via paper-wrapper.ts which handles DI and global fallback
 /**
  * Type guard to check if a path has curves
  */
@@ -240,11 +242,12 @@ let paperInitialized = false;
  * Initialize Paper.js if not already initialized
  */
 function ensurePaperInitialized() {
-    if (typeof paper === 'undefined') {
+    const paperInstance = getPaper();
+    if (!paperInstance) {
         return false;
     }
     if (!paperInitialized) {
-        paper.setup(document.createElement('canvas'));
+        paperInstance.setup(document.createElement('canvas'));
         paperInitialized = true;
     }
     return true;
@@ -254,7 +257,8 @@ function ensurePaperInitialized() {
  * @internal
  */
 function paveToPaper(pavePath) {
-    if (typeof paper === 'undefined') {
+    const paperInstance = getPaper();
+    if (!paperInstance) {
         return null;
     }
     try {
@@ -267,7 +271,7 @@ function paveToPaper(pavePath) {
         // Create a full SVG element for proper import
         const svgString = `<svg><path d="${pathData}"/></svg>`;
         // Use importSVG which properly initializes all path properties including curves
-        const imported = paper.project.importSVG(svgString);
+        const imported = paperInstance.project.importSVG(svgString);
         // Get the actual path from the imported group
         let resultPath = null;
         if (imported.children && imported.children.length > 0) {
@@ -413,11 +417,13 @@ function paperToPave(paperPath) {
  */
 export const PathOffset = (path, distance, options) => {
     // Check if dependencies are available
-    if (typeof paper === 'undefined') {
+    const paperInstance = getPaper();
+    const paperOffsetInstance = getPaperOffset();
+    if (!paperInstance) {
         console.warn('PathOffset: paper.js 0.12.4 is not loaded. Returning original path.');
         return path;
     }
-    if (typeof PaperOffset === 'undefined') {
+    if (!paperOffsetInstance) {
         console.warn('PathOffset: paperjs-offset is not loaded. Returning original path.');
         return path;
     }
@@ -434,7 +440,7 @@ export const PathOffset = (path, distance, options) => {
     }
     try {
         // Apply offset using paperjs-offset
-        const offsetted = PaperOffset.offset(paperPath, distance, options);
+        const offsetted = paperOffsetInstance.offset(paperPath, distance, options);
         // Convert back to Pave path
         const result = paperToPave(offsetted);
         return result;
