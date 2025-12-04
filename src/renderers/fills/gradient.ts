@@ -7,6 +7,7 @@ import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { applyFilters, applyEffects } from '../../channels/operations.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
 
 /**
  * グラデーション方向から座標を計算
@@ -147,19 +148,17 @@ export const renderGradientFill = (
 
     // エフェクト適用
     // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+    const { canvasSize } = options
+    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
     let drawX = 0
     let drawY = 0
-    if (halftone || dither) {
-      const { canvasSize } = options
-      const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2))
-      const offsetX = Math.floor((diagonal - canvasSize[0]) / 2)
-      const offsetY = Math.floor((diagonal - canvasSize[1]) / 2)
-      const fullG = pipeline.createGraphics(diagonal, diagonal)
+    if (diag.usesDiagonalBuffer) {
+      const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal)
       fullG.background(255)
-      fullG.image(filteredG, offsetX, offsetY)
+      fullG.image(filteredG, diag.offsetX, diag.offsetY)
       filteredG = applyEffects(fullG, halftone, dither)
-      drawX = -offsetX
-      drawY = -offsetY
+      drawX = diag.drawX
+      drawY = diag.drawY
     }
 
     // JOINモードの場合は全チャンネルから削除

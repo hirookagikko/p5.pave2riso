@@ -4,36 +4,8 @@
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects } from '../../channels/operations.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
-/**
- * strokeCap文字列をCanvas API用の値に変換
- */
-const getCanvasLineCap = (cap) => {
-    switch (cap) {
-        case 'round':
-            return 'round';
-        case 'square':
-            return 'square';
-        case 'butt':
-            return 'butt';
-        default:
-            return 'round'; // デフォルトはround
-    }
-};
-/**
- * strokeJoin文字列をCanvas API用の値に変換
- */
-const getCanvasLineJoin = (join) => {
-    switch (join) {
-        case 'miter':
-            return 'miter';
-        case 'bevel':
-            return 'bevel';
-        case 'round':
-            return 'round';
-        default:
-            return 'miter'; // デフォルトはmiter
-    }
-};
+import { getCanvasLineCap, getCanvasLineJoin } from '../../utils/stroke-style.js';
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
 /**
  * 破線Strokeをレンダリング
  *
@@ -47,18 +19,13 @@ export const renderDashedStroke = (stroke, pipeline) => {
     // トップレベルとstroke内のエフェクトをマージ（stroke内が優先）
     const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: stroke.filter, halftone: stroke.halftone, dither: stroke.dither });
     // エフェクトが指定されているかチェック
-    const hasEffects = filter || halftone || dither;
+    const hasEffects = filter ?? halftone ?? dither;
     if (hasEffects) {
         // エフェクトあり: グラフィックスバッファ経由で処理
         // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
-        const usesDiagonalBuffer = halftone || dither;
-        const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
-        const bufferSize = usesDiagonalBuffer ? diagonal : canvasSize[0];
-        const bufferHeight = usesDiagonalBuffer ? diagonal : canvasSize[1];
-        const offsetX = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[0]) / 2) : 0;
-        const offsetY = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[1]) / 2) : 0;
+        const diag = calculateDiagonalBuffer(canvasSize, halftone, dither);
         // 黒ストロークで形状を描画（1回だけ作成）
-        let strokeG = pipeline.createGraphics(bufferSize, bufferHeight);
+        let strokeG = pipeline.createGraphics(diag.bufferWidth, diag.bufferHeight);
         strokeG.background(255);
         strokeG.noFill();
         strokeG.stroke(0); // 黒でストローク
@@ -67,14 +34,14 @@ export const renderDashedStroke = (stroke, pipeline) => {
         strokeG.drawingContext.lineCap = getCanvasLineCap(stroke.strokeCap);
         strokeG.drawingContext.lineJoin = getCanvasLineJoin(stroke.strokeJoin);
         // 対角線バッファ使用時はオフセットを適用
-        if (usesDiagonalBuffer) {
+        if (diag.usesDiagonalBuffer) {
             strokeG.drawingContext.save();
-            strokeG.drawingContext.translate(offsetX, offsetY);
+            strokeG.drawingContext.translate(diag.offsetX, diag.offsetY);
         }
         pipeline.drawPathToCanvas(path, strokeG.drawingContext);
         strokeG.drawingContext.stroke();
         strokeG.drawingContext.setLineDash([]); // リセット
-        if (usesDiagonalBuffer) {
+        if (diag.usesDiagonalBuffer) {
             strokeG.drawingContext.restore();
         }
         // フィルター適用
@@ -82,14 +49,12 @@ export const renderDashedStroke = (stroke, pipeline) => {
         // ハーフトーン/ディザー適用
         strokeG = applyEffects(strokeG, halftone, dither);
         // 各チャンネルに転送（対角線バッファ使用時は負のオフセットで描画）
-        const drawX = usesDiagonalBuffer ? -offsetX : 0;
-        const drawY = usesDiagonalBuffer ? -offsetY : 0;
         channels.forEach((channel, i) => {
             const channelVal = stroke.channelVals[i];
             if (channelVal !== undefined && channelVal > 0) {
                 channel.push();
                 channel.fill(createInkDepth(channelVal));
-                channel.image(strokeG, drawX, drawY);
+                channel.image(strokeG, diag.drawX, diag.drawY);
                 channel.pop();
             }
         });

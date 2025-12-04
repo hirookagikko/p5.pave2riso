@@ -2,43 +2,13 @@
  * ベタ塗りStrokeレンダラー
  */
 
-import type { SolidStrokeConfig, StrokeJoin, StrokeCap } from '../../types/stroke.js'
+import type { SolidStrokeConfig } from '../../types/stroke.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { applyFilters, applyEffects } from '../../channels/operations.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
-
-/**
- * strokeCap文字列をp5.js定数に変換
- */
-const getStrokeCapConstant = (cap: StrokeCap | undefined): string => {
-  switch (cap) {
-    case 'round':
-      return ROUND
-    case 'square':
-      return SQUARE
-    case 'butt':
-      return SQUARE  // p5.jsにはBUTTがないのでSQUAREを使用
-    default:
-      return ROUND  // デフォルトはROUND
-  }
-}
-
-/**
- * strokeJoin文字列をp5.js定数に変換
- */
-const getStrokeJoinConstant = (join: StrokeJoin | undefined): string => {
-  switch (join) {
-    case 'miter':
-      return MITER
-    case 'bevel':
-      return BEVEL
-    case 'round':
-      return ROUND
-    default:
-      return MITER  // デフォルトはMITER
-  }
-}
+import { getStrokeCapConstant, getStrokeJoinConstant } from '../../utils/stroke-style.js'
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
 
 /**
  * ベタ塗りStrokeをレンダリング
@@ -61,21 +31,16 @@ export const renderSolidStroke = (
   )
 
   // エフェクトが指定されているかチェック
-  const hasEffects = filter || halftone || dither
+  const hasEffects = filter ?? halftone ?? dither
 
   if (hasEffects) {
     // エフェクトあり: グラフィックスバッファ経由で処理
 
     // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
-    const usesDiagonalBuffer = halftone || dither
-    const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2))
-    const bufferSize = usesDiagonalBuffer ? diagonal : canvasSize[0]
-    const bufferHeight = usesDiagonalBuffer ? diagonal : canvasSize[1]
-    const offsetX = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[0]) / 2) : 0
-    const offsetY = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[1]) / 2) : 0
+    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
 
     // 黒ストロークで形状を描画（1回だけ作成）
-    let strokeG = pipeline.createGraphics(bufferSize, bufferHeight)
+    let strokeG = pipeline.createGraphics(diag.bufferWidth, diag.bufferHeight)
     strokeG.background(255)
     strokeG.noFill()
     strokeG.stroke(0)  // 黒でストローク
@@ -83,13 +48,13 @@ export const renderSolidStroke = (
     strokeG.strokeCap(getStrokeCapConstant(stroke.strokeCap))
     strokeG.strokeJoin(getStrokeJoinConstant(stroke.strokeJoin))
     // 対角線バッファ使用時はオフセットを適用
-    if (usesDiagonalBuffer) {
+    if (diag.usesDiagonalBuffer) {
       strokeG.drawingContext.save()
-      strokeG.drawingContext.translate(offsetX, offsetY)
+      strokeG.drawingContext.translate(diag.offsetX, diag.offsetY)
     }
     pipeline.drawPathToCanvas(path, strokeG.drawingContext)
     strokeG.drawingContext.stroke()
-    if (usesDiagonalBuffer) {
+    if (diag.usesDiagonalBuffer) {
       strokeG.drawingContext.restore()
     }
 
@@ -100,14 +65,12 @@ export const renderSolidStroke = (
     strokeG = applyEffects(strokeG, halftone, dither)
 
     // 各チャンネルに転送（対角線バッファ使用時は負のオフセットで描画）
-    const drawX = usesDiagonalBuffer ? -offsetX : 0
-    const drawY = usesDiagonalBuffer ? -offsetY : 0
     channels.forEach((channel, i) => {
       const channelVal = stroke.channelVals[i]
       if (channelVal !== undefined && channelVal > 0) {
         channel.push()
         channel.fill(createInkDepth(channelVal))
-        channel.image(strokeG, drawX, drawY)
+        channel.image(strokeG, diag.drawX, diag.drawY)
         channel.pop()
       }
     })

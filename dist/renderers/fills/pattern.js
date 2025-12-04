@@ -5,6 +5,7 @@ import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/operations.js';
 import { degreesToRadians } from '../../utils/angleConverter.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
 /**
  * パターンFillをレンダリング
  *
@@ -56,19 +57,17 @@ export const renderPatternFill = (fill, pipeline) => {
     baseG = applyFilters(baseG, filter);
     // エフェクト適用
     // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+    const { canvasSize } = options;
+    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither);
     let drawX = 0;
     let drawY = 0;
-    if (halftone || dither) {
-        const { canvasSize } = options;
-        const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
-        const offsetX = Math.floor((diagonal - canvasSize[0]) / 2);
-        const offsetY = Math.floor((diagonal - canvasSize[1]) / 2);
-        const fullG = pipeline.createGraphics(diagonal, diagonal);
+    if (diag.usesDiagonalBuffer) {
+        const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
         fullG.background(255);
-        fullG.image(baseG, offsetX, offsetY);
+        fullG.image(baseG, diag.offsetX, diag.offsetY);
         baseG = applyEffects(fullG, halftone, dither);
-        drawX = -offsetX;
-        drawY = -offsetY;
+        drawX = diag.drawX;
+        drawY = diag.drawY;
     }
     pipeline.setBaseGraphics(baseG);
     // joinモードの場合は全チャンネルから削除

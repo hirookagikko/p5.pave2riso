@@ -5,66 +5,8 @@ import { ensurePTNAvailable, applyFilters, applyEffects } from '../../channels/o
 import { degreesToRadians } from '../../utils/angleConverter.js';
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
-/**
- * strokeCap文字列をp5.js定数に変換
- */
-const getStrokeCapConstant = (cap) => {
-    switch (cap) {
-        case 'round':
-            return ROUND;
-        case 'square':
-            return SQUARE;
-        case 'butt':
-            return SQUARE; // p5.jsにはBUTTがないのでSQUAREを使用（本来はPROJECT）
-        default:
-            return ROUND; // デフォルトはROUND
-    }
-};
-/**
- * strokeJoin文字列をp5.js定数に変換
- */
-const getStrokeJoinConstant = (join) => {
-    switch (join) {
-        case 'miter':
-            return MITER;
-        case 'bevel':
-            return BEVEL;
-        case 'round':
-            return ROUND;
-        default:
-            return MITER; // デフォルトはMITER
-    }
-};
-/**
- * strokeCap文字列をCanvas APIのlineCap値に変換
- */
-const getCanvasLineCap = (cap) => {
-    switch (cap) {
-        case 'round':
-            return 'round';
-        case 'square':
-            return 'square';
-        case 'butt':
-            return 'butt';
-        default:
-            return 'round'; // デフォルトはround
-    }
-};
-/**
- * strokeJoin文字列をCanvas APIのlineJoin値に変換
- */
-const getCanvasLineJoin = (join) => {
-    switch (join) {
-        case 'miter':
-            return 'miter';
-        case 'bevel':
-            return 'bevel';
-        case 'round':
-            return 'round';
-        default:
-            return 'miter'; // デフォルトはmiter
-    }
-};
+import { getStrokeCapConstant, getStrokeJoinConstant, getCanvasLineCap, getCanvasLineJoin } from '../../utils/stroke-style.js';
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
 /**
  * パターンStrokeをレンダリング
  *
@@ -141,6 +83,7 @@ export const renderPatternStroke = (stroke, pipeline) => {
     // エフェクト適用
     let finalPatG = patG;
     const { canvasSize } = options;
+    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither);
     if (filter) {
         finalPatG = applyFilters(finalPatG, filter);
     }
@@ -148,16 +91,13 @@ export const renderPatternStroke = (stroke, pipeline) => {
     // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
     let drawPosX = gPosX;
     let drawPosY = gPosY;
-    if (halftone || dither) {
-        const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
-        const offsetX = Math.floor((diagonal - canvasSize[0]) / 2);
-        const offsetY = Math.floor((diagonal - canvasSize[1]) / 2);
-        const fullG = pipeline.createGraphics(diagonal, diagonal);
+    if (diag.usesDiagonalBuffer) {
+        const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
         fullG.background(255);
-        fullG.image(finalPatG, gPosX + offsetX, gPosY + offsetY);
+        fullG.image(finalPatG, gPosX + diag.offsetX, gPosY + diag.offsetY);
         finalPatG = applyEffects(fullG, halftone, dither);
-        drawPosX = -offsetX;
-        drawPosY = -offsetY;
+        drawPosX = diag.drawX;
+        drawPosY = diag.drawY;
     }
     // 3. 各チャンネルに転送
     const mode = options.mode;

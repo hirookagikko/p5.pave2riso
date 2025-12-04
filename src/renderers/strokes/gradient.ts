@@ -2,75 +2,18 @@
  * グラデーションStrokeレンダラー
  */
 
-import type { GradientStrokeConfig, StrokeCap, StrokeJoin } from '../../types/stroke.js'
+import type { GradientStrokeConfig } from '../../types/stroke.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { applyFilters, applyEffects } from '../../channels/operations.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
-
-/**
- * strokeCap文字列をp5.js定数に変換
- */
-const getStrokeCapConstant = (cap: StrokeCap | undefined): string => {
-  switch (cap) {
-    case 'round':
-      return ROUND
-    case 'square':
-      return SQUARE
-    case 'butt':
-      return SQUARE  // p5.jsにはBUTTがないのでSQUAREを使用
-    default:
-      return ROUND  // デフォルトはROUND
-  }
-}
-
-/**
- * strokeJoin文字列をp5.js定数に変換
- */
-const getStrokeJoinConstant = (join: StrokeJoin | undefined): string => {
-  switch (join) {
-    case 'miter':
-      return MITER
-    case 'bevel':
-      return BEVEL
-    case 'round':
-      return ROUND
-    default:
-      return MITER  // デフォルトはMITER
-  }
-}
-
-/**
- * strokeCap文字列をCanvas APIのlineCap値に変換
- */
-const getCanvasLineCap = (cap: StrokeCap | undefined): CanvasLineCap => {
-  switch (cap) {
-    case 'round':
-      return 'round'
-    case 'square':
-      return 'square'
-    case 'butt':
-      return 'butt'
-    default:
-      return 'round'  // デフォルトはround
-  }
-}
-
-/**
- * strokeJoin文字列をCanvas APIのlineJoin値に変換
- */
-const getCanvasLineJoin = (join: StrokeJoin | undefined): CanvasLineJoin => {
-  switch (join) {
-    case 'miter':
-      return 'miter'
-    case 'bevel':
-      return 'bevel'
-    case 'round':
-      return 'round'
-    default:
-      return 'miter'  // デフォルトはmiter
-  }
-}
+import {
+  getStrokeCapConstant,
+  getStrokeJoinConstant,
+  getCanvasLineCap,
+  getCanvasLineJoin
+} from '../../utils/stroke-style.js'
+import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
 
 /**
  * グラデーションStrokeをレンダリング
@@ -122,11 +65,8 @@ export const renderGradientStroke = (
   }> = []
 
   // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
-  const usesDiagonalBuffer = halftone || dither
   const { canvasSize } = options
-  const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2))
-  const diagonalOffsetX = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[0]) / 2) : 0
-  const diagonalOffsetY = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[1]) / 2) : 0
+  const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
 
   stroke.colorStops.forEach((colorStop) => {
     // チャンネルインデックスの検証
@@ -213,10 +153,10 @@ export const renderGradientStroke = (
     }
     // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
     // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
-    if (usesDiagonalBuffer) {
-      const fullG = pipeline.createGraphics(diagonal, diagonal)
+    if (diag.usesDiagonalBuffer) {
+      const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal)
       fullG.background(255)
-      fullG.image(finalGradG, gPosX + diagonalOffsetX, gPosY + diagonalOffsetY)
+      fullG.image(finalGradG, gPosX + diag.offsetX, gPosY + diag.offsetY)
       finalGradG = applyEffects(fullG, halftone, dither)
     }
 
@@ -259,8 +199,8 @@ export const renderGradientStroke = (
 
   // 4. 各colorStopのグラデーションを対象チャンネルに転送
   // halftone使用時は負のオフセットで描画、それ以外は(gPosX, gPosY)
-  const drawPosX = usesDiagonalBuffer ? -diagonalOffsetX : gPosX
-  const drawPosY = usesDiagonalBuffer ? -diagonalOffsetY : gPosY
+  const drawPosX = diag.usesDiagonalBuffer ? diag.drawX : gPosX
+  const drawPosY = diag.usesDiagonalBuffer ? diag.drawY : gPosY
 
   gradImages.forEach(({ gradG, channelIndex }) => {
     // joinモード: gradGで全チャンネルからREMOVE（グラデの黒い部分だけ削除）
