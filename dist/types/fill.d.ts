@@ -2,6 +2,7 @@
  * Fill設定のDiscriminated Union型定義
  */
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js';
+import type { Percentage } from './branded.js';
 /**
  * グラデーションタイプ
  */
@@ -10,6 +11,21 @@ export type GradientType = 'linear' | 'radial' | 'conic';
  * グラデーション方向（線形グラデーション用）
  */
 export type GradientDirection = 'TD' | 'DT' | 'LR' | 'RL' | 'LTRB' | 'RTLB' | 'LBRT' | 'RBLT';
+/**
+ * グラデーションカラーストップの個別エントリ
+ */
+export interface ColorStopEntry {
+    /**
+     * 位置（0-100%）
+     * グラデーション内での位置を表す
+     */
+    position: Percentage | number;
+    /**
+     * インク濃度（0-100%）
+     * この位置でのインクの濃さ
+     */
+    depth: Percentage | number;
+}
 /**
  * グラデーションカラーストップ
  */
@@ -21,16 +37,7 @@ export interface ColorStop {
     /**
      * カラーストップの配列
      */
-    stops: Array<{
-        /**
-         * 位置（0-100）
-         */
-        position: number;
-        /**
-         * インク濃度（0-100）
-         */
-        depth: number;
-    }>;
+    stops: ColorStopEntry[];
 }
 /**
  * 画像フィット方式

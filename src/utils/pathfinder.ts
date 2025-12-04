@@ -310,7 +310,7 @@ function paveToPaper(pavePath: PavePath): PaperPath | null {
     return null
   }
   try {
-    const PathGlobal = getPath() as unknown as { toSVGString: (path: PavePath) => string }
+    const PathGlobal = getPath()
     const pathData = PathGlobal.toSVGString(pavePath)
 
     if (!pathData) {

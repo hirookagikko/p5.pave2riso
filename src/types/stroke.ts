@@ -4,6 +4,7 @@
 
 import type { ColorStop, GradientType } from './fill.js'
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js'
+import type { DashPattern } from './branded.js'
 
 /**
  * ストロークキャップスタイル（線の端の形状）
@@ -75,8 +76,9 @@ export interface DashedStrokeConfig {
 
   /**
    * 破線パターン [lineLength, gapLength]
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
    */
-  dashArgs: number[]
+  dashArgs: DashPattern
 
   /**
    * ストロークキャップスタイル（線の端の形状）
@@ -141,8 +143,9 @@ export interface PatternStrokeConfig {
   /**
    * 破線パターン [lineLength, gapLength]
    * 指定すると破線パターンストロークになる
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
    */
-  dashArgs?: number[]
+  dashArgs?: DashPattern
 
   /**
    * ストロークキャップスタイル（線の端の形状）
@@ -194,8 +197,9 @@ export interface GradientStrokeConfig {
   /**
    * 破線パターン [lineLength, gapLength]
    * 指定すると破線グラデーションストロークになる
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
    */
-  dashArgs?: number[]
+  dashArgs?: DashPattern
 
   /**
    * ストロークキャップスタイル（線の端の形状）
