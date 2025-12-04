@@ -1,5 +1,12 @@
 /**
  * レンダリングモード実装
+ *
+ * This module handles different rendering modes for Risograph printing:
+ * - **overprint**: All colors print on top of each other (default)
+ * - **cutout**: The shape is erased from all channels before rendering
+ * - **join**: Similar to cutout, but with edge blending
+ *
+ * @module modes/modes
  */
 
 import type { RenderMode } from '../types/core.js'
@@ -8,6 +15,16 @@ import { applyFilters, applyEffects } from '../channels/operations.js'
 
 /**
  * レンダリングモードを適用
+ *
+ * This function applies pre-processing based on the render mode.
+ * It does NOT handle the actual fill/stroke rendering - that is done
+ * by the respective renderers. This function only handles:
+ *
+ * 1. **overprint**: No pre-processing (colors layer on top)
+ * 2. **cutout**: Erases the path shape from all channels
+ *    - If filters are specified, applies them to the cutout mask
+ *    - Uses REMOVE blend mode to erase the filtered shape
+ * 3. **join**: Pre-processing is handled in fill/stroke renderers
  *
  * @param mode - レンダリングモード
  * @param pipeline - GraphicsPipeline
@@ -24,13 +41,24 @@ export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void =>
 
     case 'cutout': {
       if (filter) {
-        // フィルター適用パス
+        // Filter-aware cutout path:
+        // 1. Create a mask buffer with the path filled in black on white
+        // 2. Apply filters (posterize, blur, etc.) to the mask
+        // 3. Apply halftone/dither effects if specified
+        // 4. Use REMOVE blend mode to erase the filtered mask from all channels
+        //
+        // This allows for soft-edged cutouts when using blur filters,
+        // or patterned cutouts when using halftone/dither effects.
         let cutoutG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
         cutoutG.background(255)
         cutoutG.fill(0)
         cutoutG.noStroke()
         pipeline.drawPathToCanvas(path, cutoutG.drawingContext)
         cutoutG.drawingContext.fill()
+
+        // Apply filter chain: filters first, then effects
+        // This order ensures filters modify the base mask before
+        // halftone/dither patterns are applied
         cutoutG = applyFilters(cutoutG, filter)
         cutoutG = applyEffects(cutoutG, halftone, dither)
 
@@ -38,13 +66,15 @@ export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void =>
           channel.push()
           channel.fill(255)
           channel.noStroke()
+          // REMOVE blend mode: dark areas in cutoutG erase the channel
           channel.blendMode(REMOVE)
           channel.image(cutoutG, 0, 0)
           channel.blendMode(BLEND)
           channel.pop()
         })
       } else {
-        // 通常のカットアウト
+        // Simple cutout: directly erase the path shape from all channels
+        // Uses p5.js erase() mode for clean, hard-edged cutouts
         channels.forEach((channel) => {
           channel.push()
           channel.fill(255)

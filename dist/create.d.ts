@@ -60,6 +60,13 @@ export interface P5Pave2RisoInstance {
     ot2pave: (commands: OpenTypeCommand[]) => PavePath;
     /**
      * Reset injected dependencies (useful for testing)
+     *
+     * **Warning**: This clears the global dependency cache, which affects ALL
+     * instances created by `createP5Pave2Riso()`. Only call this in test cleanup
+     * or when you are certain no other code is using the library.
+     *
+     * After calling this, you must call `createP5Pave2Riso()` again before
+     * using any library functions.
      */
     resetDependencies: () => void;
 }

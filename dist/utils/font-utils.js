@@ -5,6 +5,11 @@
  * into pave.js Path objects with proper handling of holes and compound paths.
  */
 import { getPathBounds, createLine, createCubicBezier, createQuadraticBezier, joinPaths, closePath, createEmptyPath, unitePaths, subtractPaths } from './pave-wrapper.js';
+import { debugLog, debugWarn } from './debug.js';
+/**
+ * Debug category for font-related logging
+ */
+const DEBUG_CATEGORY = 'font';
 /**
  * Calculates the area of a path using bounding box approximation
  *
@@ -156,16 +161,16 @@ const determinePathOperation = (largerPath, smallerPath, largerOriginalWinding =
     const areaRatio = smallerArea / largerArea;
     const windingsSame = (largerWinding > 0 && smallerWinding > 0) ||
         (largerWinding <= 0 && smallerWinding <= 0);
-    console.log(`  determinePathOperation:`);
-    console.log(`    Relation: ${relation}`);
-    console.log(`    Area ratio: ${areaRatio.toFixed(3)}`);
-    console.log(`    Larger bounds: [${largerBounds[0][0].toFixed(1)}, ${largerBounds[0][1].toFixed(1)}] to [${largerBounds[1][0].toFixed(1)}, ${largerBounds[1][1].toFixed(1)}]`);
-    console.log(`    Smaller bounds: [${smallerBounds[0][0].toFixed(1)}, ${smallerBounds[0][1].toFixed(1)}] to [${smallerBounds[1][0].toFixed(1)}, ${smallerBounds[1][1].toFixed(1)}]`);
-    console.log(`    Larger winding: ${largerWinding > 0 ? 'CCW' : 'CW'}${largerOriginalWinding !== null ? ' (original)' : ''} (value: ${largerWinding.toFixed(2)})`);
-    console.log(`    Smaller winding: ${smallerWinding > 0 ? 'CCW' : 'CW'} (value: ${smallerWinding.toFixed(2)})`);
-    console.log(`    Windings same: ${windingsSame}`);
+    debugLog(DEBUG_CATEGORY, `  determinePathOperation:`);
+    debugLog(DEBUG_CATEGORY, `    Relation: ${relation}`);
+    debugLog(DEBUG_CATEGORY, `    Area ratio: ${areaRatio.toFixed(3)}`);
+    debugLog(DEBUG_CATEGORY, `    Larger bounds: [${largerBounds[0][0].toFixed(1)}, ${largerBounds[0][1].toFixed(1)}] to [${largerBounds[1][0].toFixed(1)}, ${largerBounds[1][1].toFixed(1)}]`);
+    debugLog(DEBUG_CATEGORY, `    Smaller bounds: [${smallerBounds[0][0].toFixed(1)}, ${smallerBounds[0][1].toFixed(1)}] to [${smallerBounds[1][0].toFixed(1)}, ${smallerBounds[1][1].toFixed(1)}]`);
+    debugLog(DEBUG_CATEGORY, `    Larger winding: ${largerWinding > 0 ? 'CCW' : 'CW'}${largerOriginalWinding !== null ? ' (original)' : ''} (value: ${largerWinding.toFixed(2)})`);
+    debugLog(DEBUG_CATEGORY, `    Smaller winding: ${smallerWinding > 0 ? 'CCW' : 'CW'} (value: ${smallerWinding.toFixed(2)})`);
+    debugLog(DEBUG_CATEGORY, `    Windings same: ${windingsSame}`);
     if (relation === 'INDEPENDENT') {
-        console.log(`  → UNITE (independent paths)`);
+        debugLog(DEBUG_CATEGORY, `  → UNITE (independent paths)`);
         return 'UNITE';
     }
     if (relation === 'CONTAINED') {
@@ -180,53 +185,53 @@ const determinePathOperation = (largerPath, smallerPath, largerOriginalWinding =
                 const largerCurves = largerPath.curves ? largerPath.curves.length : 0;
                 const subtractedCurves = subtracted.curves ? subtracted.curves.length : 0;
                 fullyContained = subtractedCurves > largerCurves;
-                console.log(`    Larger curves: ${largerCurves}, Subtracted curves: ${subtractedCurves}`);
-                console.log(`    Fully contained: ${fullyContained}`);
+                debugLog(DEBUG_CATEGORY, `    Larger curves: ${largerCurves}, Subtracted curves: ${subtractedCurves}`);
+                debugLog(DEBUG_CATEGORY, `    Fully contained: ${fullyContained}`);
             }
             else {
                 // SUBTRACT の結果が空なら、完全に外側にある
                 fullyContained = false;
-                console.log(`    Subtract resulted in empty path - smaller is outside`);
-                console.log(`    Fully contained: ${fullyContained}`);
+                debugLog(DEBUG_CATEGORY, `    Subtract resulted in empty path - smaller is outside`);
+                debugLog(DEBUG_CATEGORY, `    Fully contained: ${fullyContained}`);
             }
             /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
         }
         catch (e) {
-            console.warn(`    Warning: Path.subtract check failed, using bounds-based判定`, e.message);
+            debugWarn(DEBUG_CATEGORY, `    Warning: Path.subtract check failed, using bounds-based判定`, e.message);
             // エラーの場合はbounding boxベースの判定にフォールバック
             fullyContained = true;
         }
         // 完全に包含されていない場合（はみ出している）は solid として扱う
         if (!fullyContained) {
-            console.log(`  → UNITE (contained by bounds but protruding from actual path - treating as solid)`);
+            debugLog(DEBUG_CATEGORY, `  → UNITE (contained by bounds but protruding from actual path - treating as solid)`);
             return 'UNITE';
         }
         // 完全に包含されている場合は、元のロジックで判定
         // 巻き方向が異なる場合、smallerを穴として扱う
         if (!windingsSame) {
-            console.log(`  → SUBTRACT (fully contained, opposite winding - treating smaller as hole)`);
+            debugLog(DEBUG_CATEGORY, `  → SUBTRACT (fully contained, opposite winding - treating smaller as hole)`);
             return 'SUBTRACT';
         }
         // 巻き方向が同じ場合は、smallerの巻き方向で判定
         if (smallerWinding > 0) {
             // CCW = 穴 → SUBTRACT
-            console.log(`  → SUBTRACT (fully contained, same winding but smaller is CCW hole)`);
+            debugLog(DEBUG_CATEGORY, `  → SUBTRACT (fully contained, same winding but smaller is CCW hole)`);
             return 'SUBTRACT';
         }
         else {
             // CW = ソリッド → UNITE
-            console.log(`  → UNITE (fully contained, same winding and smaller is CW solid)`);
+            debugLog(DEBUG_CATEGORY, `  → UNITE (fully contained, same winding and smaller is CW solid)`);
             return 'UNITE';
         }
     }
     // OVERLAP
     if (windingsSame) {
-        console.log(`  → UNITE (overlap, same winding)`);
+        debugLog(DEBUG_CATEGORY, `  → UNITE (overlap, same winding)`);
         return 'UNITE';
     }
     else {
         // 巻き方向が逆でも、飛び出している場合は統合
-        console.log(`  → UNITE (overlap, opposite winding but protruding)`);
+        debugLog(DEBUG_CATEGORY, `  → UNITE (overlap, opposite winding but protruding)`);
         return 'UNITE';
     }
 };
@@ -264,7 +269,7 @@ export const ot2pave = (commands, options = {}) => {
     const allPaths = [];
     let tempPath = []; // 処理用の一時的なパス
     let presentPos = [0, 0]; // 現在の座標
-    console.log('\n=== PHASE 1: Collecting all paths ===');
+    debugLog(DEBUG_CATEGORY, '\n=== PHASE 1: Collecting all paths ===');
     for (let i = 0; i < commands.length; i++) {
         const cmd = commands[i];
         if (!cmd)
@@ -286,7 +291,7 @@ export const ot2pave = (commands, options = {}) => {
                         winding: newWinding,
                         bounds: newBounds
                     });
-                    console.log(`Path ${allPaths.length} (implicit close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
+                    debugLog(DEBUG_CATEGORY, `Path ${allPaths.length} (implicit close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
                     // デバッグモード：個別パスを記録
                     if (debugPaths) {
                         debugPaths.push({
@@ -314,7 +319,7 @@ export const ot2pave = (commands, options = {}) => {
                     winding: newWinding,
                     bounds: newBounds
                 });
-                console.log(`Path ${allPaths.length}: area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
+                debugLog(DEBUG_CATEGORY, `Path ${allPaths.length}: area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
                 // デバッグモード：個別パスを記録
                 if (debugPaths) {
                     debugPaths.push({
@@ -347,7 +352,7 @@ export const ot2pave = (commands, options = {}) => {
             default: {
                 // Exhaustive check - cast to string for logging
                 const unknownCmd = cmd;
-                console.warn(`Unknown command type: ${unknownCmd.type}`, cmd);
+                debugWarn(DEBUG_CATEGORY, `Unknown command type: ${unknownCmd.type}`, cmd);
                 break;
             }
         }
@@ -370,7 +375,7 @@ export const ot2pave = (commands, options = {}) => {
             winding: newWinding,
             bounds: newBounds
         });
-        console.log(`Path ${allPaths.length} (final close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
+        debugLog(DEBUG_CATEGORY, `Path ${allPaths.length} (final close): area=${newArea.toFixed(2)}, winding=${newWinding > 0 ? 'CCW' : 'CW'} (value: ${newWinding.toFixed(2)})`);
         // デバッグモード：個別パスを記録
         if (debugPaths) {
             debugPaths.push({
@@ -384,35 +389,35 @@ export const ot2pave = (commands, options = {}) => {
     }
     // パスが1つもない場合は空のパスを返す
     if (allPaths.length === 0) {
-        console.warn('⚠️ No paths found in commands');
+        debugWarn(DEBUG_CATEGORY, 'No paths found in commands');
         // External library interface (pave.js) - return values are typed but ESLint sees them as any
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return createEmptyPath();
     }
     // フェーズ2: 面積の大きい順にソート
-    console.log('\n=== PHASE 2: Sorting by area (largest first) ===');
+    debugLog(DEBUG_CATEGORY, '\n=== PHASE 2: Sorting by area (largest first) ===');
     allPaths.sort((a, b) => b.area - a.area);
     for (let i = 0; i < allPaths.length; i++) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const path = allPaths[i];
-        console.log(`Sorted[${i}]: area=${path.area.toFixed(2)}, winding=${path.winding > 0 ? 'CCW' : 'CW'} (value: ${path.winding.toFixed(2)})`);
+        debugLog(DEBUG_CATEGORY, `Sorted[${i}]: area=${path.area.toFixed(2)}, winding=${path.winding > 0 ? 'CCW' : 'CW'} (value: ${path.winding.toFixed(2)})`);
     }
     // フェーズ3: 最大パスをベースに設定（巻き方向に関わらず無条件でsolid扱い）
-    console.log('\n=== PHASE 3: Setting base path (largest) ===');
+    debugLog(DEBUG_CATEGORY, '\n=== PHASE 3: Setting base path (largest) ===');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const firstPath = allPaths[0];
     let result = firstPath.path;
     let resultWinding = firstPath.winding; // 結果パスの巻き方向を追跡
-    console.log(`Base path: area=${firstPath.area.toFixed(2)}, winding=${firstPath.winding > 0 ? 'CCW' : 'CW'} (value: ${firstPath.winding.toFixed(2)})`);
-    console.log('Note: Largest path is always treated as solid (base), regardless of winding direction');
+    debugLog(DEBUG_CATEGORY, `Base path: area=${firstPath.area.toFixed(2)}, winding=${firstPath.winding > 0 ? 'CCW' : 'CW'} (value: ${firstPath.winding.toFixed(2)})`);
+    debugLog(DEBUG_CATEGORY, 'Note: Largest path is always treated as solid (base), regardless of winding direction');
     // フェーズ4: 逐次統合
-    console.log('\n=== PHASE 4: Sequential integration ===');
+    debugLog(DEBUG_CATEGORY, '\n=== PHASE 4: Sequential integration ===');
     for (let i = 1; i < allPaths.length; i++) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const currentPath = allPaths[i];
-        console.log(`\n--- Processing path ${i}/${allPaths.length - 1} ---`);
-        console.log(`  Current path: area=${currentPath.area.toFixed(2)}, winding=${currentPath.winding > 0 ? 'CCW' : 'CW'} (value: ${currentPath.winding.toFixed(2)})`);
-        console.log(`  Result winding before operation: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)})`);
+        debugLog(DEBUG_CATEGORY, `\n--- Processing path ${i}/${allPaths.length - 1} ---`);
+        debugLog(DEBUG_CATEGORY, `  Current path: area=${currentPath.area.toFixed(2)}, winding=${currentPath.winding > 0 ? 'CCW' : 'CW'} (value: ${currentPath.winding.toFixed(2)})`);
+        debugLog(DEBUG_CATEGORY, `  Result winding before operation: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)})`);
         // 常に追跡している巻き方向を使用（元の巻き方向を保持）
         const largerOriginalWinding = resultWinding;
         const smallerOriginalWinding = currentPath.winding; // 常に元の巻き方向を使用
@@ -425,15 +430,15 @@ export const ot2pave = (commands, options = {}) => {
             result = subtractPaths(result, [currentPath.path]);
             // 結果が空でないかチェック
             if (!result?.curves || result.curves.length === 0) {
-                console.warn('⚠️ SUBTRACT resulted in empty path, keeping previous result');
+                debugWarn(DEBUG_CATEGORY, 'SUBTRACT resulted in empty path, keeping previous result');
                 result = before;
             }
             else {
                 // 結果の巻き方向を更新（Pave.jsがパスを正規化する可能性があるため）
                 resultWinding = getPathWindingDirection(result);
                 const resultArea = getPathArea(result);
-                console.log(`  Result winding after SUBTRACT: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`);
-                console.log(`  Result area: ${resultArea.toFixed(2)}, curves: ${result.curves ? result.curves.length : 0}`);
+                debugLog(DEBUG_CATEGORY, `  Result winding after SUBTRACT: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`);
+                debugLog(DEBUG_CATEGORY, `  Result area: ${resultArea.toFixed(2)}, curves: ${result.curves ? result.curves.length : 0}`);
             }
             /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
         }
@@ -445,7 +450,7 @@ export const ot2pave = (commands, options = {}) => {
             result = unitePaths([result, currentPath.path]);
             // 結果が空でないかチェック
             if (!result?.curves || result.curves.length === 0) {
-                console.warn('⚠️ UNITE resulted in empty path, keeping previous result');
+                debugWarn(DEBUG_CATEGORY, 'UNITE resulted in empty path, keeping previous result');
                 result = before;
             }
             else {
@@ -453,14 +458,14 @@ export const ot2pave = (commands, options = {}) => {
                 resultWinding = getPathWindingDirection(result);
                 const resultArea = getPathArea(result);
                 const beforeArea = getPathArea(before);
-                console.log(`  Result winding after UNITE: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`);
-                console.log(`  Result area: ${resultArea.toFixed(2)} (before: ${beforeArea.toFixed(2)}), curves: ${result.curves ? result.curves.length : 0}`);
+                debugLog(DEBUG_CATEGORY, `  Result winding after UNITE: ${resultWinding > 0 ? 'CCW' : 'CW'} (value: ${resultWinding.toFixed(2)}) ${beforeWinding !== resultWinding ? '(CHANGED from ' + (beforeWinding > 0 ? 'CCW' : 'CW') + ')' : ''}`);
+                debugLog(DEBUG_CATEGORY, `  Result area: ${resultArea.toFixed(2)} (before: ${beforeArea.toFixed(2)}), curves: ${result.curves ? result.curves.length : 0}`);
             }
             /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
         }
     }
-    console.log('\n=== FINAL RESULT ===');
-    console.log(`Final path curves: ${result.curves ? result.curves.length : 0}`);
+    debugLog(DEBUG_CATEGORY, '\n=== FINAL RESULT ===');
+    debugLog(DEBUG_CATEGORY, `Final path curves: ${result.curves ? result.curves.length : 0}`);
     return result;
 };
 //# sourceMappingURL=font-utils.js.map

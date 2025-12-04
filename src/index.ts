@@ -25,6 +25,9 @@ export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset, c
 // Font utilities
 export { ot2pave } from './utils/font-utils.js'
 
+// Debug utilities
+export { enableDebug, disableDebug, isDebugEnabled, initDebugFromEnv } from './utils/debug.js'
+
 // 型定義
 export type {
   Pave2RisoOptions,

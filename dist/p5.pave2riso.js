@@ -15,5 +15,7 @@ export { p2r } from './utils/factory.js';
 export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset, cleanupPaperResources } from './utils/pathfinder.js';
 // Font utilities
 export { ot2pave } from './utils/font-utils.js';
+// Debug utilities
+export { enableDebug, disableDebug, isDebugEnabled, initDebugFromEnv } from './utils/debug.js';
 export { normalizeFilterConfig } from './types/effects.js';
 //# sourceMappingURL=index.js.map

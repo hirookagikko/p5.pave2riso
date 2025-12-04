@@ -22,7 +22,23 @@ type AnyFilterConfig = FilterConfig | LegacyFilterConfig;
  */
 export declare const applyFilters: (graphics: p5.Graphics, filterConfig: AnyFilterConfig | AnyFilterConfig[] | null | undefined) => p5.Graphics;
 /**
+ * Check if the halftoneImage function is available
+ *
+ * @returns true if halftoneImage is available
+ */
+export declare const isHalftoneAvailable: () => boolean;
+/**
+ * Check if the ditherImage function is available
+ *
+ * @returns true if ditherImage is available
+ */
+export declare const isDitherAvailable: () => boolean;
+/**
  * Graphicsオブジェクトにハーフトーン/ディザーエフェクトを適用
+ *
+ * Requires p5.riso.js to be loaded for halftone and dither effects.
+ * If the required functions are not available and effects are requested,
+ * a warning is logged and the graphics object is returned unchanged.
  *
  * @param graphics - エフェクトを適用するGraphicsオブジェクト
  * @param halftone - ハーフトーン設定

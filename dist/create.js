@@ -66,6 +66,7 @@ export function createP5Pave2Riso(deps) {
         isPathsOverlap,
         ot2pave,
         resetDependencies: () => {
+            // Note: This affects ALL instances - use only in tests or when reinitializing
             resetPath();
             resetVec2();
             resetPaper();

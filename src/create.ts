@@ -78,6 +78,13 @@ export interface P5Pave2RisoInstance {
 
   /**
    * Reset injected dependencies (useful for testing)
+   *
+   * **Warning**: This clears the global dependency cache, which affects ALL
+   * instances created by `createP5Pave2Riso()`. Only call this in test cleanup
+   * or when you are certain no other code is using the library.
+   *
+   * After calling this, you must call `createP5Pave2Riso()` again before
+   * using any library functions.
    */
   resetDependencies: () => void
 }
@@ -137,6 +144,7 @@ export function createP5Pave2Riso(deps: P5Pave2RisoDeps): P5Pave2RisoInstance {
     isPathsOverlap,
     ot2pave,
     resetDependencies: (): void => {
+      // Note: This affects ALL instances - use only in tests or when reinitializing
       resetPath()
       resetVec2()
       resetPaper()

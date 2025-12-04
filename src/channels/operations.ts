@@ -62,7 +62,29 @@ export const applyFilters = (
 }
 
 /**
+ * Check if the halftoneImage function is available
+ *
+ * @returns true if halftoneImage is available
+ */
+export const isHalftoneAvailable = (): boolean => {
+  return typeof window !== 'undefined' && typeof window.halftoneImage === 'function'
+}
+
+/**
+ * Check if the ditherImage function is available
+ *
+ * @returns true if ditherImage is available
+ */
+export const isDitherAvailable = (): boolean => {
+  return typeof window !== 'undefined' && typeof window.ditherImage === 'function'
+}
+
+/**
  * Graphicsオブジェクトにハーフトーン/ディザーエフェクトを適用
+ *
+ * Requires p5.riso.js to be loaded for halftone and dither effects.
+ * If the required functions are not available and effects are requested,
+ * a warning is logged and the graphics object is returned unchanged.
  *
  * @param graphics - エフェクトを適用するGraphicsオブジェクト
  * @param halftone - ハーフトーン設定
@@ -77,15 +99,29 @@ export const applyEffects = (
   let result = graphics
 
   // ハーフトーンエフェクト
-  if (halftone && typeof window.halftoneImage === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    result = window.halftoneImage(result, ...halftone.halftoneArgs)
+  if (halftone) {
+    if (typeof window !== 'undefined' && typeof window.halftoneImage === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      result = window.halftoneImage(result, ...halftone.halftoneArgs)
+    } else {
+      console.warn(
+        'p5.pave2riso: halftone effect requested but halftoneImage() is not available. ' +
+        'Make sure p5.riso.js is loaded.'
+      )
+    }
   }
 
   // ディザーエフェクト
-  if (dither && typeof window.ditherImage === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    result = window.ditherImage(result, ...dither.ditherArgs)
+  if (dither) {
+    if (typeof window !== 'undefined' && typeof window.ditherImage === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      result = window.ditherImage(result, ...dither.ditherArgs)
+    } else {
+      console.warn(
+        'p5.pave2riso: dither effect requested but ditherImage() is not available. ' +
+        'Make sure p5.riso.js is loaded.'
+      )
+    }
   }
 
   return result
