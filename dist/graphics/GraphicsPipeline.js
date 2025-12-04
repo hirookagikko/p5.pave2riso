@@ -16,11 +16,11 @@ export class GraphicsPipeline {
         this.options = options;
         // Pave.jsのPath.bounds()を使用してパスの境界を取得
         this.pathBounds = getPathBounds(options.path);
-        // vec2を使用して位置とサイズを計算
+        // vec2を使用して位置とサイズを計算（整数化してp5.jsのcopy()エラーを防止）
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-        this.gPos = createVec2(this.pathBounds[0][0], this.pathBounds[0][1]);
+        this.gPos = createVec2(Math.floor(this.pathBounds[0][0]), Math.floor(this.pathBounds[0][1]));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-        this.gSize = createVec2(this.pathBounds[1][0] - this.pathBounds[0][0], this.pathBounds[1][1] - this.pathBounds[0][1]);
+        this.gSize = createVec2(Math.ceil(this.pathBounds[1][0] - this.pathBounds[0][0]), Math.ceil(this.pathBounds[1][1] - this.pathBounds[0][1]));
         // ベースGraphicsの作成
         this.baseG = createGraphics(options.canvasSize[0], options.canvasSize[1]);
         this.baseG.pixelDensity(1);

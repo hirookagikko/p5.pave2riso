@@ -4,6 +4,7 @@
 import { ensurePTNAvailable, applyFilters, applyEffects } from '../../channels/operations.js';
 import { degreesToRadians } from '../../utils/angleConverter.js';
 import { createInkDepth } from '../../utils/inkDepth.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
 /**
  * strokeCap文字列をp5.js定数に変換
  */
@@ -80,6 +81,8 @@ export const renderPatternStroke = (stroke, pipeline) => {
     const options = pipeline.getOptions();
     const { channels } = options;
     const path = options.path;
+    // トップレベルとstroke内のエフェクトをマージ（stroke内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: stroke.filter, halftone: stroke.halftone, dither: stroke.dither });
     // パス境界 + strokeWeight でグラフィックスサイズを計算
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();
@@ -138,21 +141,21 @@ export const renderPatternStroke = (stroke, pipeline) => {
     // エフェクト適用
     let finalPatG = patG;
     const { canvasSize } = options;
-    if (stroke.filter) {
-        finalPatG = applyFilters(finalPatG, stroke.filter);
+    if (filter) {
+        finalPatG = applyFilters(finalPatG, filter);
     }
     // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
     // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
     let drawPosX = gPosX;
     let drawPosY = gPosY;
-    if (stroke.halftone || stroke.dither) {
+    if (halftone || dither) {
         const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
         const offsetX = Math.floor((diagonal - canvasSize[0]) / 2);
         const offsetY = Math.floor((diagonal - canvasSize[1]) / 2);
         const fullG = pipeline.createGraphics(diagonal, diagonal);
         fullG.background(255);
         fullG.image(finalPatG, gPosX + offsetX, gPosY + offsetY);
-        finalPatG = applyEffects(fullG, stroke.halftone, stroke.dither);
+        finalPatG = applyEffects(fullG, halftone, dither);
         drawPosX = -offsetX;
         drawPosY = -offsetY;
     }

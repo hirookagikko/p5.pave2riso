@@ -23,8 +23,12 @@ export const applyFilters = (
     const requiresArgs = ['posterize', 'blur'].includes(f.filterType)
 
     if (requiresArgs && f.filterArgs) {
+      // blur引数を整数化してp5.jsのcopy()エラーを防止
+      const args = f.filterType === 'blur'
+        ? f.filterArgs.map(arg => Math.round(arg))
+        : f.filterArgs
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      graphics.filter(f.filterType, ...f.filterArgs)
+      graphics.filter(f.filterType, ...args)
     } else {
       graphics.filter(f.filterType)
     }

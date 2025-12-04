@@ -1,6 +1,7 @@
 /**
  * Fill設定のDiscriminated Union型定義
  */
+import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js';
 /**
  * グラデーションタイプ
  */
@@ -52,6 +53,18 @@ export interface SolidFillConfig {
      * 各チャンネルのインク濃度（0-100）
      */
     channelVals: number[];
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * パターンFill設定
@@ -77,6 +90,18 @@ export interface PatternFillConfig {
      * 各チャンネルのインク濃度（0-100）
      */
     channelVals: number[];
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * グラデーションFill設定
@@ -95,6 +120,18 @@ export interface GradientFillConfig {
      * カラーストップ
      */
     colorStops: ColorStop[];
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * 画像Fill設定
@@ -133,6 +170,18 @@ export interface ImageFillConfig {
      * 各チャンネルのインク濃度（0-100）
      */
     channelVals?: number[];
+    /**
+     * フィルター設定
+     */
+    filter?: FilterConfig | FilterConfig[] | null;
+    /**
+     * ハーフトーン設定
+     */
+    halftone?: HalftoneConfig | null;
+    /**
+     * ディザー設定
+     */
+    dither?: DitherConfig | null;
 }
 /**
  * Fill設定のDiscriminated Union

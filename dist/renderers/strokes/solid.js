@@ -3,6 +3,7 @@
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects } from '../../channels/operations.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
 /**
  * strokeCap文字列をp5.js定数に変換
  */
@@ -43,12 +44,14 @@ export const renderSolidStroke = (stroke, pipeline) => {
     const options = pipeline.getOptions();
     const { channels, canvasSize } = options;
     const path = options.path;
+    // トップレベルとstroke内のエフェクトをマージ（stroke内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: stroke.filter, halftone: stroke.halftone, dither: stroke.dither });
     // エフェクトが指定されているかチェック
-    const hasEffects = stroke.filter || stroke.halftone || stroke.dither;
+    const hasEffects = filter || halftone || dither;
     if (hasEffects) {
         // エフェクトあり: グラフィックスバッファ経由で処理
         // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
-        const usesDiagonalBuffer = stroke.halftone || stroke.dither;
+        const usesDiagonalBuffer = halftone || dither;
         const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
         const bufferSize = usesDiagonalBuffer ? diagonal : canvasSize[0];
         const bufferHeight = usesDiagonalBuffer ? diagonal : canvasSize[1];
@@ -73,9 +76,9 @@ export const renderSolidStroke = (stroke, pipeline) => {
             strokeG.drawingContext.restore();
         }
         // フィルター適用
-        strokeG = applyFilters(strokeG, stroke.filter);
+        strokeG = applyFilters(strokeG, filter);
         // ハーフトーン/ディザー適用
-        strokeG = applyEffects(strokeG, stroke.halftone, stroke.dither);
+        strokeG = applyEffects(strokeG, halftone, dither);
         // 各チャンネルに転送（対角線バッファ使用時は負のオフセットで描画）
         const drawX = usesDiagonalBuffer ? -offsetX : 0;
         const drawY = usesDiagonalBuffer ? -offsetY : 0;

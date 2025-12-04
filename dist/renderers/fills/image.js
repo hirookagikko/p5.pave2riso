@@ -4,6 +4,7 @@
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { normalizeAlignX, normalizeAlignY } from '../../utils/alignment.js';
 import { applyFilters, applyEffects } from '../../channels/operations.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
 /**
  * 画像フィット計算
  *
@@ -56,8 +57,10 @@ export const renderImageFill = (fill, pipeline) => {
     if (!img)
         return;
     const options = pipeline.getOptions();
-    const { channels, filter, halftone, dither, mode } = options;
+    const { channels, mode } = options;
     const path = options.path;
+    // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
     // Vec2 array index access - external library interface (linearly)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();

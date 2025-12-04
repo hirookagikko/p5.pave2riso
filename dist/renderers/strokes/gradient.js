@@ -3,6 +3,7 @@
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects } from '../../channels/operations.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
 /**
  * strokeCap文字列をp5.js定数に変換
  */
@@ -80,6 +81,8 @@ export const renderGradientStroke = (stroke, pipeline) => {
     const options = pipeline.getOptions();
     const { channels, mode } = options;
     const path = options.path;
+    // トップレベルとstroke内のエフェクトをマージ（stroke内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: stroke.filter, halftone: stroke.halftone, dither: stroke.dither });
     if (!stroke.colorStops)
         return;
     // パス境界 + strokeWeight でグラフィックスサイズを計算
@@ -125,7 +128,7 @@ export const renderGradientStroke = (stroke, pipeline) => {
     // 2. 各colorStopのグラデーション画像を先に作成
     const gradImages = [];
     // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
-    const usesDiagonalBuffer = stroke.halftone || stroke.dither;
+    const usesDiagonalBuffer = halftone || dither;
     const { canvasSize } = options;
     const diagonal = Math.ceil(Math.sqrt(canvasSize[0] ** 2 + canvasSize[1] ** 2));
     const diagonalOffsetX = usesDiagonalBuffer ? Math.floor((diagonal - canvasSize[0]) / 2) : 0;
@@ -198,8 +201,8 @@ export const renderGradientStroke = (stroke, pipeline) => {
         gradG.drawingContext.globalCompositeOperation = 'source-over';
         // エフェクト適用
         let finalGradG = gradG;
-        if (stroke.filter) {
-            finalGradG = applyFilters(finalGradG, stroke.filter);
+        if (filter) {
+            finalGradG = applyFilters(finalGradG, filter);
         }
         // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
         // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
@@ -207,7 +210,7 @@ export const renderGradientStroke = (stroke, pipeline) => {
             const fullG = pipeline.createGraphics(diagonal, diagonal);
             fullG.background(255);
             fullG.image(finalGradG, gPosX + diagonalOffsetX, gPosY + diagonalOffsetY);
-            finalGradG = applyEffects(fullG, stroke.halftone, stroke.dither);
+            finalGradG = applyEffects(fullG, halftone, dither);
         }
         gradImages.push({ gradG: finalGradG, channelIndex: colorStop.channel });
     });

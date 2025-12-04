@@ -6,6 +6,7 @@ import type { SolidFillConfig } from '../../types/fill.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { applyFilters, applyEffects } from '../../channels/operations.js'
+import { mergeEffects } from '../../utils/effect-merge.js'
 
 /**
  * ベタ塗りFillをレンダリング
@@ -18,8 +19,14 @@ export const renderSolidFill = (
   pipeline: GraphicsPipeline
 ): void => {
   const options = pipeline.getOptions()
-  const { channels, filter, halftone, dither, mode } = options
+  const { channels, mode } = options
   const path = options.path
+
+  // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+  const { filter, halftone, dither } = mergeEffects(
+    { filter: options.filter, halftone: options.halftone, dither: options.dither },
+    { filter: fill.filter, halftone: fill.halftone, dither: fill.dither }
+  )
 
   // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
   const { canvasSize } = options

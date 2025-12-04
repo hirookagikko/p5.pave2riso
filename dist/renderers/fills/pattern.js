@@ -4,6 +4,7 @@
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/operations.js';
 import { degreesToRadians } from '../../utils/angleConverter.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
 /**
  * パターンFillをレンダリング
  *
@@ -13,8 +14,10 @@ import { degreesToRadians } from '../../utils/angleConverter.js';
 export const renderPatternFill = (fill, pipeline) => {
     ensurePTNAvailable();
     const options = pipeline.getOptions();
-    const { channels, filter, halftone, dither, mode } = options;
+    const { channels, mode } = options;
     const path = options.path;
+    // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
     // Vec2 array index access - external library interface (linearly)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const gPos = pipeline.getPosition();
