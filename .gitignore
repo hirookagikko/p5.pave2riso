@@ -2,3 +2,7 @@ node_modules/
 *.log
 .DS_Store
 libraries/
+
+# Development plans (internal)
+docs/*.md
+!docs/README.md
