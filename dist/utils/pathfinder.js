@@ -6,7 +6,10 @@
  */
 import { createCircle, subtractPaths, unitePaths, getPathBounds, getPath } from './pave-wrapper.js';
 import { getPaper, getPaperOffset } from './paper-wrapper.js';
-// Note: paper and PaperOffset are accessed via paper-wrapper.ts which handles DI and global fallback
+// External dependencies for PathOffset (loaded via CDN or via DI)
+// paper.js 0.12.4: https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm
+// paperjs-offset 1.0.8: https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm
+// Types are imported from ../types/paper.js
 /**
  * Type guard to check if a path has curves
  */
@@ -267,11 +270,8 @@ function ensurePaperInitialized() {
  * ```
  */
 export function cleanupPaperResources() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const paperInstance = getPaper();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (paperInstance?.project) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         paperInstance.project.clear();
     }
     paperCanvas = null;
@@ -304,32 +304,18 @@ function paveToPaper(pavePath) {
             const child = imported.children[0];
             if (child) {
                 // Clone the path before removing the parent to preserve it
-                const cloneMethod = child.clone;
-                if (typeof cloneMethod === 'function') {
-                    resultPath = cloneMethod.call(child);
-                }
-                else {
-                    resultPath = child;
-                }
+                resultPath = child.clone();
             }
         }
-        else if ('firstChild' in imported && imported.firstChild) {
-            const cloneMethod = imported.firstChild.clone;
-            if (typeof cloneMethod === 'function') {
-                resultPath = cloneMethod.call(imported.firstChild);
-            }
-            else {
-                resultPath = imported.firstChild;
-            }
+        else if (imported.firstChild) {
+            resultPath = imported.firstChild.clone();
         }
         else {
             resultPath = imported;
         }
         // Remove the imported group from the project to avoid memory leaks
         // (the cloned path is now independent)
-        if (typeof imported.remove === 'function') {
-            imported.remove();
-        }
+        imported.remove();
         return resultPath;
     }
     catch (e) {

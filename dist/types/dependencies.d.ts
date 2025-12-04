@@ -8,6 +8,7 @@
  */
 import type { PavePathStatic } from './pave.js';
 import type { Vec2Static } from './linearly.js';
+import type { PaperInstance, PaperOffsetStatic } from './paper.js';
 /**
  * Dependencies required by p5.pave2riso
  *
@@ -38,11 +39,11 @@ export interface P5Pave2RisoDeps {
      * Paper.js paper object (optional)
      * Required only for PathOffset functionality
      */
-    paper?: unknown;
+    paper?: PaperInstance;
     /**
      * PaperOffset library (optional)
      * Required only for PathOffset functionality
      */
-    PaperOffset?: unknown;
+    PaperOffset?: PaperOffsetStatic;
 }
 //# sourceMappingURL=dependencies.d.ts.map

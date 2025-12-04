@@ -7,30 +7,31 @@
  * @module utils/paper-wrapper
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { PaperInstance, PaperOffsetStatic } from '../types/paper.js'
 
 // Global declarations for fallback (backward compatibility)
-declare const paper: any
-declare const PaperOffset: any
+// These are untyped because we can't control what's on the global scope
+declare const paper: PaperInstance | undefined
+declare const PaperOffset: PaperOffsetStatic | undefined
 
 /**
  * Cached paper instance for dependency injection
  * @internal
  */
-let cachedPaper: any = null
+let cachedPaper: PaperInstance | null = null
 
 /**
  * Cached PaperOffset instance for dependency injection
  * @internal
  */
-let cachedPaperOffset: any = null
+let cachedPaperOffset: PaperOffsetStatic | null = null
 
 /**
  * Inject paper dependency
  *
  * @param p - paper instance from paper.js
  */
-export function setPaper(p: any): void {
+export function setPaper(p: PaperInstance): void {
   cachedPaper = p
 }
 
@@ -46,7 +47,7 @@ export function resetPaper(): void {
  *
  * @param po - PaperOffset instance from paperjs-offset
  */
-export function setPaperOffset(po: any): void {
+export function setPaperOffset(po: PaperOffsetStatic): void {
   cachedPaperOffset = po
 }
 
@@ -66,7 +67,7 @@ export function resetPaperOffset(): void {
  *
  * @returns paper instance or undefined if not available
  */
-export function getPaper(): any {
+export function getPaper(): PaperInstance | undefined {
   if (cachedPaper) return cachedPaper
   if (typeof paper !== 'undefined') return paper
   return undefined
@@ -81,7 +82,7 @@ export function getPaper(): any {
  *
  * @returns PaperOffset instance or undefined if not available
  */
-export function getPaperOffset(): any {
+export function getPaperOffset(): PaperOffsetStatic | undefined {
   if (cachedPaperOffset) return cachedPaperOffset
   if (typeof PaperOffset !== 'undefined') return PaperOffset
   return undefined

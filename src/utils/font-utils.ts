@@ -451,9 +451,12 @@ export const ot2pave = (commands: OTCommand[], options: Ot2paveOptions = {}): Pa
           ))
         }
         break
-      default:
-        console.warn(`Unknown command type: ${cmd.type}`, cmd)
+      default: {
+        // Exhaustive check - cast to string for logging
+        const unknownCmd = cmd as { type: string }
+        console.warn(`Unknown command type: ${unknownCmd.type}`, cmd)
         break
+      }
     }
     // Update position only if the command has valid x, y coordinates
     if (cmd.x !== undefined && cmd.y !== undefined) {

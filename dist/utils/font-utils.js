@@ -344,9 +344,12 @@ export const ot2pave = (commands, options = {}) => {
                     tempPath.push(createQuadraticBezier(presentPos, [cmd.x1, cmd.y1], [cmd.x, cmd.y]));
                 }
                 break;
-            default:
-                console.warn(`Unknown command type: ${cmd.type}`, cmd);
+            default: {
+                // Exhaustive check - cast to string for logging
+                const unknownCmd = cmd;
+                console.warn(`Unknown command type: ${unknownCmd.type}`, cmd);
                 break;
+            }
         }
         // Update position only if the command has valid x, y coordinates
         if (cmd.x !== undefined && cmd.y !== undefined) {

@@ -6,12 +6,13 @@
  *
  * @module utils/paper-wrapper
  */
+import type { PaperInstance, PaperOffsetStatic } from '../types/paper.js';
 /**
  * Inject paper dependency
  *
  * @param p - paper instance from paper.js
  */
-export declare function setPaper(p: any): void;
+export declare function setPaper(p: PaperInstance): void;
 /**
  * Reset paper dependency to null
  */
@@ -21,7 +22,7 @@ export declare function resetPaper(): void;
  *
  * @param po - PaperOffset instance from paperjs-offset
  */
-export declare function setPaperOffset(po: any): void;
+export declare function setPaperOffset(po: PaperOffsetStatic): void;
 /**
  * Reset PaperOffset dependency to null
  */
@@ -35,7 +36,7 @@ export declare function resetPaperOffset(): void;
  *
  * @returns paper instance or undefined if not available
  */
-export declare function getPaper(): any;
+export declare function getPaper(): PaperInstance | undefined;
 /**
  * Get PaperOffset instance with dependency injection support
  *
@@ -45,5 +46,5 @@ export declare function getPaper(): any;
  *
  * @returns PaperOffset instance or undefined if not available
  */
-export declare function getPaperOffset(): any;
+export declare function getPaperOffset(): PaperOffsetStatic | undefined;
 //# sourceMappingURL=paper-wrapper.d.ts.map

@@ -6,6 +6,7 @@
  */
 
 import type { PavePath } from '../types/core.js'
+import type { PaperPath, PaperItem } from '../types/paper.js'
 import {
   createCircle,
   subtractPaths,
@@ -18,28 +19,7 @@ import { getPaper, getPaperOffset } from './paper-wrapper.js'
 // External dependencies for PathOffset (loaded via CDN or via DI)
 // paper.js 0.12.4: https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm
 // paperjs-offset 1.0.8: https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm
-
-// Type declarations for external dependencies
-interface PaperPoint {
-  x: number
-  y: number
-  isZero(): boolean
-}
-
-interface PaperSegment {
-  point: PaperPoint
-  handleIn: PaperPoint
-  handleOut: PaperPoint
-}
-
-interface PaperPath {
-  segments: PaperSegment[]
-  closed: boolean
-  curves?: unknown[]
-  children?: PaperPath[]
-}
-
-// Note: paper and PaperOffset are accessed via paper-wrapper.ts which handles DI and global fallback
+// Types are imported from ../types/paper.js
 
 /**
  * Type guard to check if a path has curves
@@ -312,11 +292,8 @@ function ensurePaperInitialized(): boolean {
  * ```
  */
 export function cleanupPaperResources(): void {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const paperInstance = getPaper()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (paperInstance?.project) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     paperInstance.project.clear()
   }
   paperCanvas = null
@@ -345,10 +322,7 @@ function paveToPaper(pavePath: PavePath): PaperPath | null {
     const svgString = `<svg><path d="${pathData}"/></svg>`
 
     // Use importSVG which properly initializes all path properties including curves
-    const imported = paperInstance.project.importSVG(svgString) as PaperPath & {
-      firstChild?: PaperPath
-      remove?: () => void
-    }
+    const imported: PaperItem = paperInstance.project.importSVG(svgString)
 
     // Get the actual path from the imported group
     let resultPath: PaperPath | null = null
@@ -358,29 +332,17 @@ function paveToPaper(pavePath: PavePath): PaperPath | null {
       const child = imported.children[0]
       if (child) {
         // Clone the path before removing the parent to preserve it
-        const cloneMethod = (child as unknown as { clone?: () => PaperPath }).clone
-        if (typeof cloneMethod === 'function') {
-          resultPath = cloneMethod.call(child)
-        } else {
-          resultPath = child
-        }
+        resultPath = child.clone()
       }
-    } else if ('firstChild' in imported && imported.firstChild) {
-      const cloneMethod = (imported.firstChild as unknown as { clone?: () => PaperPath }).clone
-      if (typeof cloneMethod === 'function') {
-        resultPath = cloneMethod.call(imported.firstChild)
-      } else {
-        resultPath = imported.firstChild
-      }
+    } else if (imported.firstChild) {
+      resultPath = imported.firstChild.clone()
     } else {
       resultPath = imported
     }
 
     // Remove the imported group from the project to avoid memory leaks
     // (the cloned path is now independent)
-    if (typeof imported.remove === 'function') {
-      imported.remove()
-    }
+    imported.remove()
 
     return resultPath
   } catch (e) {
