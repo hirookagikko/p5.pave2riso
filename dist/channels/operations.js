@@ -1,29 +1,45 @@
 /**
  * チャンネル操作ユーティリティ
  */
+import { normalizeFilterConfig } from '../types/effects.js';
 /**
  * Graphicsオブジェクトにフィルターを適用
+ *
+ * 新形式（Discriminated Union）と旧形式（filterArgs）の両方に対応
  *
  * @param graphics - フィルターを適用するGraphicsオブジェクト
  * @param filterConfig - フィルター設定（配列または単一）
  * @returns フィルター適用後のGraphicsオブジェクト（チェーン用）
+ *
+ * @example
+ * // 新形式（推奨）
+ * applyFilters(g, { filterType: 'posterize', levels: 4 })
+ * applyFilters(g, { filterType: 'blur', radius: 3 })
+ *
+ * // 旧形式（後方互換）
+ * applyFilters(g, { filterType: 'posterize', filterArgs: [4] })
  */
 export const applyFilters = (graphics, filterConfig) => {
     if (!filterConfig)
         return graphics;
     const filters = Array.isArray(filterConfig) ? filterConfig : [filterConfig];
-    filters.forEach((f) => {
-        const requiresArgs = ['posterize', 'blur'].includes(f.filterType);
-        if (requiresArgs && f.filterArgs) {
-            // blur引数を整数化してp5.jsのcopy()エラーを防止
-            const args = f.filterType === 'blur'
-                ? f.filterArgs.map(arg => Math.round(arg))
-                : f.filterArgs;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            graphics.filter(f.filterType, ...args);
-        }
-        else {
-            graphics.filter(f.filterType);
+    filters.forEach((rawFilter) => {
+        // Discriminated Union形式に正規化
+        const f = normalizeFilterConfig(rawFilter);
+        switch (f.filterType) {
+            case 'posterize':
+                graphics.filter(f.filterType, f.levels);
+                break;
+            case 'blur':
+                // blur引数を整数化してp5.jsのcopy()エラーを防止
+                graphics.filter(f.filterType, Math.round(f.radius ?? 4));
+                break;
+            case 'threshold':
+                graphics.filter(f.filterType, f.threshold ?? 0.5);
+                break;
+            default:
+                // gray, opaque, invert, dilate, erode - 引数なし
+                graphics.filter(f.filterType);
         }
     });
     return graphics;

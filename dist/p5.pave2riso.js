@@ -12,7 +12,8 @@ export { createInkDepth } from './utils/inkDepth.js';
 // Factory function
 export { p2r } from './utils/factory.js';
 // Pathfinder utilities
-export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset } from './utils/pathfinder.js';
+export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset, cleanupPaperResources } from './utils/pathfinder.js';
 // Font utilities
 export { ot2pave } from './utils/font-utils.js';
+export { normalizeFilterConfig } from './types/effects.js';
 //# sourceMappingURL=index.js.map

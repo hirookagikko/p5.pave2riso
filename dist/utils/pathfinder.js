@@ -238,6 +238,7 @@ export const isPathsOverlap = (pathA, pathB) => {
 // ============================================
 // Internal state for Paper.js initialization
 let paperInitialized = false;
+let paperCanvas = null;
 /**
  * Initialize Paper.js if not already initialized
  */
@@ -247,10 +248,34 @@ function ensurePaperInitialized() {
         return false;
     }
     if (!paperInitialized) {
-        paperInstance.setup(document.createElement('canvas'));
+        paperCanvas = document.createElement('canvas');
+        paperInstance.setup(paperCanvas);
         paperInitialized = true;
     }
     return true;
+}
+/**
+ * Cleanup Paper.js resources to prevent memory leaks
+ *
+ * Should be called when PathOffset operations are no longer needed,
+ * or periodically during long-running sessions.
+ *
+ * @example
+ * ```typescript
+ * // After completing path operations
+ * cleanupPaperResources()
+ * ```
+ */
+export function cleanupPaperResources() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const paperInstance = getPaper();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (paperInstance?.project) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        paperInstance.project.clear();
+    }
+    paperCanvas = null;
+    paperInitialized = false;
 }
 /**
  * Convert Pave.js path to Paper.js 0.12.4 path

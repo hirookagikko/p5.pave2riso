@@ -87,6 +87,19 @@ export declare const PathExclude: (pathA: PavePath, pathB: PavePath) => PavePath
  */
 export declare const isPathsOverlap: (pathA: PavePath, pathB: PavePath) => boolean;
 /**
+ * Cleanup Paper.js resources to prevent memory leaks
+ *
+ * Should be called when PathOffset operations are no longer needed,
+ * or periodically during long-running sessions.
+ *
+ * @example
+ * ```typescript
+ * // After completing path operations
+ * cleanupPaperResources()
+ * ```
+ */
+export declare function cleanupPaperResources(): void;
+/**
  * Offset a path by a given distance using paperjs-offset
  *
  * This function works around Pave.js's Path.offset issue by:

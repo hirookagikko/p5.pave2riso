@@ -53,9 +53,9 @@ const getPathWindingDirection = (path) => {
                 }
                 else if (segment && typeof segment === 'object') {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    x1 = (segment).x ?? (segment)[0];
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    y1 = (segment).y ?? (segment)[1];
+                    const seg = segment;
+                    x1 = seg.x ?? seg[0];
+                    y1 = seg.y ?? seg[1];
                 }
                 if (Array.isArray(nextSegment) && nextSegment.length >= 2) {
                     x2 = nextSegment[0];
@@ -63,9 +63,9 @@ const getPathWindingDirection = (path) => {
                 }
                 else if (nextSegment && typeof nextSegment === 'object') {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    x2 = (nextSegment).x ?? (nextSegment)[0];
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    y2 = (nextSegment).y ?? (nextSegment)[1];
+                    const nextSeg = nextSegment;
+                    x2 = nextSeg.x ?? nextSeg[0];
+                    y2 = nextSeg.y ?? nextSeg[1];
                 }
                 if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
                     signedArea += (x1 * y2 - x2 * y1);

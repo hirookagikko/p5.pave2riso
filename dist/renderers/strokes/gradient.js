@@ -98,34 +98,7 @@ export const renderGradientStroke = (stroke, pipeline) => {
     const gWidth = (gSize[0]) + stroke.strokeWeight * 2;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const gHeight = (gSize[1]) + stroke.strokeWeight * 2;
-    // 1. cutout/joinモード用のソリッドストローク画像を作成（1回だけ）
-    // gradientは特定チャンネルにしか描画されないため、前処理のeraseでは
-    // 描画されないチャンネルが透明のまま残り背景が透けてしまう
-    // そのため、cutout/join両方ともソリッド形状でREMOVEする
-    let solidG = null;
-    if (mode === 'cutout' || mode === 'join') {
-        solidG = pipeline.createGraphics(gWidth, gHeight);
-        solidG.background(255);
-        solidG.noFill();
-        solidG.stroke(0); // 100%黒（フルインク）
-        solidG.strokeWeight(stroke.strokeWeight);
-        solidG.strokeCap(getStrokeCapConstant(stroke.strokeCap));
-        solidG.strokeJoin(getStrokeJoinConstant(stroke.strokeJoin));
-        solidG.drawingContext.lineCap = getCanvasLineCap(stroke.strokeCap);
-        solidG.drawingContext.lineJoin = getCanvasLineJoin(stroke.strokeJoin);
-        if (stroke.dashArgs) {
-            solidG.drawingContext.setLineDash(stroke.dashArgs);
-        }
-        solidG.drawingContext.save();
-        solidG.drawingContext.translate(-gPosX, -gPosY);
-        pipeline.drawPathToCanvas(path, solidG.drawingContext);
-        solidG.drawingContext.stroke();
-        solidG.drawingContext.restore();
-        if (stroke.dashArgs) {
-            solidG.drawingContext.setLineDash([]);
-        }
-    }
-    // 2. 各colorStopのグラデーション画像を先に作成
+    // 各colorStopのグラデーション画像を作成
     const gradImages = [];
     // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
     const usesDiagonalBuffer = halftone || dither;

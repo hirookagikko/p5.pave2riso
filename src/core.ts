@@ -63,7 +63,10 @@ export const pave2Riso = (options: Pave2RisoOptions): void => {
           break
         default: {
           const _exhaustiveCheck: never = options.fill
-          console.warn(`Unknown fill type: ${(_exhaustiveCheck as { type: string }).type}`)
+          throw new TypeError(
+            `Unknown fill type: ${(_exhaustiveCheck as { type: string }).type}. ` +
+            `Supported types: solid, pattern, gradient, image`
+          )
         }
       }
     }
@@ -134,7 +137,10 @@ export const pave2Riso = (options: Pave2RisoOptions): void => {
           break
         default: {
           const _exhaustiveCheck: never = options.stroke
-          console.warn(`Unknown stroke type: ${(_exhaustiveCheck as { type: string }).type}`)
+          throw new TypeError(
+            `Unknown stroke type: ${(_exhaustiveCheck as { type: string }).type}. ` +
+            `Supported types: solid, dashed, pattern, gradient`
+          )
         }
       }
     }

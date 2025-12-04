@@ -20,13 +20,23 @@ export { p2r } from './utils/factory.js'
 export type { P2RContext, P2ROptions } from './utils/factory.js'
 
 // Pathfinder utilities
-export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset } from './utils/pathfinder.js'
+export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset, cleanupPaperResources } from './utils/pathfinder.js'
 
 // Font utilities
 export { ot2pave } from './utils/font-utils.js'
 
 // 型定義
-export type { Pave2RisoOptions, RenderMode, PavePath } from './types/core.js'
+export type {
+  Pave2RisoOptions,
+  RenderMode,
+  PavePath,
+  PaveCurve,
+  PaveCurveSegment,
+  PaveCurveVertex,
+  PaveCurveVertexXY,
+  PaveCurvePoint,
+  PaveCurveElement
+} from './types/core.js'
 export type {
   FillConfig,
   SolidFillConfig,
@@ -49,4 +59,15 @@ export type {
   StrokeCap,
   StrokeJoin
 } from './types/stroke.js'
-export type { FilterConfig, HalftoneConfig, DitherConfig, FilterType } from './types/effects.js'
+export type {
+  FilterConfig,
+  PosterizeFilter,
+  BlurFilter,
+  ThresholdFilter,
+  NoArgFilter,
+  LegacyFilterConfig,
+  HalftoneConfig,
+  DitherConfig,
+  FilterType
+} from './types/effects.js'
+export { normalizeFilterConfig } from './types/effects.js'

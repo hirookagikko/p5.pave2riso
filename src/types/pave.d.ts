@@ -5,12 +5,15 @@
  * we define the subset of APIs used in this project as global declarations.
  */
 
+import type { PaveCurve } from './core.js'
+
 declare global {
   /**
    * Pave path object
    */
   interface PavePath {
-    curves?: unknown[]
+    /** パスを構成するカーブセグメントの配列 */
+    curves?: PaveCurve[]
     [key: string]: unknown
   }
 

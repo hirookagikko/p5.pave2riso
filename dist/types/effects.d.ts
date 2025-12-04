@@ -6,18 +6,72 @@
  */
 export type FilterType = 'posterize' | 'blur' | 'threshold' | 'gray' | 'opaque' | 'invert' | 'dilate' | 'erode';
 /**
- * フィルター設定
+ * Posterizeフィルター設定
+ * 画像の色数を削減する
  */
-export interface FilterConfig {
-    /**
-     * フィルタータイプ
-     */
+export interface PosterizeFilter {
+    filterType: 'posterize';
+    /** 色のレベル数（2-255） */
+    levels: number;
+}
+/**
+ * Blurフィルター設定
+ * ガウシアンブラーを適用する
+ */
+export interface BlurFilter {
+    filterType: 'blur';
+    /** ブラー半径（ピクセル、デフォルト: 4） */
+    radius?: number;
+}
+/**
+ * Thresholdフィルター設定
+ * 指定したしきい値で二値化する
+ */
+export interface ThresholdFilter {
+    filterType: 'threshold';
+    /** しきい値（0.0-1.0、デフォルト: 0.5） */
+    threshold?: number;
+}
+/**
+ * 引数なしフィルター設定
+ * gray, opaque, invert, dilate, erode
+ */
+export interface NoArgFilter {
+    filterType: 'gray' | 'opaque' | 'invert' | 'dilate' | 'erode';
+}
+/**
+ * フィルター設定（Discriminated Union）
+ *
+ * 各フィルタータイプに応じた引数を型安全に指定できる
+ *
+ * @example
+ * // Posterize: 色数を削減
+ * { filterType: 'posterize', levels: 4 }
+ *
+ * // Blur: ぼかし
+ * { filterType: 'blur', radius: 3 }
+ *
+ * // Threshold: 二値化
+ * { filterType: 'threshold', threshold: 0.5 }
+ *
+ * // 引数なしフィルター
+ * { filterType: 'gray' }
+ * { filterType: 'invert' }
+ */
+export type FilterConfig = PosterizeFilter | BlurFilter | ThresholdFilter | NoArgFilter;
+/**
+ * Legacy互換: 旧形式のフィルター設定
+ * @deprecated FilterConfig Discriminated Unionを使用してください
+ */
+export interface LegacyFilterConfig {
     filterType: FilterType;
-    /**
-     * フィルター引数（posterize、blurなど一部のフィルターで必要）
-     */
     filterArgs?: number[];
 }
+/**
+ * Legacy形式からDiscriminated Union形式への変換
+ * 後方互換性のために使用
+ */
+export declare const normalizeFilterConfig: (config: FilterConfig | LegacyFilterConfig) => FilterConfig;
 /**
  * ハーフトーン設定
  */

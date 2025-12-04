@@ -4,6 +4,8 @@
 /**
  * インク濃度パーセンテージ（0-100）をp5.jsカラー値（0-255）に変換
  *
+ * p5.jsのグローバルmap関数に依存せず、直接線形補間を実装
+ *
  * @param value - インク濃度パーセンテージ（0-100）
  * @returns p5.jsカラー値（0-255）
  *
@@ -13,9 +15,10 @@
  * const none = createInkDepth(0)   // 0
  */
 export const createInkDepth = (value) => {
-    // p5.jsのmap関数を使用: map(value, start1, stop1, start2, stop2)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    return Math.round(map(value, 0, 100, 0, 255));
+    // 線形補間: (value / 100) * 255
+    // p5.jsのmap(value, 0, 100, 0, 255)と同等
+    const mapped = (value / 100) * 255;
+    return Math.round(mapped);
 };
 /**
  * InkDepth型からnumber型への変換（安全な型キャスト）
