@@ -16,6 +16,10 @@ import { renderSolidStroke } from './renderers/strokes/solid.js'
 import { renderDashedStroke } from './renderers/strokes/dashed.js'
 import { renderPatternStroke } from './renderers/strokes/pattern.js'
 import { renderGradientStroke } from './renderers/strokes/gradient.js'
+import {
+  shouldApplyStrokePreprocess,
+  extractStrokePreprocessParams
+} from './utils/stroke-preprocess.js'
 
 /**
  * Pave pathをRisographチャンネルに変換
@@ -73,52 +77,17 @@ export const pave2Riso = (options: Pave2RisoOptions): void => {
 
     // Stroke処理
     if (options.stroke) {
-      // cutout/joinモードの前処理
-      if (options.stroke.type === 'dashed') {
+      // cutout/joinモードの前処理（ヘルパー関数で判定・抽出）
+      if (shouldApplyStrokePreprocess(options.stroke.type, options.mode)) {
+        const params = extractStrokePreprocessParams(options.stroke)
         applyStrokeModePreprocess(
           options.mode,
           pipeline,
-          options.stroke.strokeWeight,
-          options.stroke.dashArgs,
-          options.stroke.strokeCap,
-          options.stroke.strokeJoin
+          params.strokeWeight,
+          params.dashArgs,
+          params.strokeCap,
+          params.strokeJoin
         )
-      } else if (options.stroke.type === 'solid') {
-        applyStrokeModePreprocess(
-          options.mode,
-          pipeline,
-          options.stroke.strokeWeight,
-          undefined,  // dashArgs
-          options.stroke.strokeCap,
-          options.stroke.strokeJoin
-        )
-      } else if (options.stroke.type === 'pattern') {
-        // joinモードの場合はパターンレンダラー内で処理（柄だけを消去）
-        // cutoutモードの場合のみ前処理で消去
-        if (options.mode !== 'join') {
-          applyStrokeModePreprocess(
-            options.mode,
-            pipeline,
-            options.stroke.strokeWeight,
-            options.stroke.dashArgs,
-            options.stroke.strokeCap,
-            options.stroke.strokeJoin
-          )
-        }
-      } else if (options.stroke.type === 'gradient') {
-        // cutoutモード: patternと同様に前処理でerase
-        // （透明部分はレンダラー内でsolidGを使って白で埋める）
-        if (options.mode === 'cutout') {
-          applyStrokeModePreprocess(
-            options.mode,
-            pipeline,
-            options.stroke.strokeWeight,
-            options.stroke.dashArgs,
-            options.stroke.strokeCap,
-            options.stroke.strokeJoin
-          )
-        }
-        // joinモード: レンダラー内でgradGを使ってREMOVE
       }
 
       // Strokeレンダリング
