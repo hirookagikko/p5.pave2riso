@@ -9,10 +9,19 @@ import { createVec2 } from '../utils/vec2-wrapper.js';
  * GraphicsPipelineクラス
  *
  * Graphics生成、クリッピング、モード適用、クリーンアップを管理
+ *
+ * リソース管理:
+ * - cleanup()メソッドで全てのGraphicsリソースを解放
+ * - try-finallyパターンで使用することを推奨
+ * - cleanup()は冪等（複数回呼び出しても安全）
+ * - cleanup()後のcreateGraphics()呼び出しはエラー
+ *
+ * NOTE: ES2023+ Symbol.dispose support planned for future TypeScript upgrade
  */
 export class GraphicsPipeline {
     constructor(options) {
         this.graphicsToCleanup = [];
+        this.disposed = false;
         this.options = options;
         // Pave.jsのPath.bounds()を使用してパスの境界を取得
         this.pathBounds = getPathBounds(options.path);
@@ -33,8 +42,12 @@ export class GraphicsPipeline {
      * @param width - 幅
      * @param height - 高さ
      * @returns 新しいGraphicsオブジェクト
+     * @throws {Error} cleanup()後に呼び出された場合
      */
     createGraphics(width, height) {
+        if (this.disposed) {
+            throw new Error('GraphicsPipeline has been disposed. Cannot create new graphics.');
+        }
         const g = createGraphics(width, height);
         g.pixelDensity(1);
         this.graphicsToCleanup.push(g);
@@ -66,13 +79,28 @@ export class GraphicsPipeline {
     }
     /**
      * 全てのGraphicsリソースをクリーンアップ
+     *
+     * 複数回呼び出しても安全（冪等）
+     * cleanup()後のcreateGraphics()呼び出しはエラーになる
      */
     cleanup() {
+        if (this.disposed) {
+            return; // Already disposed, no-op
+        }
         this.graphicsToCleanup.forEach((g) => {
             if (g && typeof g.remove === 'function') {
                 g.remove();
             }
         });
+        // Clear array to prevent double-remove and allow GC
+        this.graphicsToCleanup = [];
+        this.disposed = true;
+    }
+    /**
+     * パイプラインが破棄済みかどうかを確認
+     */
+    isDisposed() {
+        return this.disposed;
     }
     /**
      * ゲッター

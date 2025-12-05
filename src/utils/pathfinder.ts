@@ -296,7 +296,20 @@ export function cleanupPaperResources(): void {
   if (paperInstance?.project) {
     paperInstance.project.clear()
   }
-  paperCanvas = null
+
+  // Explicitly release canvas memory by setting dimensions to 0
+  // This helps the browser reclaim GPU/memory resources
+  if (paperCanvas) {
+    paperCanvas.width = 0
+    paperCanvas.height = 0
+    // Clear any 2D context to release associated resources
+    const ctx = paperCanvas.getContext('2d')
+    if (ctx) {
+      ctx.clearRect(0, 0, 0, 0)
+    }
+    paperCanvas = null
+  }
+
   paperInitialized = false
 }
 

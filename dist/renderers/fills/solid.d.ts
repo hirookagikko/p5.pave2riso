@@ -1,5 +1,8 @@
 /**
  * ベタ塗りFillレンダラー
+ *
+ * Refactored to eliminate code duplication between JOIN mode and normal mode
+ * by extracting common patterns into helper functions.
  */
 import type { SolidFillConfig } from '../../types/fill.js';
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js';
