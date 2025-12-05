@@ -31,6 +31,28 @@ export interface PaperSegment {
 }
 
 /**
+ * A bezier curve between two segments in a Paper.js path
+ */
+export interface PaperCurve {
+  /** The first segment of the curve */
+  segment1: PaperSegment
+  /** The second segment of the curve */
+  segment2: PaperSegment
+  /** The first control point (absolute coordinates) */
+  point1: PaperPoint
+  /** The second control point (absolute coordinates) */
+  point2: PaperPoint
+  /** The handle at the first segment */
+  handle1: PaperPoint
+  /** The handle at the second segment */
+  handle2: PaperPoint
+  /** The length of the curve */
+  length: number
+  /** Whether the curve is linear (no handles) */
+  isLinear(): boolean
+}
+
+/**
  * Paper.js Path or CompoundPath
  * Represents a vector path that can be manipulated
  */
@@ -40,7 +62,7 @@ export interface PaperPath {
   /** Whether the path is closed */
   closed: boolean
   /** Array of curves (bezier segments) in the path */
-  curves?: unknown[]
+  curves?: PaperCurve[]
   /** Child paths (for CompoundPath) */
   children?: PaperPath[]
   /** First child path */

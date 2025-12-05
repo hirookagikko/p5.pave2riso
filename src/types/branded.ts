@@ -40,17 +40,20 @@ export type Percentage = Brand<number, 'Percentage'>
 export type PixelValue = Brand<number, 'PixelValue'>
 
 /**
- * Dash pattern tuple [lineLength, gapLength]
+ * Dash pattern tuple [lineLength, gapLength, ...]
  *
  * Represents a dashed line pattern with alternating line and gap segments.
- * Both values should be positive numbers in pixels.
+ * Minimum 2 values required. All values should be positive numbers in pixels.
+ * Pattern repeats: [line, gap, line, gap, ...]
  *
  * @example
  * ```typescript
- * const pattern: DashPattern = [10, 5]  // 10px line, 5px gap
+ * const simple: DashPattern = [10, 5]  // 10px line, 5px gap
+ * const complex: DashPattern = [10, 5, 2, 5]  // 10px line, 5px gap, 2px line, 5px gap
+ * const dotDash: DashPattern = [15, 5, 3, 5]  // long-short pattern
  * ```
  */
-export type DashPattern = [number, number]
+export type DashPattern = [number, number, ...number[]]
 
 /**
  * Create a Percentage value with runtime validation
