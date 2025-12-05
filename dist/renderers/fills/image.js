@@ -5,6 +5,7 @@ import { createInkDepth } from '../../utils/inkDepth.js';
 import { normalizeAlignX, normalizeAlignY } from '../../utils/alignment.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
 import { applyEffectPipeline } from '../shared/effect-pipeline.js';
+import { extractSize, extractPosition } from '../../utils/vec2-access.js';
 /**
  * 画像フィット計算
  *
@@ -61,20 +62,9 @@ export const renderImageFill = (fill, pipeline) => {
     const path = options.path;
     // トップレベルとfill内のエフェクトをマージ（fill内が優先）
     const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
-    // Vec2 array index access - external library interface (linearly)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const gPos = pipeline.getPosition();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const gSize = pipeline.getSize();
-    // Vec2 array index access - external library interface (linearly)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const tw = gSize[0];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const th = gSize[1];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const gPosX = gPos[0];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const gPosY = gPos[1];
+    // Vec2ヘルパーで座標を抽出
+    const { width: tw, height: th } = extractSize(pipeline);
+    const { x: gPosX, y: gPosY } = extractPosition(pipeline);
     const iw = img.width;
     const ih = img.height;
     // パラメータのデフォルト値

@@ -4,6 +4,7 @@
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
 import { applyEffectPipeline } from '../shared/effect-pipeline.js';
+import { extractSize, extractPosition } from '../../utils/vec2-access.js';
 /**
  * グラデーション方向から座標を計算
  *
@@ -46,11 +47,9 @@ export const renderGradientFill = (fill, pipeline) => {
     const path = options.path;
     // トップレベルとfill内のエフェクトをマージ（fill内が優先）
     const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
-    // Vec2 array index access - external library interface (linearly)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const gPos = pipeline.getPosition();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const gSize = pipeline.getSize();
+    // Vec2ヘルパーで座標を抽出
+    const { width: gSizeWidth, height: gSizeHeight } = extractSize(pipeline);
+    const { x: gPosX, y: gPosY } = extractPosition(pipeline);
     if (!fill.colorStops)
         return;
     fill.colorStops.forEach((colorStop) => {
@@ -59,15 +58,6 @@ export const renderGradientFill = (fill, pipeline) => {
             console.warn(`Invalid channel index: ${colorStop.channel}`);
             return;
         }
-        // Vec2 array index access - external library interface (linearly)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const gSizeWidth = gSize[0];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const gSizeHeight = gSize[1];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const gPosX = gPos[0];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const gPosY = gPos[1];
         // グラデーショングラフィックスの作成
         const gradBaseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
         const gradG = pipeline.createGraphics(gSizeWidth, gSizeHeight);

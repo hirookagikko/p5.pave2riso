@@ -13,6 +13,7 @@ import {
   getCanvasLineJoin
 } from '../../utils/stroke-style.js'
 import { applyEffectPipelineWithOffset } from '../shared/effect-pipeline.js'
+import { extractStrokeBounds } from '../../utils/vec2-access.js'
 
 /**
  * グラデーションStrokeをレンダリング
@@ -44,18 +45,10 @@ export const renderGradientStroke = (
   if (!stroke.colorStops) return
 
   // パス境界 + strokeWeight でグラフィックスサイズを計算
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const gPos = pipeline.getPosition()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const gSize = pipeline.getSize()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gPosX = gPos[0] - stroke.strokeWeight
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gPosY = gPos[1] - stroke.strokeWeight
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gWidth = (gSize[0]) + stroke.strokeWeight * 2
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const gHeight = (gSize[1]) + stroke.strokeWeight * 2
+  const { x: gPosX, y: gPosY, width: gWidth, height: gHeight } = extractStrokeBounds(
+    pipeline,
+    stroke.strokeWeight
+  )
 
   // 各colorStopのグラデーション画像を作成
   const gradImages: Array<{
