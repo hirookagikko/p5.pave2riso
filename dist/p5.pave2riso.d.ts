@@ -10,7 +10,7 @@ export { pave2Riso } from './core.js';
 export { createInkDepth } from './utils/inkDepth.js';
 export { p2r } from './utils/factory.js';
 export type { P2RContext, P2ROptions } from './utils/factory.js';
-export { PathIntersect, PathSubtract, PathExclude, isPathsOverlap, PathOffset, cleanupPaperResources } from './utils/pathfinder.js';
+export { PathIntersect, PathSubtract, PathUnite, PathExclude, isPathsOverlap, PathOffset, cleanupPaperResources } from './utils/pathfinder.js';
 export { ot2pave } from './utils/font-utils.js';
 export { enableDebug, disableDebug, isDebugEnabled, initDebugFromEnv } from './utils/debug.js';
 export type { Pave2RisoOptions, RenderMode, PavePath, PaveCurve, PaveCurveSegment, PaveCurveVertex, PaveCurveVertexXY, PaveCurvePoint, PaveCurveElement } from './types/core.js';

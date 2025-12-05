@@ -43,6 +43,10 @@ export interface P5Pave2RisoInstance {
      */
     PathSubtract: (pathA: PavePath, pathB: PavePath) => PavePath;
     /**
+     * Unite two paths (combine areas)
+     */
+    PathUnite: (pathA: PavePath, pathB: PavePath) => PavePath;
+    /**
      * Exclude overlapping areas of two paths
      */
     PathExclude: (pathA: PavePath, pathB: PavePath) => PavePath;

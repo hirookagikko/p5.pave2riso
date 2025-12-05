@@ -144,6 +144,48 @@ export const PathSubtract = (pathA: PavePath, pathB: PavePath): PavePath => {
 }
 
 /**
+ * Unite two paths (boolean OR operation)
+ *
+ * Returns a new path containing the combined area of both paths.
+ * This is a simplified wrapper around Path.unite([A, B]).
+ *
+ * @param pathA - First path
+ * @param pathB - Second path
+ * @returns United path, or empty path on error
+ *
+ * @example
+ * ```typescript
+ * const circle1 = Path.circle([100, 100], 50)
+ * const circle2 = Path.circle([150, 100], 50)
+ * const result = PathUnite(circle1, circle2)
+ * // Returns combined area of both circles
+ * ```
+ */
+export const PathUnite = (pathA: PavePath, pathB: PavePath): PavePath => {
+  // External library interface (pave.js) - return values are typed but ESLint sees them as any
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+  const emptyPath = createCircle([0, 0], 0)
+
+  if (!pathA || !pathB) {
+    console.warn("PathUnite: pathA または pathB が無効です。")
+    return emptyPath
+  }
+
+  try {
+    const result = unitePaths([pathA, pathB])
+    if (!result || !hasCurves(result)) {
+      console.warn("PathUnite: 結果のパスが無効です。")
+      return emptyPath
+    }
+    return result
+  } catch (e) {
+    console.warn("PathUnite: パス統合に失敗しました。", e)
+    return emptyPath
+  }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+}
+
+/**
  * Computes the symmetric difference of two paths (boolean XOR operation)
  *
  * Returns a new path containing areas that are in either path but not in both.

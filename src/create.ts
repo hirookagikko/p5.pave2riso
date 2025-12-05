@@ -12,7 +12,7 @@ import { setVec2, resetVec2 } from './utils/vec2-wrapper.js'
 import { setPaper, resetPaper, setPaperOffset, resetPaperOffset } from './utils/paper-wrapper.js'
 import { pave2Riso } from './core.js'
 import { p2r } from './utils/factory.js'
-import { PathIntersect, PathSubtract, PathExclude, PathOffset, isPathsOverlap } from './utils/pathfinder.js'
+import { PathIntersect, PathSubtract, PathUnite, PathExclude, PathOffset, isPathsOverlap } from './utils/pathfinder.js'
 import { ot2pave } from './utils/font-utils.js'
 import type { P5Pave2RisoDeps } from './types/dependencies.js'
 import type { P2RContext, P2ROptions } from './utils/factory.js'
@@ -55,6 +55,11 @@ export interface P5Pave2RisoInstance {
    * Subtract pathB from pathA
    */
   PathSubtract: (pathA: PavePath, pathB: PavePath) => PavePath
+
+  /**
+   * Unite two paths (combine areas)
+   */
+  PathUnite: (pathA: PavePath, pathB: PavePath) => PavePath
 
   /**
    * Exclude overlapping areas of two paths
@@ -139,6 +144,7 @@ export function createP5Pave2Riso(deps: P5Pave2RisoDeps): P5Pave2RisoInstance {
     p2r,
     PathIntersect,
     PathSubtract,
+    PathUnite,
     PathExclude,
     PathOffset,
     isPathsOverlap,

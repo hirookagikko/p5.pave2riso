@@ -46,6 +46,25 @@ export declare const PathIntersect: (pathA: PavePath, pathB: PavePath) => PavePa
  */
 export declare const PathSubtract: (pathA: PavePath, pathB: PavePath) => PavePath;
 /**
+ * Unite two paths (boolean OR operation)
+ *
+ * Returns a new path containing the combined area of both paths.
+ * This is a simplified wrapper around Path.unite([A, B]).
+ *
+ * @param pathA - First path
+ * @param pathB - Second path
+ * @returns United path, or empty path on error
+ *
+ * @example
+ * ```typescript
+ * const circle1 = Path.circle([100, 100], 50)
+ * const circle2 = Path.circle([150, 100], 50)
+ * const result = PathUnite(circle1, circle2)
+ * // Returns combined area of both circles
+ * ```
+ */
+export declare const PathUnite: (pathA: PavePath, pathB: PavePath) => PavePath;
+/**
  * Computes the symmetric difference of two paths (boolean XOR operation)
  *
  * Returns a new path containing areas that are in either path but not in both.
