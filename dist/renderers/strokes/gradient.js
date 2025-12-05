@@ -2,10 +2,9 @@
  * グラデーションStrokeレンダラー
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
-import { applyFilters, applyEffects } from '../../channels/operations.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
 import { getStrokeCapConstant, getStrokeJoinConstant, getCanvasLineCap, getCanvasLineJoin } from '../../utils/stroke-style.js';
-import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
+import { applyEffectPipelineWithOffset } from '../shared/effect-pipeline.js';
 /**
  * グラデーションStrokeをレンダリング
  *
@@ -42,9 +41,10 @@ export const renderGradientStroke = (stroke, pipeline) => {
     const gHeight = (gSize[1]) + stroke.strokeWeight * 2;
     // 各colorStopのグラデーション画像を作成
     const gradImages = [];
-    // halftone/dither使用時の対角線バッファ計算（角度付き回転でのクリップ防止）
     const { canvasSize } = options;
-    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither);
+    // 描画位置（エフェクトパイプライン適用後に更新される可能性あり）
+    let finalDrawPosX = gPosX;
+    let finalDrawPosY = gPosY;
     stroke.colorStops.forEach((colorStop) => {
         // チャンネルインデックスの検証
         if (colorStop.channel < 0 || colorStop.channel >= channels.length) {
@@ -111,19 +111,11 @@ export const renderGradientStroke = (stroke, pipeline) => {
         gradG.drawingContext.fillStyle = 'white';
         gradG.drawingContext.fillRect(0, 0, gWidth, gHeight);
         gradG.drawingContext.globalCompositeOperation = 'source-over';
-        // エフェクト適用
-        let finalGradG = gradG;
-        if (filter) {
-            finalGradG = applyFilters(finalGradG, filter);
-        }
-        // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
-        // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
-        if (diag.usesDiagonalBuffer) {
-            const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
-            fullG.background(255);
-            fullG.image(finalGradG, gPosX + diag.offsetX, gPosY + diag.offsetY);
-            finalGradG = applyEffects(fullG, halftone, dither);
-        }
+        // エフェクトパイプライン適用
+        const { graphics: finalGradG, drawX, drawY } = applyEffectPipelineWithOffset(gradG, filter, halftone, dither, canvasSize, pipeline, gPosX, gPosY);
+        // 描画位置を更新（全colorStopで同じ値になる）
+        finalDrawPosX = drawX;
+        finalDrawPosY = drawY;
         gradImages.push({ gradG: finalGradG, channelIndex: colorStop.channel });
     });
     // 3. cutoutモード: 前処理でeraseされた透明部分を白く埋める
@@ -159,16 +151,13 @@ export const renderGradientStroke = (stroke, pipeline) => {
         });
     }
     // 4. 各colorStopのグラデーションを対象チャンネルに転送
-    // halftone使用時は負のオフセットで描画、それ以外は(gPosX, gPosY)
-    const drawPosX = diag.usesDiagonalBuffer ? diag.drawX : gPosX;
-    const drawPosY = diag.usesDiagonalBuffer ? diag.drawY : gPosY;
     gradImages.forEach(({ gradG, channelIndex }) => {
         // joinモード: gradGで全チャンネルからREMOVE（グラデの黒い部分だけ削除）
         if (mode === 'join') {
             channels.forEach((channel) => {
                 channel.push();
                 channel.blendMode(REMOVE);
-                channel.image(gradG, drawPosX, drawPosY);
+                channel.image(gradG, finalDrawPosX, finalDrawPosY);
                 channel.pop();
             });
         }
@@ -176,7 +165,7 @@ export const renderGradientStroke = (stroke, pipeline) => {
         const channel = channels[channelIndex];
         if (channel) {
             channel.push();
-            channel.image(gradG, drawPosX, drawPosY);
+            channel.image(gradG, finalDrawPosX, finalDrawPosY);
             channel.pop();
         }
     });

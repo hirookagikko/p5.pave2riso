@@ -5,10 +5,10 @@
 import type { PatternFillConfig } from '../../types/fill.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
-import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/operations.js'
+import { ensurePTNAvailable } from '../../channels/operations.js'
 import { degreesToRadians } from '../../utils/angleConverter.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
-import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
+import { applyEffectPipeline } from '../shared/effect-pipeline.js'
 
 /**
  * パターンFillをレンダリング
@@ -62,38 +62,26 @@ export const renderPatternFill = (
   patG.rectPattern(0, 0, gSizeWidth, gSizeHeight)
 
   // ベースグラフィックスにパターンを適用（クリップ後にfilter適用するためここではfilterなし）
-  let baseG = pipeline.getBaseGraphics()
+  const baseG = pipeline.getBaseGraphics()
   baseG.drawingContext.save()
   pipeline.drawPathToCanvas(path, baseG.drawingContext)
   baseG.drawingContext.clip()
   baseG.image(patG, gPosX, gPosY)
   baseG.drawingContext.restore()
 
-  // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
-  baseG = applyFilters(baseG, filter)
-
-  // エフェクト適用
-  // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+  // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
   const { canvasSize } = options
-  const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
-  let drawX = 0
-  let drawY = 0
-  if (diag.usesDiagonalBuffer) {
-    const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal)
-    fullG.background(255)
-    fullG.image(baseG, diag.offsetX, diag.offsetY)
-    baseG = applyEffects(fullG, halftone, dither)
-    drawX = diag.drawX
-    drawY = diag.drawY
-  }
-  pipeline.setBaseGraphics(baseG)
+  const { graphics: processedG, drawX, drawY } = applyEffectPipeline(
+    baseG, filter, halftone, dither, canvasSize, pipeline
+  )
+  pipeline.setBaseGraphics(processedG)
 
   // joinモードの場合は全チャンネルから削除
   if (mode === 'join') {
     channels.forEach((channel) => {
       channel.push()
       channel.blendMode(REMOVE)
-      channel.image(baseG, drawX, drawY)
+      channel.image(processedG, drawX, drawY)
       channel.pop()
     })
   }
@@ -104,7 +92,7 @@ export const renderPatternFill = (
     if (channelVal !== undefined && channelVal > 0) {
       channel.push()
       channel.fill(createInkDepth(channelVal))
-      channel.image(baseG, drawX, drawY)
+      channel.image(processedG, drawX, drawY)
       channel.pop()
     }
   })

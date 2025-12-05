@@ -5,9 +5,8 @@
 import type { GradientFillConfig, GradientDirection } from '../../types/fill.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
-import { applyFilters, applyEffects } from '../../channels/operations.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
-import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
+import { applyEffectPipeline } from '../shared/effect-pipeline.js'
 
 /**
  * グラデーション方向から座標を計算
@@ -143,30 +142,18 @@ export const renderGradientFill = (
     gradBaseG.image(gradG, gPosX, gPosY)
     gradBaseG.drawingContext.restore()
 
-    // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
-    let filteredG = applyFilters(gradBaseG, filter)
-
-    // エフェクト適用
-    // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+    // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
     const { canvasSize } = options
-    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
-    let drawX = 0
-    let drawY = 0
-    if (diag.usesDiagonalBuffer) {
-      const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal)
-      fullG.background(255)
-      fullG.image(filteredG, diag.offsetX, diag.offsetY)
-      filteredG = applyEffects(fullG, halftone, dither)
-      drawX = diag.drawX
-      drawY = diag.drawY
-    }
+    const { graphics: processedG, drawX, drawY } = applyEffectPipeline(
+      gradBaseG, filter, halftone, dither, canvasSize, pipeline
+    )
 
     // JOINモードの場合は全チャンネルから削除
     if (mode === 'join') {
       channels.forEach((channel) => {
         channel.push()
         channel.blendMode(REMOVE)
-        channel.image(filteredG, drawX, drawY)
+        channel.image(processedG, drawX, drawY)
         channel.pop()
       })
     }
@@ -175,7 +162,7 @@ export const renderGradientFill = (
     const channel = channels[colorStop.channel]
     if (channel) {
       channel.push()
-      channel.image(filteredG, drawX, drawY)
+      channel.image(processedG, drawX, drawY)
       channel.pop()
     }
   })

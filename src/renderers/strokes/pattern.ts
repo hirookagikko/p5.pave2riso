@@ -4,7 +4,7 @@
 
 import type { PatternStrokeConfig } from '../../types/stroke.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
-import { ensurePTNAvailable, applyFilters, applyEffects } from '../../channels/operations.js'
+import { ensurePTNAvailable } from '../../channels/operations.js'
 import { degreesToRadians } from '../../utils/angleConverter.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
@@ -14,7 +14,7 @@ import {
   getCanvasLineCap,
   getCanvasLineJoin
 } from '../../utils/stroke-style.js'
-import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js'
+import { applyEffectPipelineWithOffset } from '../shared/effect-pipeline.js'
 
 /**
  * パターンStrokeをレンダリング
@@ -102,27 +102,11 @@ export const renderPatternStroke = (
   patG.drawingContext.fillRect(0, 0, gWidth, gHeight)
   patG.drawingContext.globalCompositeOperation = 'source-over'
 
-  // エフェクト適用
-  let finalPatG: p5.Graphics = patG
+  // エフェクトパイプライン適用
   const { canvasSize } = options
-  const diag = calculateDiagonalBuffer(canvasSize, halftone, dither)
-
-  if (filter) {
-    finalPatG = applyFilters(finalPatG, filter)
-  }
-
-  // halftone/dither: 対角線サイズのグラフィックスにコピーしてから適用
-  // (halftoneImageは角度付き回転で細長いキャンバスだとクリップされる)
-  let drawPosX = gPosX
-  let drawPosY = gPosY
-  if (diag.usesDiagonalBuffer) {
-    const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal)
-    fullG.background(255)
-    fullG.image(finalPatG, gPosX + diag.offsetX, gPosY + diag.offsetY)
-    finalPatG = applyEffects(fullG, halftone, dither)
-    drawPosX = diag.drawX
-    drawPosY = diag.drawY
-  }
+  const { graphics: finalPatG, drawX: drawPosX, drawY: drawPosY } = applyEffectPipelineWithOffset(
+    patG, filter, halftone, dither, canvasSize, pipeline, gPosX, gPosY
+  )
 
   // 3. 各チャンネルに転送
   const mode = options.mode

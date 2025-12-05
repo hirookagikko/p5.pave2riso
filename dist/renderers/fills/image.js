@@ -3,9 +3,8 @@
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
 import { normalizeAlignX, normalizeAlignY } from '../../utils/alignment.js';
-import { applyFilters, applyEffects } from '../../channels/operations.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
-import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
+import { applyEffectPipeline } from '../shared/effect-pipeline.js';
 /**
  * 画像フィット計算
  *
@@ -112,28 +111,15 @@ export const renderImageFill = (fill, pipeline) => {
     }
     imgBaseG.pop();
     imgBaseG.drawingContext.restore();
-    // フィルター適用（クリップ後の結果に対して適用することでblurが境界を超えて広がる）
-    let filteredG = applyFilters(imgBaseG, filter);
-    // エフェクト適用
-    // halftone/dither使用時は対角線サイズのバッファを使用（角度付き回転でのクリップ防止）
+    // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
     const { canvasSize } = options;
-    const diag = calculateDiagonalBuffer(canvasSize, halftone, dither);
-    let drawX = 0;
-    let drawY = 0;
-    if (diag.usesDiagonalBuffer) {
-        const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
-        fullG.background(255);
-        fullG.image(filteredG, diag.offsetX, diag.offsetY);
-        filteredG = applyEffects(fullG, halftone, dither);
-        drawX = diag.drawX;
-        drawY = diag.drawY;
-    }
+    const { graphics: processedG, drawX, drawY } = applyEffectPipeline(imgBaseG, filter, halftone, dither, canvasSize, pipeline);
     // joinモードの場合は全チャンネルから削除
     if (mode === 'join') {
         channels.forEach((channel) => {
             channel.push();
             channel.blendMode(REMOVE);
-            channel.image(filteredG, drawX, drawY);
+            channel.image(processedG, drawX, drawY);
             channel.pop();
         });
     }
@@ -143,7 +129,7 @@ export const renderImageFill = (fill, pipeline) => {
         if (channelVal !== undefined && channelVal > 0) {
             channel.push();
             channel.fill(createInkDepth(channelVal));
-            channel.image(filteredG, drawX, drawY);
+            channel.image(processedG, drawX, drawY);
             channel.pop();
         }
     });

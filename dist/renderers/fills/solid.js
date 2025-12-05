@@ -2,9 +2,9 @@
  * ベタ塗りFillレンダラー
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
-import { applyFilters, applyEffects } from '../../channels/operations.js';
 import { mergeEffects } from '../../utils/effect-merge.js';
 import { calculateDiagonalBuffer } from '../../utils/diagonal-buffer.js';
+import { applyEffectPipeline } from '../shared/effect-pipeline.js';
 /**
  * ベタ塗りFillをレンダリング
  *
@@ -24,30 +24,20 @@ export const renderSolidFill = (fill, pipeline) => {
     if (mode === 'join') {
         if (filter) {
             // フィルター適用パス
-            let eraseG = pipeline.createGraphics(canvasSize[0], canvasSize[1]);
+            const eraseG = pipeline.createGraphics(canvasSize[0], canvasSize[1]);
             eraseG.background(255);
             eraseG.fill(0);
             eraseG.noStroke();
             pipeline.drawPathToCanvas(path, eraseG.drawingContext);
             eraseG.drawingContext.fill();
-            eraseG = applyFilters(eraseG, filter);
-            // halftone/dither使用時は対角線バッファを使用
-            let drawX = 0;
-            let drawY = 0;
-            if (diag.usesDiagonalBuffer) {
-                const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
-                fullG.background(255);
-                fullG.image(eraseG, diag.offsetX, diag.offsetY);
-                eraseG = applyEffects(fullG, halftone, dither);
-                drawX = diag.drawX;
-                drawY = diag.drawY;
-            }
+            // エフェクトパイプライン適用
+            const { graphics: processedG, drawX, drawY } = applyEffectPipeline(eraseG, filter, halftone, dither, canvasSize, pipeline);
             channels.forEach((channel) => {
                 channel.push();
                 channel.fill(255);
                 channel.noStroke();
                 channel.blendMode(REMOVE);
-                channel.image(eraseG, drawX, drawY);
+                channel.image(processedG, drawX, drawY);
                 channel.blendMode(BLEND);
                 channel.pop();
             });
@@ -116,32 +106,22 @@ export const renderSolidFill = (fill, pipeline) => {
     }
     if (filter) {
         // フィルター適用パス
-        let baseG = pipeline.getBaseGraphics();
+        const baseG = pipeline.getBaseGraphics();
         baseG.push();
         baseG.noStroke();
         baseG.fill(0);
         pipeline.drawPathToCanvas(path, baseG.drawingContext);
         baseG.drawingContext.fill();
         baseG.pop();
-        baseG = applyFilters(baseG, filter);
-        // halftone/dither使用時は対角線バッファを使用
-        let drawX = 0;
-        let drawY = 0;
-        if (diag.usesDiagonalBuffer) {
-            const fullG = pipeline.createGraphics(diag.diagonal, diag.diagonal);
-            fullG.background(255);
-            fullG.image(baseG, diag.offsetX, diag.offsetY);
-            baseG = applyEffects(fullG, halftone, dither);
-            drawX = diag.drawX;
-            drawY = diag.drawY;
-        }
-        pipeline.setBaseGraphics(baseG);
+        // エフェクトパイプライン適用
+        const { graphics: processedG, drawX, drawY } = applyEffectPipeline(baseG, filter, halftone, dither, canvasSize, pipeline);
+        pipeline.setBaseGraphics(processedG);
         channels.forEach((channel, i) => {
             const channelVal = fill.channelVals[i];
             if (channelVal !== undefined && channelVal > 0) {
                 channel.push();
                 channel.fill(createInkDepth(channelVal));
-                channel.image(baseG, drawX, drawY);
+                channel.image(processedG, drawX, drawY);
                 channel.pop();
             }
         });
