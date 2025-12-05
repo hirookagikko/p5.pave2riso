@@ -71,6 +71,7 @@ declare global {
   const RADIANS: string
   const MITER: string
   const BEVEL: string
+  const GRAY: string
 
   // p5.pattern型定義
   interface PTNObject {

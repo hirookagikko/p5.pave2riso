@@ -111,6 +111,8 @@ export const renderImageFill = (fill, pipeline) => {
     }
     imgBaseG.pop();
     imgBaseG.drawingContext.restore();
+    // 自動グレースケール変換（Risograph印刷用）
+    imgBaseG.filter(GRAY);
     // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
     const { canvasSize } = options;
     const { graphics: processedG, drawX, drawY } = applyEffectPipeline(imgBaseG, filter, halftone, dither, canvasSize, pipeline);
