@@ -121,6 +121,11 @@ export class GraphicsPipeline {
         return this.baseG;
     }
     setBaseGraphics(g) {
+        // 新しいgraphicsがまだ追跡されていない場合、追跡リストに追加
+        // (applyEffectsなど外部で生成されたGraphicsのメモリリーク防止)
+        if (!this.graphicsToCleanup.includes(g)) {
+            this.graphicsToCleanup.push(g);
+        }
         this.baseG = g;
     }
     /**
