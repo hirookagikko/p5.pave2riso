@@ -54,7 +54,7 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
   const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
-    console.warn("PathIntersect: pathA または pathB が無効です。")
+    console.warn("PathIntersect: pathA or pathB is invalid.")
     return emptyPath
   }
 
@@ -62,7 +62,7 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
     // 両方のPath.subtract操作をtry-catchで囲む
     const diff = subtractPaths(pathA, [pathB])
     if (!diff || !hasCurves(diff) || diff.curves.length === 0) {
-      console.warn("PathIntersect: 差がないか、無効なパスです。")
+      console.warn("PathIntersect: Difference is empty or path is invalid.")
       return emptyPath
     }
     const intersected = subtractPaths(pathA, [diff])
@@ -75,16 +75,16 @@ export const PathIntersect = (pathA: PavePath, pathB: PavePath): PavePath => {
         const united = unitePaths([pathA, pathB])
         // 結合後のcurves数が元のpathAと同じなら完全重複
         if (hasCurves(united) && hasCurves(pathA) && united.curves.length === pathA.curves.length) {
-          console.warn("PathIntersect: パス同士が完全重複しています。元のパスを返します。")
+          console.warn("PathIntersect: Paths completely overlap. Returning original path.")
           return pathA
         } else {
           // 完全分離
-          console.warn("PathIntersect: パス同士が重なりません。空パスを返します。")
+          console.warn("PathIntersect: Paths do not overlap. Returning empty path.")
           return emptyPath
         }
       } catch (uniteError) {
         // Path.uniteも失敗した場合は空パスを返す
-        console.warn("PathIntersect: 交差判定に失敗しました。空パスを返します。")
+        console.warn("PathIntersect: Intersection check failed. Returning empty path.")
         return emptyPath
       }
     } else {
@@ -119,21 +119,21 @@ export const PathSubtract = (pathA: PavePath, pathB: PavePath): PavePath => {
   const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
-    console.warn("PathSubtract: pathA または pathB が無効です。")
+    console.warn("PathSubtract: pathA or pathB is invalid.")
     return emptyPath
   }
 
   try {
     const result = subtractPaths(pathA, [pathB])
     if (!result || !hasCurves(result)) {
-      console.warn("PathSubtract: 結果のパスが無効です。")
+      console.warn("PathSubtract: Result path is invalid.")
       return emptyPath
     }
     return result
   } catch (e) {
     // Path.subtractでエラーが発生した場合
     if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
-      console.warn("PathSubtract: パス減算に失敗しました。空パスを返します。")
+      console.warn("PathSubtract: Path subtraction failed. Returning empty path.")
       return emptyPath
     } else {
       // 予期しないエラーの場合は再スローする
@@ -167,19 +167,19 @@ export const PathUnite = (pathA: PavePath, pathB: PavePath): PavePath => {
   const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
-    console.warn("PathUnite: pathA または pathB が無効です。")
+    console.warn("PathUnite: pathA or pathB is invalid.")
     return emptyPath
   }
 
   try {
     const result = unitePaths([pathA, pathB])
     if (!result || !hasCurves(result)) {
-      console.warn("PathUnite: 結果のパスが無効です。")
+      console.warn("PathUnite: Result path is invalid.")
       return emptyPath
     }
     return result
   } catch (e) {
-    console.warn("PathUnite: パス統合に失敗しました。", e)
+    console.warn("PathUnite: Path union failed.", e)
     return emptyPath
   }
   /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
@@ -209,33 +209,33 @@ export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
   const emptyPath = createCircle([0, 0], 0)
 
   if (!pathA || !pathB) {
-    console.warn("PathExclude: pathA または pathB が無効です。")
+    console.warn("PathExclude: pathA or pathB is invalid.")
     return emptyPath
   }
 
   const united = unitePaths([pathA, pathB])
   if (!united || !hasCurves(united)) {
-    console.warn("PathExclude: 統合されたパスが無効です。")
+    console.warn("PathExclude: United path is invalid.")
     return emptyPath
   }
 
   const intersected = PathIntersect(pathA, pathB)
   if (!intersected || !hasCurves(intersected)) {
-    console.warn("PathExclude: 交差しているパスが無効です。")
+    console.warn("PathExclude: Intersected path is invalid.")
     return emptyPath
   }
 
   try {
     const excluded = subtractPaths(united, [intersected])
     if (!excluded || !hasCurves(excluded)) {
-      console.warn("PathExclude: 除外されたパスが無効です。")
+      console.warn("PathExclude: Excluded path is invalid.")
       return emptyPath
     }
     return excluded
   } catch (e) {
     // Path.subtractでエラーが発生した場合（完全重複など）
     if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
-      console.warn("PathExclude: 交差部分が全体と一致します。空パスを返します。")
+      console.warn("PathExclude: Intersection covers entire area. Returning empty path.")
       return emptyPath
     } else {
       // 予期しないエラーの場合は再スローする
@@ -269,7 +269,7 @@ export const PathExclude = (pathA: PavePath, pathB: PavePath): PavePath => {
 export const isPathsOverlap = (pathA: PavePath, pathB: PavePath): boolean => {
   // パスの有効性チェック
   if (!pathA || !pathB || !hasCurves(pathA) || !hasCurves(pathB)) {
-    console.warn("isPathsOverlap: 無効なパスが渡されました")
+    console.warn("isPathsOverlap: Invalid path provided")
     return false
   }
 
@@ -292,7 +292,7 @@ export const isPathsOverlap = (pathA: PavePath, pathB: PavePath): boolean => {
     return width > 1e-10 && height > 1e-10
   } catch (e) {
     // bounds 取得に失敗した場合は false を返す
-    console.warn("⚠️ isPathsOverlap: 交差部分の bounds 取得に失敗", e)
+    console.warn("isPathsOverlap: Failed to get bounds of intersection", e)
     return false
   }
 }
