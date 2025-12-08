@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Effects | p5.pave2riso</title>
+  <link rel="stylesheet" href="common/example.css">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/antiboredom/p5.riso@master/lib/p5.riso.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1><a href="../README.md">p5.pave2riso</a></h1>
+    <nav class="example-nav">
+      <button class="nav-toggle" id="nav-toggle" type="button">
+        Examples <span class="menu-icon">&#9662;</span>
+      </button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="fill-types.html">Fill Types</a></li>
+        <li><a href="stroke-types.html">Stroke Types</a></li>
+        <li><a href="print-modes.html">Print Modes</a></li>
+        <li><a href="effects.html">Effects</a></li>
+        <li><a href="text-paths.html">Text Paths</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="canvas-area">
+      <main></main>
+      <button id="export-btn" type="button">Export Riso PNGs</button>
+    </div>
+
+    <div class="code-area">
+      <div class="description">
+        <p>p5.pave2riso supports three types of post-processing effects to add classic print aesthetics to your designs:</p>
+        <p><strong>Filter:</strong> Image processing effects like blur, threshold, and posterize using p5.js filters.</p>
+        <p><strong>Halftone:</strong> Classic print dot patterns with customizable dot size, spacing, and angle. Perfect for achieving that authentic Risograph look.</p>
+        <p><strong>Dither:</strong> Dithering algorithms (like Bayer) that create textured patterns from gradients, adding organic print character.</p>
+        <p>Effects can be applied to any fill or stroke type, and multiple effects can be combined for unique results.</p>
+      </div>
+
+      <h2>Source Code</h2>
+      <pre><code id="source-code">// Loading...</code></pre>
+    </div>
+  </div>
+
+  <script type="module" src="effects.js"></script>
+  <script type="module" src="common/example.js"></script>
+</body>
+</html>

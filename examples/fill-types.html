@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fill Types | p5.pave2riso</title>
+  <link rel="stylesheet" href="common/example.css">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/antiboredom/p5.riso@master/lib/p5.riso.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1><a href="../README.md">p5.pave2riso</a></h1>
+    <nav class="example-nav">
+      <button class="nav-toggle" id="nav-toggle" type="button">
+        Examples <span class="menu-icon">&#9662;</span>
+      </button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="fill-types.html" class="active">Fill Types</a></li>
+        <li><a href="stroke-types.html">Stroke Types</a></li>
+        <li><a href="print-modes.html">Print Modes</a></li>
+        <li><a href="effects.html">Effects</a></li>
+        <li><a href="text-paths.html">Text Paths</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="canvas-area">
+      <main></main>
+      <button id="export-btn" type="button">Export Riso PNGs</button>
+    </div>
+    <div class="code-area">
+      <div class="description">
+        <p>p5.pave2riso supports <strong>4 fill types</strong> for creating varied visual effects:</p>
+        <p><strong>solid</strong> - Simple ink density fill</p>
+        <p><strong>pattern</strong> - Procedural patterns using p5.pattern library</p>
+        <p><strong>gradient</strong> - Linear, radial, or conic gradients across channels</p>
+        <p><strong>image</strong> - Image-based fills with grayscale mapping</p>
+      </div>
+      <h2>Source Code</h2>
+      <pre><code id="source-code"></code></pre>
+    </div>
+  </div>
+
+  <script type="module" src="fill-types.js"></script>
+  <script type="module" src="common/example.js"></script>
+</body>
+</html>

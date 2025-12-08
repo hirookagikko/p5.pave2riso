@@ -2,7 +2,7 @@
 
 *Read this in other languages: [English](README.md), [日本語](README.ja.md)*
 
-A p5.js library that converts vector paths created with Pave.js into p5.riso.js Risograph print channels. Also supports pattern drawing with p5.pattern.js.
+A p5.js library that converts vector paths created with Pave.js into p5.riso.js Risograph print channels. Supports diverse fill types (solid, pattern, gradient, image), stroke styles (solid, dashed, pattern, gradient), print modes (overprint, cutout, join), and effects (filters, halftone, dithering).
 
 ## Dependencies
 
@@ -16,88 +16,11 @@ This library depends on:
 
 ## Key Features
 
-### 1. Risograph Print Modes
-- **overprint**: Overlay inks (default)
-  - Fill and stroke overlap across all channels
-
-- **cutout**: Remove path region before printing
-  - Remove path region from all channels with solid shape
-  - Then apply fill/stroke to specified channels
-
-- **join**: Remove path region according to fill density/pattern before printing
-  - **Solid fill**: Completely remove (same as cutout)
-  - **Pattern fill**: Remove according to pattern (density)
-  - **Gradient fill**: Remove according to gradient density
-  - **Image fill**: Remove according to image density
-
-### 2. Diverse Fill Types
-- **Solid**: Fill with ink density (0-100%) per channel
-- **Pattern**: Pattern fill using p5.pattern library
-- **Gradient**: Linear, radial, and conic gradients
-- **Image**: Use images as fill (position adjustment, scale, rotation support)
-
-### 3. Diverse Stroke Types
-- **Solid**: Single color line
-- **Dashed**: Customizable dashed line patterns
-- **Pattern**: Lines drawn with patterns
-- **Gradient**: Lines drawn with gradients
-
-### 4. Effect Support
-- **Filter**: Apply image processing filters
-- **Halftone**: Halftone dot expression
-- **Dithering**: Gradation expression with dither patterns
-
-## Architecture
-
-### Processing Flow
-
-1. **Validation**: Check required parameters (path, canvasSize, channels, mode)
-2. **GraphicsPipeline Initialization**: Manage and prepare p5.Graphics objects
-3. **Apply Clipping Path**: Set optional clipping path
-4. **Apply Print Mode**: Pre-process according to overprint/cutout/join mode
-5. **Draw Fill**: Execute appropriate fill renderer based on settings
-6. **Draw Stroke**: Execute appropriate stroke renderer based on settings
-7. **Release Clipping**: Release clipping path
-8. **Cleanup**: Dispose temporary graphics resources
-
-### Main Components
-
-```
-src/
-├── core.ts                    # pave2Riso() main function
-├── graphics/
-│   └── GraphicsPipeline.ts   # Graphics processing hub
-├── modes/
-│   └── modes.ts              # Print mode processing
-├── renderers/
-│   ├── fills/                # Fill renderers
-│   │   ├── solid.ts
-│   │   ├── pattern.ts
-│   │   ├── gradient.ts
-│   │   └── image.ts
-│   └── strokes/              # Stroke renderers
-│       ├── solid.ts
-│       ├── dashed.ts
-│       ├── pattern.ts
-│       └── gradient.ts
-├── channels/
-│   └── operations.ts         # Effect processing
-├── types/                    # Type definitions
-├── utils/                    # Utilities
-└── validation/               # Validation
-```
-
-**Main Roles**:
-- **pave2Riso()**: Orchestrates overall processing
-- **GraphicsPipeline**: Create/manage p5.Graphics objects, draw Pave paths, handle clipping
-- **Mode Processing**: Pre-draw processing for each print mode
-- **Renderers**: Drawing implementation by fill type and stroke type
-- **Effect Processing**: Apply filters, halftone, dithering
-
-### Type-Safe Design
-
-- **Fill and Stroke Settings**: When you specify the `type` field, the corresponding configuration items are automatically determined (TypeScript Discriminated Unions)
-- **Ink Density**: Checked in 0-100% range and managed type-safely (Branded Types)
+- **Risograph Print Modes**: overprint (overlay inks), cutout (remove then print), join (remove by density)
+- **Fill Types**: solid, pattern, gradient (linear/radial/conic), image
+- **Stroke Types**: solid, dashed, pattern, gradient
+- **Effects**: filters, halftone, dithering
+- **Utilities**: Factory function (p2r), pathfinder operations, font path conversion (OpenType to Pave)
 
 ## Installation
 
@@ -146,9 +69,19 @@ After building, use `dist/p5.pave2riso.js`.
 </html>
 ```
 
-## Usage Examples
+## Examples
 
-### Basic Usage
+**[View Examples](https://hirookagikko.github.io/p5.pave2riso/examples/)**
+
+Comprehensive examples with code and live demos:
+- [Getting Started](https://hirookagikko.github.io/p5.pave2riso/examples/getting-started.html) - Basic setup and first steps
+- [Fill Types](https://hirookagikko.github.io/p5.pave2riso/examples/fill-types.html) - Solid, pattern, gradient, and image fills
+- [Stroke Types](https://hirookagikko.github.io/p5.pave2riso/examples/stroke-types.html) - Solid, dashed, pattern, and gradient strokes
+- [Print Modes](https://hirookagikko.github.io/p5.pave2riso/examples/print-modes.html) - Overprint, cutout, and join modes
+- [Effects](https://hirookagikko.github.io/p5.pave2riso/examples/effects.html) - Filters, halftone, and dithering
+- [Text Paths](https://hirookagikko.github.io/p5.pave2riso/examples/text-paths.html) - Working with fonts using OpenType.js
+
+## Basic Usage
 
 ```javascript
 // Import pave and linearly as ES modules
@@ -162,35 +95,7 @@ window.Path = Path
 window.vec2 = vec2
 ```
 
-### Solid Fill
-
 Sample code: [samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js) | **[View Demo](https://hirookagikko.github.io/p5.pave2riso/)**
-
-Demonstrates different channel combinations using 6 circles.
-
-### Pattern Fill
-
-(Coming soon)
-
-### Gradient Fill
-
-(Coming soon)
-
-### Image Fill
-
-(Coming soon)
-
-### Stroke
-
-(Coming soon)
-
-### Print Modes
-
-(Coming soon)
-
-### Effects
-
-(Coming soon)
 
 ### Factory Function (p2r)
 
@@ -256,6 +161,21 @@ pave2Riso({
   fill: { type: 'solid', channelVals: [100, 0, 0] }
 })
 ```
+
+## Architecture
+
+The library uses a type-safe pipeline architecture:
+
+1. **Validation** → Verify required parameters
+2. **GraphicsPipeline** → Manage p5.Graphics objects and clipping
+3. **Mode Processing** → Pre-process for overprint/cutout/join modes
+4. **Renderers** → Dispatch to type-specific fill and stroke renderers
+5. **Effects** → Apply filters, halftone, or dithering
+6. **Cleanup** → Release graphics resources
+
+**Type Safety**: Fill and stroke settings use TypeScript discriminated unions. The `type` field determines available configuration options. Ink density values are range-checked (0-100%) using branded types.
+
+See [CLAUDE.md](CLAUDE.md) for detailed component documentation.
 
 ## License
 
