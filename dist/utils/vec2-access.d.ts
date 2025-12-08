@@ -14,6 +14,7 @@ import type { Vec2 } from '../types/linearly.js';
  *
  * @param vec - Vec2オブジェクト
  * @returns x, y座標
+ * @throws Error if vec is null/undefined or doesn't have valid numeric values
  */
 export declare const extractVec2: (vec: Vec2) => {
     x: number;

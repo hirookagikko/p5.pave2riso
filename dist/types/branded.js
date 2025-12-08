@@ -20,8 +20,8 @@
  * ```
  */
 export function percentage(value) {
-    if (value < 0 || value > 100) {
-        throw new RangeError(`Percentage must be between 0 and 100, got ${value}`);
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+        throw new RangeError(`Percentage must be a finite number between 0 and 100, got ${value}`);
     }
     return value;
 }
@@ -44,7 +44,7 @@ export function unsafePercentage(value) {
  * @returns true if value is between 0 and 100 inclusive
  */
 export function isValidPercentage(value) {
-    return value >= 0 && value <= 100;
+    return Number.isFinite(value) && value >= 0 && value <= 100;
 }
 /**
  * Clamp a number to percentage range (0-100)
@@ -53,6 +53,9 @@ export function isValidPercentage(value) {
  * @returns Clamped value as Percentage
  */
 export function clampPercentage(value) {
+    if (!Number.isFinite(value)) {
+        throw new RangeError(`Cannot clamp non-finite value: ${value}`);
+    }
     return Math.max(0, Math.min(100, value));
 }
 //# sourceMappingURL=branded.js.map

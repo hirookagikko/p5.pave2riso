@@ -16,12 +16,22 @@ import type { Vec2 } from '../types/linearly.js'
  *
  * @param vec - Vec2オブジェクト
  * @returns x, y座標
+ * @throws Error if vec is null/undefined or doesn't have valid numeric values
  */
 export const extractVec2 = (
   vec: Vec2
 ): { x: number; y: number } => {
-  // Vec2は [0] と [1] を持つことが保証されている
-  return { x: vec[0], y: vec[1] }
+  // null/undefined チェック
+  if (!vec) {
+    throw new Error('Invalid Vec2: expected array-like object, got null or undefined')
+  }
+  // 数値チェック
+  const x = vec[0]
+  const y = vec[1]
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    throw new Error(`Invalid Vec2: expected [number, number], got [${typeof x}, ${typeof y}]`)
+  }
+  return { x, y }
 }
 
 /**

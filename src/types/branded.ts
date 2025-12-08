@@ -69,8 +69,8 @@ export type DashPattern = [number, number, ...number[]]
  * ```
  */
 export function percentage(value: number): Percentage {
-  if (value < 0 || value > 100) {
-    throw new RangeError(`Percentage must be between 0 and 100, got ${value}`)
+  if (!Number.isFinite(value) || value < 0 || value > 100) {
+    throw new RangeError(`Percentage must be a finite number between 0 and 100, got ${value}`)
   }
   return value as Percentage
 }
@@ -95,7 +95,7 @@ export function unsafePercentage(value: number): Percentage {
  * @returns true if value is between 0 and 100 inclusive
  */
 export function isValidPercentage(value: number): boolean {
-  return value >= 0 && value <= 100
+  return Number.isFinite(value) && value >= 0 && value <= 100
 }
 
 /**
@@ -105,5 +105,8 @@ export function isValidPercentage(value: number): boolean {
  * @returns Clamped value as Percentage
  */
 export function clampPercentage(value: number): Percentage {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`Cannot clamp non-finite value: ${value}`)
+  }
   return Math.max(0, Math.min(100, value)) as Percentage
 }

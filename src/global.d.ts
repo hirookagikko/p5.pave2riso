@@ -43,8 +43,8 @@ declare global {
     vec2: {
       of(x: number, y: number): unknown
     }
-    halftoneImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
-    ditherImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
+    halftoneImage?(graphics: p5.Graphics, ...args: (string | number)[]): p5.Graphics
+    ditherImage?(graphics: p5.Graphics, ...args: (string | number)[]): p5.Graphics
     // p5.js angle mode
     _angleMode?: string
     DEGREES?: string

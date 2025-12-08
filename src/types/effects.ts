@@ -118,8 +118,9 @@ export interface HalftoneConfig {
   /**
    * ハーフトーン関数への引数
    * 通常は [dotSize, angle, density] など
+   * p5.riso.jsのhalftoneImage()に渡される引数
    */
-  halftoneArgs: number[]
+  halftoneArgs: (string | number)[]
 }
 
 /**
@@ -128,7 +129,8 @@ export interface HalftoneConfig {
 export interface DitherConfig {
   /**
    * ディザー関数への引数
-   * 通常は [threshold, pattern] など
+   * p5.riso.jsのditherImage()に渡される引数
+   * 例: ['floydSteinberg', 128] など文字列を含む場合がある
    */
-  ditherArgs: number[]
+  ditherArgs: (string | number)[]
 }
