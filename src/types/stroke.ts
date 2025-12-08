@@ -2,7 +2,7 @@
  * Stroke設定のDiscriminated Union型定義
  */
 
-import type { ColorStop, GradientType } from './fill.js'
+import type { ColorStop, GradientType, GradientDirection } from './fill.js'
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js'
 import type { DashPattern } from './branded.js'
 
@@ -188,6 +188,11 @@ export interface GradientStrokeConfig {
    * グラデーションタイプ
    */
   gradientType: GradientType
+
+  /**
+   * グラデーション方向（線形グラデーションのみ）
+   */
+  gradientDirection?: GradientDirection
 
   /**
    * カラーストップ

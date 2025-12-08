@@ -3,6 +3,7 @@
  */
 
 import type { GradientStrokeConfig } from '../../types/stroke.js'
+import type { GradientDirection } from '../../types/fill.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { mergeEffects } from '../../utils/effect-merge.js'
@@ -14,6 +15,41 @@ import {
 } from '../../utils/stroke-style.js'
 import { applyEffectPipelineWithOffset } from '../shared/effect-pipeline.js'
 import { extractStrokeBounds } from '../../utils/vec2-access.js'
+
+/**
+ * グラデーション方向から座標を計算
+ *
+ * @param direction - グラデーション方向
+ * @param width - 幅
+ * @param height - 高さ
+ * @returns [x1, y1, x2, y2]
+ */
+const getGradientCoords = (
+  direction: GradientDirection | undefined,
+  width: number,
+  height: number
+): [number, number, number, number] => {
+  switch (direction) {
+    case 'TD':
+      return [width / 2, 0, width / 2, height]
+    case 'DT':
+      return [width / 2, height, width / 2, 0]
+    case 'LR':
+      return [0, height / 2, width, height / 2]
+    case 'RL':
+      return [width, height / 2, 0, height / 2]
+    case 'LTRB':
+      return [0, 0, width, height]
+    case 'RTLB':
+      return [width, 0, 0, height]
+    case 'LBRT':
+      return [0, height, width, 0]
+    case 'RBLT':
+      return [width, height, 0, 0]
+    default:
+      return [0, 0, width, height]
+  }
+}
 
 /**
  * グラデーションStrokeをレンダリング
@@ -78,7 +114,8 @@ export const renderGradientStroke = (
 
     switch (stroke.gradientType) {
       case 'linear': {
-        grad = gradG.drawingContext.createLinearGradient(0, 0, gWidth, gHeight)
+        const coords = getGradientCoords(stroke.gradientDirection, gWidth, gHeight)
+        grad = gradG.drawingContext.createLinearGradient(...coords)
         break
       }
       case 'radial': {
