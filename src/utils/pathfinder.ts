@@ -811,54 +811,24 @@ function removeHolesWithPaper(path: PavePath, emptyPath: PavePath): PavePath {
     console.log(`  Path ${i}: clockwise=${p.clockwise}, area=${p.area?.toFixed(2)}`)
   }
 
-  // HYBRID STRATEGY: clockwise + containment
-  // 1. clockwise=true → always OUTER
-  // 2. clockwise=false + contained by a clockwise=true path → HOLE (remove)
-  // 3. clockwise=false + NOT contained → OUTER (separate outer contour with inverted winding)
+  // SIMPLE STRATEGY: Remove ALL counter-clockwise paths as holes
+  // clockwise=true → OUTER (keep)
+  // clockwise=false → HOLE (remove)
+  // Note: Gaps between paths (inter-row spaces) are NOT holes - they're just empty space
 
-  const clockwisePaths: PaperPath[] = []
-  const counterClockwisePaths: PaperPath[] = []
+  const outerPaths: PaperPath[] = []
+  let ccwCount = 0
 
-  // Separate paths by clockwise property
   for (let i = 0; i < allPaths.length; i++) {
     const currentPath = allPaths[i] as any
     if (currentPath.clockwise) {
-      clockwisePaths.push(allPaths[i]!)
+      outerPaths.push(allPaths[i]!)
     } else {
-      counterClockwisePaths.push(allPaths[i]!)
+      ccwCount++
     }
   }
 
-  console.log(`  Clockwise paths: ${clockwisePaths.length}, Counter-clockwise paths: ${counterClockwisePaths.length}`)
-
-  // Start with all clockwise paths as outer
-  const outerPaths: PaperPath[] = [...clockwisePaths]
-
-  // For each counter-clockwise path, check if it's contained by any clockwise path
-  for (let i = 0; i < counterClockwisePaths.length; i++) {
-    const ccwPath = counterClockwisePaths[i] as any
-    const ccwBounds = ccwPath.bounds
-    const ccwCenter = ccwBounds.center
-
-    let isContained = false
-
-    // Check if this CCW path's center is inside any CW path
-    for (const cwPath of clockwisePaths) {
-      const cwPathAny = cwPath as any
-      if (cwPathAny.contains(ccwCenter)) {
-        isContained = true
-        break
-      }
-    }
-
-    if (isContained) {
-      console.log(`  CCW Path ${i}: HOLE (removed) - contained by a CW path`)
-    } else {
-      // Not contained - this is a separate outer contour with inverted winding
-      outerPaths.push(counterClockwisePaths[i]!)
-      console.log(`  CCW Path ${i}: OUTER (kept) - not contained, separate contour`)
-    }
-  }
+  console.log(`  Keeping ${outerPaths.length} CW paths, removing ${ccwCount} CCW paths`)
 
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -878,7 +848,7 @@ function removeHolesWithPaper(path: PavePath, emptyPath: PavePath): PavePath {
 
   console.log(`PathRemoveHoles: Removed ${allPaths.length - outerPaths.length} holes, kept ${outerPaths.length} paths`)
 
-  // Build new CompoundPath with only outer paths (without unite - preserve separate contours)
+  // Build new CompoundPath with only outer paths
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CompoundPath = (paperInstance as any).CompoundPath
   const newCompound = new CompoundPath() as PaperPath
