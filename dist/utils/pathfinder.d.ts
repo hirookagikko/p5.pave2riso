@@ -160,4 +160,26 @@ export declare const PathOffset: (path: PavePath, distance: number, options?: {
     join?: "miter" | "bevel" | "round";
     cap?: "butt" | "round" | "square";
 }) => PavePath;
+/**
+ * Remove all holes from a path, keeping only the outer contours
+ *
+ * This function analyzes the winding direction of each sub-path and removes
+ * any that are detected as holes (counter-clockwise winding in a Y-down
+ * coordinate system).
+ *
+ * Useful after PathOffset operations on text where you want to fill the
+ * holes of letters like 'e', 'o', 'a', 'd', etc.
+ *
+ * @param path - Pave.js path (may be a compound path with holes)
+ * @returns New path with only solid (outer) contours, or original path if no holes
+ *
+ * @example
+ * ```typescript
+ * const textPath = ot2pave(font.getPath('echo', 0, 100, 72).commands)
+ * const offsetPath = PathOffset(textPath, 10)
+ * const filledPath = PathRemoveHoles(offsetPath)
+ * // 'e', 'c', 'o' の穴が埋められた太い文字パス
+ * ```
+ */
+export declare const PathRemoveHoles: (path: PavePath) => PavePath;
 //# sourceMappingURL=pathfinder.d.ts.map

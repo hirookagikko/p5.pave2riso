@@ -571,3 +571,390 @@ export const PathOffset = (
     return path
   }
 }
+
+// ============================================
+// PathRemoveHoles: Remove holes from a path
+// ============================================
+
+/**
+ * Determines the winding direction of a single curve using the Shoelace formula
+ *
+ * In a coordinate system where Y-axis points down (like pave.js/p5.js):
+ * - Positive signed area = Counter-clockwise (CCW) = hole
+ * - Negative signed area = Clockwise (CW) = solid
+ *
+ * @param curve - Single curve from a Pave path
+ * @returns Signed area (positive = CCW/hole, negative = CW/solid)
+ * @internal
+ */
+function getCurveWindingDirection(curve: unknown): number {
+  let signedArea = 0
+
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+  /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+
+  // Handle structured curve (with vertices property)
+  if (curve && typeof curve === 'object' && 'vertices' in curve && Array.isArray((curve as any).vertices)) {
+    const vertices = (curve as any).vertices
+    for (let j = 0; j < vertices.length; j++) {
+      const current = vertices[j]
+      const next = vertices[(j + 1) % vertices.length]
+
+      if (!current?.point || !next?.point) continue
+
+      const x1 = current.point[0]
+      const y1 = current.point[1]
+      const x2 = next.point[0]
+      const y2 = next.point[1]
+
+      signedArea += (x1 * y2 - x2 * y1)
+    }
+  }
+  // Handle array format curve
+  else if (Array.isArray(curve)) {
+    for (let j = 0; j < curve.length; j++) {
+      const segment = curve[j]
+      const nextSegment = curve[(j + 1) % curve.length]
+
+      let x1: number | undefined, y1: number | undefined
+      let x2: number | undefined, y2: number | undefined
+
+      if (Array.isArray(segment) && segment.length >= 2) {
+        x1 = segment[0]
+        y1 = segment[1]
+      } else if (segment && typeof segment === 'object') {
+        const seg = segment as any
+        x1 = seg.x ?? seg[0]
+        y1 = seg.y ?? seg[1]
+      }
+
+      if (Array.isArray(nextSegment) && nextSegment.length >= 2) {
+        x2 = nextSegment[0]
+        y2 = nextSegment[1]
+      } else if (nextSegment && typeof nextSegment === 'object') {
+        const nextSeg = nextSegment as any
+        x2 = nextSeg.x ?? nextSeg[0]
+        y2 = nextSeg.y ?? nextSeg[1]
+      }
+
+      if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
+        signedArea += (x1 * y2 - x2 * y1)
+      }
+    }
+  }
+
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment */
+  /* eslint-enable @typescript-eslint/no-unsafe-member-access */
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  // Y軸が下向きの座標系では符号が逆になる
+  return -(signedArea / 2)
+}
+
+/**
+ * Remove all holes from a path, keeping only the outer contours
+ *
+ * This function analyzes the winding direction of each sub-path and removes
+ * any that are detected as holes (counter-clockwise winding in a Y-down
+ * coordinate system).
+ *
+ * Useful after PathOffset operations on text where you want to fill the
+ * holes of letters like 'e', 'o', 'a', 'd', etc.
+ *
+ * @param path - Pave.js path (may be a compound path with holes)
+ * @returns New path with only solid (outer) contours, or original path if no holes
+ *
+ * @example
+ * ```typescript
+ * const textPath = ot2pave(font.getPath('echo', 0, 100, 72).commands)
+ * const offsetPath = PathOffset(textPath, 10)
+ * const filledPath = PathRemoveHoles(offsetPath)
+ * // 'e', 'c', 'o' の穴が埋められた太い文字パス
+ * ```
+ */
+export const PathRemoveHoles = (path: PavePath): PavePath => {
+  const emptyPath = createCircle([0, 0], 0)
+
+  // Validate input
+  if (!path || !hasCurves(path) || path.curves.length === 0) {
+    console.warn('PathRemoveHoles: Invalid path provided')
+    return emptyPath
+  }
+
+  // Single curve - no holes possible
+  if (path.curves.length === 1) {
+    return path
+  }
+
+  // Log Pave.js curves info
+  console.log(`PathRemoveHoles: Pave path has ${path.curves.length} curves`)
+  for (let i = 0; i < Math.min(path.curves.length, 10); i++) {
+    const curve = path.curves[i] as { vertices?: unknown[]; closed?: boolean }
+    const vertexCount = curve?.vertices?.length || 0
+    console.log(`  Pave curve ${i}: vertices=${vertexCount}, closed=${curve?.closed}`)
+  }
+
+  // Use Paper.js for accurate area calculation if available
+  const paperInstance = getPaper()
+  console.log('PathRemoveHoles: Paper.js available:', !!paperInstance, 'initialized:', paperInstance ? ensurePaperInitialized() : false)
+  if (paperInstance && ensurePaperInitialized()) {
+    return removeHolesWithPaper(path, emptyPath)
+  }
+
+  // Fallback: use Shoelace formula (less accurate for bezier curves)
+  console.log('PathRemoveHoles: Using Shoelace fallback')
+  return removeHolesWithShoelace(path, emptyPath)
+}
+
+/**
+ * Recursively collect all Path children from a Paper.js item
+ * This handles CompoundPath, Group, and nested structures
+ * @internal
+ */
+function collectAllPaperPaths(item: PaperItem, paths: PaperPath[], depth = 0): void {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const itemAny = item as any
+  const indent = '  '.repeat(depth)
+
+  console.log(`${indent}collectAllPaperPaths: className=${itemAny.className}, hasSegments=${!!itemAny.segments}, segmentCount=${itemAny.segments?.length || 0}, childCount=${itemAny.children?.length || 0}`)
+
+  // Check if this is a Path (not CompoundPath)
+  if (itemAny.className === 'Path' && itemAny.segments && itemAny.segments.length > 0) {
+    paths.push(item as PaperPath)
+    return
+  }
+
+  // If it has children, recurse into them
+  if (itemAny.children && itemAny.children.length > 0) {
+    for (const child of itemAny.children) {
+      collectAllPaperPaths(child, paths, depth + 1)
+    }
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+/**
+ * Convert Pave path to array of individual Paper.js paths
+ * Uses Paper.js native parsing to properly separate all subpaths
+ * @internal
+ */
+function paveToSeparatePaperPaths(pavePath: PavePath): PaperPath[] {
+  const paperInstance = getPaper()
+  if (!paperInstance) {
+    return []
+  }
+
+  try {
+    const PathGlobal = getPath()
+    const pathData = PathGlobal.toSVGString(pavePath)
+
+    if (!pathData) {
+      return []
+    }
+
+    // Import SVG into Paper.js
+    const svgString = `<svg><path d="${pathData}"/></svg>`
+    const imported: PaperItem = paperInstance.project.importSVG(svgString)
+
+    // Collect all Path children recursively
+    const paperPaths: PaperPath[] = []
+    collectAllPaperPaths(imported, paperPaths)
+
+    console.log(`PathRemoveHoles: Paper.js found ${paperPaths.length} path children`)
+
+    // Clone paths before removing the imported group
+    const clonedPaths: PaperPath[] = []
+    for (const p of paperPaths) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clonedPaths.push((p as any).clone())
+    }
+
+    // Remove the imported group
+    imported.remove()
+
+    return clonedPaths
+  } catch (e) {
+    console.warn('PathRemoveHoles: Pave→Paper conversion failed', e)
+    return []
+  }
+}
+
+/**
+ * Remove holes using pure containment-based detection
+ * A path is an outer contour if it's not fully contained by any other path
+ * A path is a hole if it's contained within another path
+ * @internal
+ */
+function removeHolesWithPaper(path: PavePath, emptyPath: PavePath): PavePath {
+  const paperInstance = getPaper()
+  if (!paperInstance) {
+    return path
+  }
+
+  // Convert Pave path to individual Paper.js paths
+  const allPaths = paveToSeparatePaperPaths(path)
+
+  console.log(`PathRemoveHoles: Found ${allPaths.length} individual paths`)
+
+  if (allPaths.length <= 1) {
+    // Cleanup and return original
+    for (const p of allPaths) p.remove()
+    return path
+  }
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+
+  // Debug: show clockwise and area for each path
+  for (let i = 0; i < allPaths.length; i++) {
+    const p = allPaths[i] as any
+    console.log(`  Path ${i}: clockwise=${p.clockwise}, area=${p.area?.toFixed(2)}`)
+  }
+
+  // HYBRID STRATEGY: clockwise + containment
+  // 1. clockwise=true → always OUTER
+  // 2. clockwise=false + contained by a clockwise=true path → HOLE (remove)
+  // 3. clockwise=false + NOT contained → OUTER (separate outer contour with inverted winding)
+
+  const clockwisePaths: PaperPath[] = []
+  const counterClockwisePaths: PaperPath[] = []
+
+  // Separate paths by clockwise property
+  for (let i = 0; i < allPaths.length; i++) {
+    const currentPath = allPaths[i] as any
+    if (currentPath.clockwise) {
+      clockwisePaths.push(allPaths[i]!)
+    } else {
+      counterClockwisePaths.push(allPaths[i]!)
+    }
+  }
+
+  console.log(`  Clockwise paths: ${clockwisePaths.length}, Counter-clockwise paths: ${counterClockwisePaths.length}`)
+
+  // Start with all clockwise paths as outer
+  const outerPaths: PaperPath[] = [...clockwisePaths]
+
+  // For each counter-clockwise path, check if it's contained by any clockwise path
+  for (let i = 0; i < counterClockwisePaths.length; i++) {
+    const ccwPath = counterClockwisePaths[i] as any
+    const ccwBounds = ccwPath.bounds
+    const ccwCenter = ccwBounds.center
+
+    let isContained = false
+
+    // Check if this CCW path's center is inside any CW path
+    for (const cwPath of clockwisePaths) {
+      const cwPathAny = cwPath as any
+      if (cwPathAny.contains(ccwCenter)) {
+        isContained = true
+        break
+      }
+    }
+
+    if (isContained) {
+      console.log(`  CCW Path ${i}: HOLE (removed) - contained by a CW path`)
+    } else {
+      // Not contained - this is a separate outer contour with inverted winding
+      outerPaths.push(counterClockwisePaths[i]!)
+      console.log(`  CCW Path ${i}: OUTER (kept) - not contained, separate contour`)
+    }
+  }
+
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  // If no outer paths found, return empty
+  if (outerPaths.length === 0) {
+    console.warn('PathRemoveHoles: No outer paths found')
+    for (const p of allPaths) p.remove()
+    return emptyPath
+  }
+
+  // If all paths are outer, return original (no holes detected)
+  if (outerPaths.length === allPaths.length) {
+    console.log('PathRemoveHoles: No holes detected, returning original path')
+    for (const p of allPaths) p.remove()
+    return path
+  }
+
+  console.log(`PathRemoveHoles: Removed ${allPaths.length - outerPaths.length} holes, kept ${outerPaths.length} paths`)
+
+  // Build new CompoundPath with only outer paths (without unite - preserve separate contours)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CompoundPath = (paperInstance as any).CompoundPath
+  const newCompound = new CompoundPath() as PaperPath
+
+  for (const p of outerPaths) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cloned = (p as any).clone()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(newCompound as any).addChild(cloned)
+  }
+
+  console.log(`PathRemoveHoles: Built CompoundPath with ${outerPaths.length} outer paths`)
+
+  // Convert back to Pave
+  const result = paperToPave(newCompound)
+
+  // Log the result structure
+  if (result && result.curves) {
+    console.log(`PathRemoveHoles: Result has ${result.curves.length} curves`)
+  }
+
+  // Cleanup all paths
+  for (const p of allPaths) p.remove()
+  newCompound.remove()
+
+  return result || emptyPath
+}
+
+/**
+ * Remove holes using Shoelace formula (fallback when Paper.js unavailable)
+ * @internal
+ */
+function removeHolesWithShoelace(path: PavePath, emptyPath: PavePath): PavePath {
+  const curves = path.curves
+  if (!curves) {
+    return emptyPath
+  }
+
+  // Calculate winding for all curves
+  const curveInfo: Array<{ index: number; winding: number; absWinding: number }> = []
+
+  for (let i = 0; i < curves.length; i++) {
+    const curve = curves[i]
+    if (!curve) continue
+
+    const winding = getCurveWindingDirection(curve)
+    curveInfo.push({ index: i, winding, absWinding: Math.abs(winding) })
+  }
+
+  // Find the largest curve by absolute area
+  const maxAbsWinding = Math.max(...curveInfo.map(c => c.absWinding))
+  const largestCurve = curveInfo.find(c => c.absWinding === maxAbsWinding)
+
+  if (!largestCurve) {
+    return path
+  }
+
+  const outerSign = largestCurve.winding >= 0 ? 1 : -1
+
+  // Filter: keep curves with the same sign as the outer contour
+  const solidCurves: unknown[] = []
+
+  for (const info of curveInfo) {
+    const curve = curves[info.index]
+    if (!curve) continue
+
+    const sameSign = (info.winding >= 0) === (outerSign > 0) || info.winding === 0
+
+    if (sameSign) {
+      solidCurves.push(curve)
+    }
+  }
+
+  if (solidCurves.length === 0) {
+    return emptyPath
+  }
+
+  return { curves: solidCurves } as PavePath
+}

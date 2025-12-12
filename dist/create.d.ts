@@ -55,6 +55,10 @@ export interface P5Pave2RisoInstance {
      */
     PathOffset: (path: PavePath, distance: number) => PavePath;
     /**
+     * Remove holes from a path, keeping only outer contours
+     */
+    PathRemoveHoles: (path: PavePath) => PavePath;
+    /**
      * Check if two paths overlap
      */
     isPathsOverlap: (pathA: PavePath, pathB: PavePath) => boolean;
