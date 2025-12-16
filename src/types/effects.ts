@@ -1,9 +1,9 @@
 /**
- * フィルター、ハーフトーン、ディザーのエフェクト設定型定義
+ * Effect configuration type definitions for filters, halftone, and dither
  */
 
 /**
- * フィルタータイプ
+ * Filter type
  */
 export type FilterType =
   | 'posterize'
@@ -16,37 +16,37 @@ export type FilterType =
   | 'erode'
 
 /**
- * Posterizeフィルター設定
- * 画像の色数を削減する
+ * Posterize filter configuration
+ * Reduces the number of colors in the image
  */
 export interface PosterizeFilter {
   filterType: 'posterize'
-  /** 色のレベル数（2-255） */
+  /** Number of color levels (2-255) */
   levels: number
 }
 
 /**
- * Blurフィルター設定
- * ガウシアンブラーを適用する
+ * Blur filter configuration
+ * Applies Gaussian blur
  */
 export interface BlurFilter {
   filterType: 'blur'
-  /** ブラー半径（ピクセル、デフォルト: 4） */
+  /** Blur radius in pixels (default: 4) */
   radius?: number
 }
 
 /**
- * Thresholdフィルター設定
- * 指定したしきい値で二値化する
+ * Threshold filter configuration
+ * Converts to binary based on threshold value
  */
 export interface ThresholdFilter {
   filterType: 'threshold'
-  /** しきい値（0.0-1.0、デフォルト: 0.5） */
+  /** Threshold value (0.0-1.0, default: 0.5) */
   threshold?: number
 }
 
 /**
- * 引数なしフィルター設定
+ * No-argument filter configuration
  * gray, opaque, invert, dilate, erode
  */
 export interface NoArgFilter {
@@ -54,21 +54,21 @@ export interface NoArgFilter {
 }
 
 /**
- * フィルター設定（Discriminated Union）
+ * Filter configuration (Discriminated Union)
  *
- * 各フィルタータイプに応じた引数を型安全に指定できる
+ * Type-safe specification of arguments for each filter type
  *
  * @example
- * // Posterize: 色数を削減
+ * // Posterize: reduce color count
  * { filterType: 'posterize', levels: 4 }
  *
- * // Blur: ぼかし
+ * // Blur: apply blur
  * { filterType: 'blur', radius: 3 }
  *
- * // Threshold: 二値化
+ * // Threshold: binarize
  * { filterType: 'threshold', threshold: 0.5 }
  *
- * // 引数なしフィルター
+ * // No-argument filters
  * { filterType: 'gray' }
  * { filterType: 'invert' }
  */
@@ -79,8 +79,8 @@ export type FilterConfig =
   | NoArgFilter
 
 /**
- * Legacy互換: 旧形式のフィルター設定
- * @deprecated FilterConfig Discriminated Unionを使用してください
+ * Legacy compatible: old format filter configuration
+ * @deprecated Use FilterConfig Discriminated Union instead
  */
 export interface LegacyFilterConfig {
   filterType: FilterType
@@ -88,8 +88,8 @@ export interface LegacyFilterConfig {
 }
 
 /**
- * Legacy形式からDiscriminated Union形式への変換
- * 後方互換性のために使用
+ * Converts from Legacy format to Discriminated Union format
+ * Used for backward compatibility
  */
 export const normalizeFilterConfig = (config: FilterConfig | LegacyFilterConfig): FilterConfig => {
   // すでに新形式の場合はそのまま返す
@@ -112,25 +112,25 @@ export const normalizeFilterConfig = (config: FilterConfig | LegacyFilterConfig)
 }
 
 /**
- * ハーフトーン設定
+ * Halftone configuration
  */
 export interface HalftoneConfig {
   /**
-   * ハーフトーン関数への引数
-   * 通常は [dotSize, angle, density] など
-   * p5.riso.jsのhalftoneImage()に渡される引数
+   * Arguments for halftone function
+   * Typically [dotSize, angle, density] etc.
+   * Arguments passed to p5.riso.js halftoneImage()
    */
   halftoneArgs: (string | number)[]
 }
 
 /**
- * ディザー設定
+ * Dither configuration
  */
 export interface DitherConfig {
   /**
-   * ディザー関数への引数
-   * p5.riso.jsのditherImage()に渡される引数
-   * 例: ['floydSteinberg', 128] など文字列を含む場合がある
+   * Arguments for dither function
+   * Arguments passed to p5.riso.js ditherImage()
+   * Example: ['floydSteinberg', 128] may include strings
    */
   ditherArgs: (string | number)[]
 }

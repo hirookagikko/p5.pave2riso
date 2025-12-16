@@ -1,12 +1,12 @@
 /**
- * 型ガード関数
+ * Type guard functions
  */
 
 import type { FillConfig, SolidFillConfig, PatternFillConfig, GradientFillConfig, ImageFillConfig } from '../types/fill.js'
 import type { StrokeConfig, SolidStrokeConfig, DashedStrokeConfig, PatternStrokeConfig, GradientStrokeConfig } from '../types/stroke.js'
 
 /**
- * FillConfigの型ガード
+ * Type guards for FillConfig
  */
 
 export const isSolidFill = (fill: FillConfig): fill is SolidFillConfig => {
@@ -26,7 +26,7 @@ export const isImageFill = (fill: FillConfig): fill is ImageFillConfig => {
 }
 
 /**
- * StrokeConfigの型ガード
+ * Type guards for StrokeConfig
  */
 
 export const isSolidStroke = (stroke: StrokeConfig): stroke is SolidStrokeConfig => {

@@ -1,13 +1,13 @@
 /**
- * pave2Riso メイン関数
+ * pave2Riso main function
  *
- * Pave pathをRisographチャンネルに変換する
+ * Converts Pave path to Risograph channels
  */
 import type { Pave2RisoOptions } from './types/core.js';
 /**
- * Pave pathをRisographチャンネルに変換
+ * Converts Pave path to Risograph channels
  *
- * @param options - 変換オプション
+ * @param options - Conversion options
  *
  * @example
  * pave2Riso({

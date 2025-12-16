@@ -1,7 +1,7 @@
 /**
- * Graphics処理パイプライン
+ * Graphics Processing Pipeline
  *
- * pave2Risoの主要なGraphics処理を管理するクラス
+ * Class that manages main Graphics processing for pave2Riso
  */
 
 import type { Pave2RisoOptions } from '../types/core.js'
@@ -11,15 +11,15 @@ import { getPathBounds, drawPathToCanvas } from '../utils/pave-wrapper.js'
 import { createVec2 } from '../utils/vec2-wrapper.js'
 
 /**
- * GraphicsPipelineクラス
+ * GraphicsPipeline class
  *
- * Graphics生成、クリッピング、モード適用、クリーンアップを管理
+ * Manages Graphics creation, clipping, mode application, and cleanup
  *
- * リソース管理:
- * - cleanup()メソッドで全てのGraphicsリソースを解放
- * - try-finallyパターンで使用することを推奨
- * - cleanup()は冪等（複数回呼び出しても安全）
- * - cleanup()後のcreateGraphics()呼び出しはエラー
+ * Resource management:
+ * - cleanup() method releases all Graphics resources
+ * - Recommended to use with try-finally pattern
+ * - cleanup() is idempotent (safe to call multiple times)
+ * - Calling createGraphics() after cleanup() throws an error
  *
  * NOTE: ES2023+ Symbol.dispose support planned for future TypeScript upgrade
  */
@@ -58,12 +58,12 @@ export class GraphicsPipeline {
   }
 
   /**
-   * 新しいGraphicsオブジェクトを作成し、クリーンアップリストに追加
+   * Creates a new Graphics object and adds it to the cleanup list
    *
-   * @param width - 幅
-   * @param height - 高さ
-   * @returns 新しいGraphicsオブジェクト
-   * @throws {Error} cleanup()後に呼び出された場合
+   * @param width - Width
+   * @param height - Height
+   * @returns New Graphics object
+   * @throws {Error} If called after cleanup()
    */
   createGraphics(width: number, height: number): p5.Graphics {
     if (this.disposed) {
@@ -76,7 +76,7 @@ export class GraphicsPipeline {
   }
 
   /**
-   * クリッピングパスを設定
+   * Sets up clipping path
    */
   setupClipping(): void {
     const { clippingPath, channels } = this.options
@@ -91,7 +91,7 @@ export class GraphicsPipeline {
   }
 
   /**
-   * クリッピングパスを解除
+   * Releases clipping path
    */
   releaseClipping(): void {
     const { clippingPath, channels } = this.options
@@ -104,10 +104,10 @@ export class GraphicsPipeline {
   }
 
   /**
-   * 全てのGraphicsリソースをクリーンアップ
+   * Cleans up all Graphics resources
    *
-   * 複数回呼び出しても安全（冪等）
-   * cleanup()後のcreateGraphics()呼び出しはエラーになる
+   * Safe to call multiple times (idempotent)
+   * Calling createGraphics() after cleanup() throws an error
    */
   cleanup(): void {
     if (this.disposed) {
@@ -126,14 +126,14 @@ export class GraphicsPipeline {
   }
 
   /**
-   * パイプラインが破棄済みかどうかを確認
+   * Checks if the pipeline has been disposed
    */
   isDisposed(): boolean {
     return this.disposed
   }
 
   /**
-   * ゲッター
+   * Getters
    */
   getOptions(): Pave2RisoOptions {
     return this.options
@@ -165,7 +165,7 @@ export class GraphicsPipeline {
   }
 
   /**
-   * パスをCanvasに描画（Pave.js APIのラッパー）
+   * Draws path to Canvas (wrapper for Pave.js API)
    */
   drawPathToCanvas(path: PavePath, context: CanvasRenderingContext2D): void {
     drawPathToCanvas(path, context)

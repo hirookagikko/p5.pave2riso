@@ -1,24 +1,24 @@
 /**
- * 対角線バッファ計算ユーティリティ
+ * Diagonal buffer calculation utilities
  *
- * halftone/dither適用時、角度付き回転でキャンバスがクリップされるのを防ぐため
- * 対角線サイズのバッファを使用する
+ * When applying halftone/dither effects with rotation, use a diagonal-sized buffer
+ * to prevent canvas clipping.
  */
 /**
- * 対角線バッファ設定を計算
+ * Calculate diagonal buffer configuration
  *
- * halftone/dither使用時は対角線サイズのバッファを使用し、
- * そうでない場合はキャンバスサイズをそのまま使用
+ * Uses a diagonal-sized buffer when halftone/dither is enabled,
+ * otherwise uses the canvas size directly.
  *
- * @param canvasSize - キャンバスサイズ [width, height]
- * @param halftone - ハーフトーン設定（null/undefinedで無効）
- * @param dither - ディザー設定（null/undefinedで無効）
- * @returns 対角線バッファ設定
+ * @param canvasSize - Canvas size [width, height]
+ * @param halftone - Halftone configuration (null/undefined to disable)
+ * @param dither - Dither configuration (null/undefined to disable)
+ * @returns Diagonal buffer configuration
  *
  * @example
  * const config = calculateDiagonalBuffer(canvasSize, halftone, dither)
  * const buffer = pipeline.createGraphics(config.bufferWidth, config.bufferHeight)
- * // ... 描画処理 ...
+ * // ... drawing operations ...
  * channel.image(buffer, config.drawX, config.drawY)
  */
 export const calculateDiagonalBuffer = (canvasSize, halftone, dither) => {

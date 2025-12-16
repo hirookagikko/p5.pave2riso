@@ -1,23 +1,23 @@
 /**
- * チャンネル操作ユーティリティ
+ * Channel operation utilities
  */
 import type { FilterConfig, LegacyFilterConfig, HalftoneConfig, DitherConfig } from '../types/effects.js';
 type AnyFilterConfig = FilterConfig | LegacyFilterConfig;
 /**
- * Graphicsオブジェクトにフィルターを適用
+ * Applies filters to a Graphics object
  *
- * 新形式（Discriminated Union）と旧形式（filterArgs）の両方に対応
+ * Supports both new format (Discriminated Union) and legacy format (filterArgs)
  *
- * @param graphics - フィルターを適用するGraphicsオブジェクト
- * @param filterConfig - フィルター設定（配列または単一）
- * @returns フィルター適用後のGraphicsオブジェクト（チェーン用）
+ * @param graphics - Graphics object to apply filters to
+ * @param filterConfig - Filter configuration (array or single)
+ * @returns Graphics object after filter application (for chaining)
  *
  * @example
- * // 新形式（推奨）
+ * // New format (recommended)
  * applyFilters(g, { filterType: 'posterize', levels: 4 })
  * applyFilters(g, { filterType: 'blur', radius: 3 })
  *
- * // 旧形式（後方互換）
+ * // Legacy format (backward compatible)
  * applyFilters(g, { filterType: 'posterize', filterArgs: [4] })
  */
 export declare const applyFilters: (graphics: p5.Graphics, filterConfig: AnyFilterConfig | AnyFilterConfig[] | null | undefined) => p5.Graphics;
@@ -34,22 +34,22 @@ export declare const isHalftoneAvailable: () => boolean;
  */
 export declare const isDitherAvailable: () => boolean;
 /**
- * Graphicsオブジェクトにハーフトーン/ディザーエフェクトを適用
+ * Applies halftone/dither effects to a Graphics object
  *
  * Requires p5.riso.js to be loaded for halftone and dither effects.
  * If the required functions are not available and effects are requested,
  * a warning is logged and the graphics object is returned unchanged.
  *
- * @param graphics - エフェクトを適用するGraphicsオブジェクト
- * @param halftone - ハーフトーン設定
- * @param dither - ディザー設定
- * @returns エフェクト適用後のGraphicsオブジェクト
+ * @param graphics - Graphics object to apply effects to
+ * @param halftone - Halftone configuration
+ * @param dither - Dither configuration
+ * @returns Graphics object after effect application
  */
 export declare const applyEffects: (graphics: p5.Graphics, halftone: HalftoneConfig | null | undefined, dither: DitherConfig | null | undefined) => p5.Graphics;
 /**
- * グローバルなPTNオブジェクトの存在チェック
+ * Checks for the presence of the global PTN object
  *
- * @throws {ReferenceError} PTNオブジェクトが存在しない場合
+ * @throws {ReferenceError} If PTN object is not available
  */
 export declare const ensurePTNAvailable: () => void;
 export {};

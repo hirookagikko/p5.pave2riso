@@ -1,49 +1,49 @@
 /**
- * 対角線バッファ計算ユーティリティ
+ * Diagonal buffer calculation utilities
  *
- * halftone/dither適用時、角度付き回転でキャンバスがクリップされるのを防ぐため
- * 対角線サイズのバッファを使用する
+ * When applying halftone/dither effects with rotation, use a diagonal-sized buffer
+ * to prevent canvas clipping.
  */
 
 import type { HalftoneConfig, DitherConfig } from '../types/effects.js'
 
 /**
- * 対角線バッファ計算結果
+ * Diagonal buffer calculation result
  */
 export interface DiagonalBufferConfig {
-  /** 対角線バッファを使用するか */
+  /** Whether diagonal buffer is used */
   usesDiagonalBuffer: boolean
-  /** 対角線サイズ（使用しない場合は0） */
+  /** Diagonal size (0 if not used) */
   diagonal: number
-  /** 中央揃えのためのXオフセット */
+  /** X offset for centering */
   offsetX: number
-  /** 中央揃えのためのYオフセット */
+  /** Y offset for centering */
   offsetY: number
-  /** バッファ幅（対角線またはcanvasSize[0]） */
+  /** Buffer width (diagonal or canvasSize[0]) */
   bufferWidth: number
-  /** バッファ高さ（対角線またはcanvasSize[1]） */
+  /** Buffer height (diagonal or canvasSize[1]) */
   bufferHeight: number
-  /** 描画X位置（負のオフセット） */
+  /** Draw X position (negative offset) */
   drawX: number
-  /** 描画Y位置（負のオフセット） */
+  /** Draw Y position (negative offset) */
   drawY: number
 }
 
 /**
- * 対角線バッファ設定を計算
+ * Calculate diagonal buffer configuration
  *
- * halftone/dither使用時は対角線サイズのバッファを使用し、
- * そうでない場合はキャンバスサイズをそのまま使用
+ * Uses a diagonal-sized buffer when halftone/dither is enabled,
+ * otherwise uses the canvas size directly.
  *
- * @param canvasSize - キャンバスサイズ [width, height]
- * @param halftone - ハーフトーン設定（null/undefinedで無効）
- * @param dither - ディザー設定（null/undefinedで無効）
- * @returns 対角線バッファ設定
+ * @param canvasSize - Canvas size [width, height]
+ * @param halftone - Halftone configuration (null/undefined to disable)
+ * @param dither - Dither configuration (null/undefined to disable)
+ * @returns Diagonal buffer configuration
  *
  * @example
  * const config = calculateDiagonalBuffer(canvasSize, halftone, dither)
  * const buffer = pipeline.createGraphics(config.bufferWidth, config.bufferHeight)
- * // ... 描画処理 ...
+ * // ... drawing operations ...
  * channel.image(buffer, config.drawX, config.drawY)
  */
 export const calculateDiagonalBuffer = (

@@ -1,200 +1,200 @@
 /**
- * Fill設定のDiscriminated Union型定義
+ * Discriminated Union type definitions for Fill configuration
  */
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js';
 import type { Percentage } from './branded.js';
 /**
- * グラデーションタイプ
+ * Gradient type
  */
 export type GradientType = 'linear' | 'radial' | 'conic';
 /**
- * グラデーション方向（線形グラデーション用）
+ * Gradient direction (for linear gradients)
  */
 export type GradientDirection = 'TD' | 'DT' | 'LR' | 'RL' | 'LTRB' | 'RTLB' | 'LBRT' | 'RBLT';
 /**
- * グラデーションカラーストップの個別エントリ
+ * Individual entry for gradient color stop
  */
 export interface ColorStopEntry {
     /**
-     * 位置（0-100%）
-     * グラデーション内での位置を表す
+     * Position (0-100%)
+     * Represents position within the gradient
      */
     position: Percentage | number;
     /**
-     * インク濃度（0-100%）
-     * この位置でのインクの濃さ
+     * Ink density (0-100%)
+     * Ink intensity at this position
      */
     depth: Percentage | number;
 }
 /**
- * グラデーションカラーストップ
+ * Gradient color stop
  */
 export interface ColorStop {
     /**
-     * チャンネルインデックス
+     * Channel index
      */
     channel: number;
     /**
-     * カラーストップの配列
+     * Array of color stops
      */
     stops: ColorStopEntry[];
 }
 /**
- * 画像フィット方式
+ * Image fit mode
  */
 export type ImageFit = 'cover' | 'contain' | 'fill' | 'none';
 /**
- * 水平方向のアライメント
+ * Horizontal alignment
  */
 export type AlignX = 'left' | 'center' | 'right' | number;
 /**
- * 垂直方向のアライメント
+ * Vertical alignment
  */
 export type AlignY = 'top' | 'middle' | 'bottom' | number;
 /**
- * ベタ塗りFill設定
+ * Solid fill configuration
  */
 export interface SolidFillConfig {
     type: 'solid';
     /**
-     * 各チャンネルのインク濃度（0-100）
+     * Ink density for each channel (0-100)
      */
     channelVals: number[];
     /**
-     * フィルター設定
+     * Filter configuration
      */
     filter?: FilterConfig | FilterConfig[] | null;
     /**
-     * ハーフトーン設定
+     * Halftone configuration
      */
     halftone?: HalftoneConfig | null;
     /**
-     * ディザー設定
+     * Dither configuration
      */
     dither?: DitherConfig | null;
 }
 /**
- * パターンFill設定
+ * Pattern fill configuration
  */
 export interface PatternFillConfig {
     type: 'pattern';
     /**
-     * パターン名（PTNオブジェクトのキー）
+     * Pattern name (key in PTN object)
      */
     PTN: string;
     /**
-     * パターン関数への引数
+     * Arguments for pattern function
      */
     patternArgs: unknown[];
     /**
-     * パターンの回転角度（度数法）
+     * Pattern rotation angle (in degrees)
      * @example
-     * patternAngle: 45  // 45度回転
-     * patternAngle: 90  // 90度回転
+     * patternAngle: 45  // 45 degree rotation
+     * patternAngle: 90  // 90 degree rotation
      */
     patternAngle?: number;
     /**
-     * 各チャンネルのインク濃度（0-100）
+     * Ink density for each channel (0-100)
      */
     channelVals: number[];
     /**
-     * フィルター設定
+     * Filter configuration
      */
     filter?: FilterConfig | FilterConfig[] | null;
     /**
-     * ハーフトーン設定
+     * Halftone configuration
      */
     halftone?: HalftoneConfig | null;
     /**
-     * ディザー設定
+     * Dither configuration
      */
     dither?: DitherConfig | null;
 }
 /**
- * グラデーションFill設定
+ * Gradient fill configuration
  */
 export interface GradientFillConfig {
     type: 'gradient';
     /**
-     * グラデーションタイプ
+     * Gradient type
      */
     gradientType: GradientType;
     /**
-     * グラデーション方向（線形グラデーションのみ）
+     * Gradient direction (linear gradient only)
      */
     gradientDirection?: GradientDirection;
     /**
-     * カラーストップ
+     * Color stops
      */
     colorStops: ColorStop[];
     /**
-     * フィルター設定
+     * Filter configuration
      */
     filter?: FilterConfig | FilterConfig[] | null;
     /**
-     * ハーフトーン設定
+     * Halftone configuration
      */
     halftone?: HalftoneConfig | null;
     /**
-     * ディザー設定
+     * Dither configuration
      */
     dither?: DitherConfig | null;
 }
 /**
- * 画像Fill設定
+ * Image fill configuration
  */
 export interface ImageFillConfig {
     type: 'image';
     /**
-     * 画像オブジェクト
+     * Image object
      */
     image: p5.Image;
     /**
-     * フィット方式
+     * Fit mode
      */
     fit?: ImageFit;
     /**
-     * 水平方向のアライメント
+     * Horizontal alignment
      */
     alignX?: AlignX;
     /**
-     * 垂直方向のアライメント
+     * Vertical alignment
      */
     alignY?: AlignY;
     /**
-     * スケール倍率
+     * Scale factor
      */
     scale?: number;
     /**
-     * オフセット [x, y]
+     * Offset [x, y]
      */
     offset?: [number, number];
     /**
-     * 回転角度（度数法）
+     * Rotation angle (in degrees)
      */
     rotate?: number;
     /**
-     * 各チャンネルのインク濃度（0-100）
+     * Ink density for each channel (0-100)
      */
     channelVals?: number[];
     /**
-     * フィルター設定
+     * Filter configuration
      */
     filter?: FilterConfig | FilterConfig[] | null;
     /**
-     * ハーフトーン設定
+     * Halftone configuration
      */
     halftone?: HalftoneConfig | null;
     /**
-     * ディザー設定
+     * Dither configuration
      */
     dither?: DitherConfig | null;
 }
 /**
- * Fill設定のDiscriminated Union
+ * Discriminated Union for Fill configuration
  *
- * typeフィールドでどのFill方式かを判別し、
- * TypeScriptが適切にnarrowingを行える
+ * The type field determines the fill method,
+ * allowing TypeScript to properly narrow the type
  */
 export type FillConfig = SolidFillConfig | PatternFillConfig | GradientFillConfig | ImageFillConfig;
 //# sourceMappingURL=fill.d.ts.map

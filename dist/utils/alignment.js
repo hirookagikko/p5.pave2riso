@@ -1,11 +1,11 @@
 /**
- * アライメント変換ユーティリティ
+ * Alignment conversion utilities
  */
 /**
- * 水平方向のアライメントを0-1の数値に変換
+ * Convert horizontal alignment to 0-1 numeric value
  *
- * @param alignX - アライメント値
- * @returns 0-1の数値（0=left, 0.5=center, 1=right）
+ * @param alignX - Alignment value
+ * @returns Numeric value 0-1 (0=left, 0.5=center, 1=right)
  *
  * @example
  * normalizeAlignX('left')   // 0
@@ -31,10 +31,10 @@ export const normalizeAlignX = (alignX) => {
     }
 };
 /**
- * 垂直方向のアライメントを0-1の数値に変換
+ * Convert vertical alignment to 0-1 numeric value
  *
- * @param alignY - アライメント値
- * @returns 0-1の数値（0=top, 0.5=middle, 1=bottom）
+ * @param alignY - Alignment value
+ * @returns Numeric value 0-1 (0=top, 0.5=middle, 1=bottom)
  *
  * @example
  * normalizeAlignY('top')    // 0

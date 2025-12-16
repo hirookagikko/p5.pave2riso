@@ -1,5 +1,5 @@
 /**
- * 入力バリデーション
+ * Input validation
  */
 
 import type { Pave2RisoOptions, RenderMode } from '../types/core.js'
@@ -8,17 +8,17 @@ import type { StrokeConfig, StrokeCap, StrokeJoin } from '../types/stroke.js'
 import type { FilterConfig, HalftoneConfig, DitherConfig, LegacyFilterConfig } from '../types/effects.js'
 import { hasCurves } from '../types/core.js'
 
-/** 有効なグラデーションタイプ */
+/** Valid gradient types */
 const VALID_GRADIENT_TYPES: readonly GradientType[] = ['linear', 'radial', 'conic']
 
-/** 有効なストロークキャップ */
+/** Valid stroke caps */
 const VALID_STROKE_CAPS: readonly StrokeCap[] = ['round', 'square', 'butt']
 
-/** 有効なストロークジョイン */
+/** Valid stroke joins */
 const VALID_STROKE_JOINS: readonly StrokeJoin[] = ['miter', 'bevel', 'round']
 
 /**
- * オプションの数値がfiniteかを検証
+ * Validates that an optional number is finite
  */
 const validateOptionalFiniteNumber = (
   value: number | undefined,
@@ -38,7 +38,7 @@ const validateOptionalFiniteNumber = (
 }
 
 /**
- * 数値配列の各要素がfiniteかを検証
+ * Validates that each element in a number array is finite
  */
 const validateFiniteNumberArray = (
   arr: number[],
@@ -57,7 +57,7 @@ const validateFiniteNumberArray = (
 }
 
 /**
- * channelValsの範囲を検証 (0-100)
+ * Validates channelVals range (0-100)
  */
 const validateChannelVals = (vals: number[], context: string): void => {
   if (!Array.isArray(vals)) {
@@ -75,7 +75,7 @@ const validateChannelVals = (vals: number[], context: string): void => {
 }
 
 /**
- * ColorStopEntryの検証
+ * Validates ColorStopEntry
  */
 const validateColorStopEntry = (entry: ColorStopEntry, context: string): void => {
   if (typeof entry.position !== 'number' || !Number.isFinite(entry.position)) {
@@ -93,7 +93,7 @@ const validateColorStopEntry = (entry: ColorStopEntry, context: string): void =>
 }
 
 /**
- * ColorStopsの検証（順序と値の検証）
+ * Validates ColorStops (order and values)
  */
 const validateColorStops = (colorStops: ColorStop[], context: string): void => {
   if (!Array.isArray(colorStops) || colorStops.length === 0) {
@@ -128,9 +128,9 @@ const validateColorStops = (colorStops: ColorStop[], context: string): void => {
 }
 
 /**
- * FilterConfigの検証
+ * Validates FilterConfig
  *
- * Legacy形式（filterArgs）と新形式（levels, radius, threshold）の両方をサポート
+ * Supports both legacy format (filterArgs) and new format (levels, radius, threshold)
  */
 const validateFilterConfig = (filter: FilterConfig | LegacyFilterConfig, context: string): void => {
   if (!filter.filterType) {
@@ -182,7 +182,7 @@ const validateFilterConfig = (filter: FilterConfig | LegacyFilterConfig, context
 }
 
 /**
- * FilterConfig配列またはnullの検証
+ * Validates FilterConfig array or null
  */
 const validateFilters = (
   filters: FilterConfig | LegacyFilterConfig | (FilterConfig | LegacyFilterConfig)[] | null | undefined,
@@ -197,11 +197,11 @@ const validateFilters = (
 }
 
 /**
- * HalftoneConfigの検証
+ * Validates HalftoneConfig
  *
- * halftoneArgsは [type, size, angle, frequency] のような混合型配列
- * 型定義はnumber[]だが実際は(string | number)[]
- * 配列であることのみ検証
+ * halftoneArgs is a mixed-type array like [type, size, angle, frequency]
+ * Type definition is number[] but actually (string | number)[]
+ * Only validates that it's an array
  */
 const validateHalftoneConfig = (
   config: HalftoneConfig | null | undefined,
@@ -215,11 +215,11 @@ const validateHalftoneConfig = (
 }
 
 /**
- * DitherConfigの検証
+ * Validates DitherConfig
  *
- * ditherArgsは ['floydSteinberg'] のような混合型配列
- * 型定義はnumber[]だが実際は(string | number)[]
- * 配列であることのみ検証
+ * ditherArgs is a mixed-type array like ['floydSteinberg']
+ * Type definition is number[] but actually (string | number)[]
+ * Only validates that it's an array
  */
 const validateDitherConfig = (
   config: DitherConfig | null | undefined,
@@ -233,7 +233,7 @@ const validateDitherConfig = (
 }
 
 /**
- * エフェクト設定（filter, halftone, dither）の検証
+ * Validates effect settings (filter, halftone, dither)
  */
 const validateEffects = (
   config: { filter?: FilterConfig | FilterConfig[] | null; halftone?: HalftoneConfig | null; dither?: DitherConfig | null },
@@ -245,7 +245,7 @@ const validateEffects = (
 }
 
 /**
- * Fill設定の詳細検証
+ * Detailed validation of Fill configuration
  */
 const validateFillConfig = (fill: FillConfig): void => {
   switch (fill.type) {
@@ -299,7 +299,7 @@ const validateFillConfig = (fill: FillConfig): void => {
 }
 
 /**
- * Stroke設定の詳細検証
+ * Detailed validation of Stroke configuration
  */
 const validateStrokeConfig = (stroke: StrokeConfig): void => {
   // strokeWeight検証
@@ -374,10 +374,10 @@ const validateStrokeConfig = (stroke: StrokeConfig): void => {
 }
 
 /**
- * Pave2RisoOptionsの妥当性を検証
+ * Validates Pave2RisoOptions
  *
- * @param options - 検証するオプション
- * @throws {TypeError} 必須パラメータが不足または無効な場合
+ * @param options - Options to validate
+ * @throws {TypeError} If required parameters are missing or invalid
  */
 export const validateOptions = (options: Pave2RisoOptions): void => {
   // pathの検証

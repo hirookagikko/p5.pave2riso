@@ -1,5 +1,5 @@
 /**
- * レンダリングモード実装
+ * Rendering mode implementation
  *
  * This module handles different rendering modes for Risograph printing:
  * - **overprint**: All colors print on top of each other (default)
@@ -14,7 +14,7 @@ import type { GraphicsPipeline } from '../graphics/GraphicsPipeline.js'
 import { applyFilters, applyEffects } from '../channels/operations.js'
 
 /**
- * レンダリングモードを適用
+ * Applies rendering mode
  *
  * This function applies pre-processing based on the render mode.
  * It does NOT handle the actual fill/stroke rendering - that is done
@@ -26,7 +26,7 @@ import { applyFilters, applyEffects } from '../channels/operations.js'
  *    - Uses REMOVE blend mode to erase the filtered shape
  * 3. **join**: Pre-processing is handled in fill/stroke renderers
  *
- * @param mode - レンダリングモード
+ * @param mode - Rendering mode
  * @param pipeline - GraphicsPipeline
  */
 export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void => {
@@ -103,14 +103,14 @@ export const applyMode = (mode: RenderMode, pipeline: GraphicsPipeline): void =>
 }
 
 /**
- * Stroke用のcutout/joinモード前処理
+ * Pre-processing for cutout/join mode on strokes
  *
- * @param mode - レンダリングモード
+ * @param mode - Rendering mode
  * @param pipeline - GraphicsPipeline
- * @param strokeWeight - ストロークの太さ
- * @param dashArgs - 破線パターン（dashedの場合）
- * @param strokeCap - ストロークキャップ
- * @param strokeJoin - ストロークジョイン
+ * @param strokeWeight - Stroke weight
+ * @param dashArgs - Dash pattern (for dashed strokes)
+ * @param strokeCap - Stroke cap style
+ * @param strokeJoin - Stroke join style
  */
 export const applyStrokeModePreprocess = (
   mode: RenderMode,

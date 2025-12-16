@@ -1,5 +1,5 @@
 /**
- * コア型定義
+ * Core type definitions
  */
 /**
  * Type guard to check if a value has curves property

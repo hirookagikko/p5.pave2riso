@@ -1,8 +1,8 @@
 /**
- * Stroke前処理ヘルパー関数
+ * Stroke preprocessing helper functions
  *
- * core.tsのStroke前処理ロジックを集約し、
- * if-else連鎖を解消する。
+ * Consolidates stroke preprocessing logic from core.ts
+ * and eliminates if-else chains.
  */
 
 import type { StrokeConfig, StrokeCap, StrokeJoin } from '../types/stroke.js'
@@ -10,7 +10,7 @@ import type { RenderMode } from '../types/core.js'
 import type { DashPattern } from '../types/branded.js'
 
 /**
- * Stroke前処理に必要な共通パラメータ
+ * Common parameters required for stroke preprocessing
  */
 export interface StrokePreprocessParams {
   strokeWeight: number
@@ -20,16 +20,16 @@ export interface StrokePreprocessParams {
 }
 
 /**
- * Strokeタイプとモードに基づいて前処理が必要かどうかを判定
+ * Determine if preprocessing is needed based on stroke type and mode
  *
- * 前処理ルール:
- * - solid/dashed: cutout/joinモードで常に前処理
- * - pattern: cutoutモードのみ前処理（joinはレンダラー内で処理）
- * - gradient: cutoutモードのみ前処理（joinはレンダラー内で処理）
+ * Preprocessing rules:
+ * - solid/dashed: Always preprocess in cutout/join modes
+ * - pattern: Preprocess only in cutout mode (join handled in renderer)
+ * - gradient: Preprocess only in cutout mode (join handled in renderer)
  *
- * @param strokeType - Strokeタイプ
- * @param mode - レンダリングモード
- * @returns 前処理が必要な場合true
+ * @param strokeType - Stroke type
+ * @param mode - Rendering mode
+ * @returns true if preprocessing is required
  */
 export const shouldApplyStrokePreprocess = (
   strokeType: StrokeConfig['type'],
@@ -60,10 +60,10 @@ export const shouldApplyStrokePreprocess = (
 }
 
 /**
- * StrokeConfigから前処理に必要なパラメータを抽出
+ * Extract parameters needed for preprocessing from StrokeConfig
  *
- * @param stroke - Stroke設定
- * @returns 前処理パラメータ
+ * @param stroke - Stroke configuration
+ * @returns Preprocessing parameters
  */
 export const extractStrokePreprocessParams = (
   stroke: StrokeConfig

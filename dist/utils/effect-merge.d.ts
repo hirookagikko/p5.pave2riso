@@ -1,13 +1,13 @@
 /**
- * エフェクトマージユーティリティ
+ * Effect merge utilities
  *
- * トップレベルとローカル（fill/stroke内）のエフェクト設定をマージする
- * ローカル設定が優先される（nullish coalescing）
+ * Merges top-level and local (within fill/stroke) effect configurations.
+ * Local settings take precedence (nullish coalescing).
  */
 import type { FilterConfig, HalftoneConfig, DitherConfig } from '../types/effects.js';
 /**
- * エフェクト設定の型
- * undefinedを許容することで、オプショナルプロパティからの値を受け取れる
+ * Effect configuration type
+ * Allows undefined to accept values from optional properties
  */
 export interface EffectConfig {
     filter?: FilterConfig | FilterConfig[] | null | undefined;
@@ -15,7 +15,7 @@ export interface EffectConfig {
     dither?: DitherConfig | null | undefined;
 }
 /**
- * マージ結果の型
+ * Merged result type
  */
 export interface MergedEffects {
     filter: FilterConfig | FilterConfig[] | null | undefined;
@@ -23,32 +23,32 @@ export interface MergedEffects {
     dither: DitherConfig | null | undefined;
 }
 /**
- * トップレベルとローカルのエフェクト設定をマージする
+ * Merge top-level and local effect configurations
  *
- * 優先順位: ローカル > トップレベル
- * - ローカルに設定がある場合はローカルを使用
- * - ローカルがundefinedの場合はトップレベルを使用
- * - ローカルがnullの場合はnull（明示的に無効化）
+ * Priority: Local > Top-level
+ * - If local is set, use local
+ * - If local is undefined, use top-level
+ * - If local is null, use null (explicitly disabled)
  *
- * @param topLevel - トップレベルのエフェクト設定（options.filter等）
- * @param local - ローカルのエフェクト設定（fill.filter, stroke.filter等）
- * @returns マージされたエフェクト設定
+ * @param topLevel - Top-level effect configuration (options.filter, etc.)
+ * @param local - Local effect configuration (fill.filter, stroke.filter, etc.)
+ * @returns Merged effect configuration
  *
  * @example
  * ```typescript
- * // トップレベルのみ指定 → トップレベルを使用
+ * // Top-level only specified → use top-level
  * mergeEffects({ filter: blurConfig }, {})
  * // => { filter: blurConfig, halftone: undefined, dither: undefined }
  *
- * // ローカルのみ指定 → ローカルを使用
+ * // Local only specified → use local
  * mergeEffects({}, { filter: posterizeConfig })
  * // => { filter: posterizeConfig, halftone: undefined, dither: undefined }
  *
- * // 両方指定 → ローカル優先
+ * // Both specified → local takes precedence
  * mergeEffects({ filter: blurConfig }, { filter: posterizeConfig })
  * // => { filter: posterizeConfig, halftone: undefined, dither: undefined }
  *
- * // ローカルでnull指定 → 明示的に無効化
+ * // Local is null → explicitly disabled
  * mergeEffects({ filter: blurConfig }, { filter: null })
  * // => { filter: null, halftone: undefined, dither: undefined }
  * ```

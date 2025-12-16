@@ -1,7 +1,7 @@
 /**
- * グローバル型定義
+ * Global type definitions
  *
- * p5.jsとその他のグローバル変数の型定義
+ * Type definitions for p5.js and other global variables
  */
 
 /// <reference types="p5" />

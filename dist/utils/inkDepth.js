@@ -1,13 +1,13 @@
 /**
- * インク濃度のBranded Type定義とユーティリティ
+ * Ink depth Branded Type definition and utilities
  */
 /**
- * インク濃度パーセンテージ（0-100）をp5.jsカラー値（0-255）に変換
+ * Convert ink depth percentage (0-100) to p5.js color value (0-255)
  *
- * p5.jsのグローバルmap関数に依存せず、直接線形補間を実装
+ * Implements linear interpolation directly without depending on p5.js global map function
  *
- * @param value - インク濃度パーセンテージ（0-100）
- * @returns p5.jsカラー値（0-255）
+ * @param value - Ink depth percentage (0-100)
+ * @returns p5.js color value (0-255)
  *
  * @example
  * const depth = createInkDepth(50) // 128
@@ -21,10 +21,10 @@ export const createInkDepth = (value) => {
     return Math.round(mapped);
 };
 /**
- * InkDepth型からnumber型への変換（安全な型キャスト）
+ * Convert InkDepth type to number type (safe type cast)
  *
- * @param inkDepth - InkDepth値
- * @returns number値
+ * @param inkDepth - InkDepth value
+ * @returns number value
  */
 export const toNumber = (inkDepth) => {
     return inkDepth;

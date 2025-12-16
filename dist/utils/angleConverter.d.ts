@@ -1,7 +1,7 @@
 /**
- * 度数法の角度をラジアンに変換
- * @param degrees - 度数法の角度
- * @returns ラジアン値
+ * Convert angle from degrees to radians
+ * @param degrees - Angle in degrees
+ * @returns Angle in radians
  */
 export declare const degreesToRadians: (degrees: number) => number;
 //# sourceMappingURL=angleConverter.d.ts.map

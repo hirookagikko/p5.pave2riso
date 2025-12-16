@@ -6,3 +6,4 @@ libraries/
 # Development plans (internal)
 docs/*.md
 !docs/README.md
+!docs/ot2pave.md

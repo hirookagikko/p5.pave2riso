@@ -1,7 +1,7 @@
 /**
- * pave2Riso メイン関数
+ * pave2Riso main function
  *
- * Pave pathをRisographチャンネルに変換する
+ * Converts Pave path to Risograph channels
  */
 import { validateOptions } from './validation/validate.js';
 import { GraphicsPipeline } from './graphics/GraphicsPipeline.js';
@@ -16,9 +16,9 @@ import { renderPatternStroke } from './renderers/strokes/pattern.js';
 import { renderGradientStroke } from './renderers/strokes/gradient.js';
 import { shouldApplyStrokePreprocess, extractStrokePreprocessParams } from './utils/stroke-preprocess.js';
 /**
- * Pave pathをRisographチャンネルに変換
+ * Converts Pave path to Risograph channels
  *
- * @param options - 変換オプション
+ * @param options - Conversion options
  *
  * @example
  * pave2Riso({

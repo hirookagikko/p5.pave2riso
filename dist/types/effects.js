@@ -1,9 +1,9 @@
 /**
- * フィルター、ハーフトーン、ディザーのエフェクト設定型定義
+ * Effect configuration type definitions for filters, halftone, and dither
  */
 /**
- * Legacy形式からDiscriminated Union形式への変換
- * 後方互換性のために使用
+ * Converts from Legacy format to Discriminated Union format
+ * Used for backward compatibility
  */
 export const normalizeFilterConfig = (config) => {
     // すでに新形式の場合はそのまま返す

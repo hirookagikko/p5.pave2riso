@@ -1,5 +1,5 @@
 /**
- * コア型定義
+ * Core type definitions
  */
 import type { FillConfig } from './fill.js';
 import type { StrokeConfig } from './stroke.js';
@@ -7,7 +7,7 @@ import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js';
 import type { PavePath } from './pave.js';
 export type { PavePath };
 /**
- * レンダリングモード
+ * Rendering mode
  */
 export type RenderMode = 'overprint' | 'cutout' | 'join';
 /**
@@ -15,11 +15,11 @@ export type RenderMode = 'overprint' | 'cutout' | 'join';
  * Represents a point on a path with command and optional bezier handles
  */
 export interface PaveCurveVertex {
-    /** 頂点座標 [x, y] */
+    /** Vertex coordinates [x, y] */
     point: [number, number];
-    /** コマンドタイプ: L=直線, C=ベジェ曲線, M=移動, Z=閉じる */
+    /** Command type: L=line, C=bezier curve, M=move, Z=close */
     command: 'L' | 'C' | 'M' | 'Z';
-    /** ベジェ曲線の制御点 [[cp1x, cp1y], [cp2x, cp2y]]（commandが'C'の場合のみ） */
+    /** Bezier curve control points [[cp1x, cp1y], [cp2x, cp2y]] (only when command is 'C') */
     args?: [[number, number], [number, number]];
 }
 /**
@@ -27,9 +27,9 @@ export interface PaveCurveVertex {
  * Used in some legacy Pave.js operations
  */
 export interface PaveCurveVertexXY {
-    /** X座標 */
+    /** X coordinate */
     x: number;
-    /** Y座標 */
+    /** Y coordinate */
     y: number;
 }
 /**
@@ -47,9 +47,9 @@ export type PaveCurveElement = PaveCurveVertex | PaveCurveVertexXY | PaveCurvePo
  * A single curve within a path, containing vertices and closed state
  */
 export interface PaveCurveSegment {
-    /** 頂点の配列 */
+    /** Array of vertices */
     vertices: PaveCurveVertex[];
-    /** パスが閉じているかどうか */
+    /** Whether the path is closed */
     closed: boolean;
 }
 /**
@@ -64,47 +64,47 @@ export declare function hasCurves(path: unknown): path is {
     curves: PaveCurve[];
 };
 /**
- * pave2Riso関数のオプション
+ * Options for pave2Riso function
  */
 export interface Pave2RisoOptions {
     /**
-     * Pave pathオブジェクト
+     * Pave path object
      */
     path: PavePath;
     /**
-     * Stroke設定（nullの場合はストロークなし）
+     * Stroke configuration (null for no stroke)
      */
     stroke: StrokeConfig | null;
     /**
-     * Fill設定（nullの場合は塗りつぶしなし）
+     * Fill configuration (null for no fill)
      */
     fill: FillConfig | null;
     /**
-     * レンダリングモード
+     * Rendering mode
      */
     mode: RenderMode;
     /**
-     * キャンバスサイズ [width, height]
+     * Canvas size [width, height]
      */
     canvasSize: [number, number];
     /**
-     * Risographチャンネル（p5.Graphicsオブジェクトの配列）
+     * Risograph channels (array of p5.Graphics objects)
      */
     channels: p5.Graphics[];
     /**
-     * フィルター設定（配列または単一のフィルター）
+     * Filter configuration (array or single filter)
      */
     filter?: FilterConfig | FilterConfig[] | null;
     /**
-     * ハーフトーン設定
+     * Halftone configuration
      */
     halftone?: HalftoneConfig | null;
     /**
-     * ディザー設定
+     * Dither configuration
      */
     dither?: DitherConfig | null;
     /**
-     * クリッピングパス（オプション）
+     * Clipping path (optional)
      */
     clippingPath?: PavePath | null;
 }

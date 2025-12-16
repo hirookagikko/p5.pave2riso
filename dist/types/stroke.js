@@ -1,5 +1,5 @@
 /**
- * Stroke設定のDiscriminated Union型定義
+ * Discriminated Union type definitions for Stroke configuration
  */
 export {};
 //# sourceMappingURL=stroke.js.map
