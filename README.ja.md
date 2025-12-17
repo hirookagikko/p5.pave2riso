@@ -125,7 +125,7 @@ npm run build
 
 ### HTMLテンプレート
 
-※p5.riso.jsはダウンロードして任意の場所に配置
+*注: p5.riso.jsはnpmで公開されていません。[GitHub](https://github.com/antiboredom/p5.riso)からダウンロードしてローカルに配置するか、CDNサービスを利用してください。*
 
 ```html
 <!DOCTYPE html>
@@ -133,15 +133,14 @@ npm run build
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>html sample</title>
+  <title>p5.pave2riso Example</title>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
-  <script src="../libraries/p5.riso.js"></script>
+  <script src="path/to/p5.riso.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
 </head>
-<body style="padding: 0; margin: 0; zoom: 0.5;">
+<body>
   <main></main>
-  <button id="export-btn" type="button" style="position:fixed; top:12px; right:12px; z-index:1000;">Export</button>
-  <script type="module" src="sample.js"></script>
+  <script type="module" src="sketch.js"></script>
 </body>
 </html>
 ```
@@ -164,9 +163,7 @@ window.vec2 = vec2
 
 ### ソリッド塗り
 
-サンプルコード：[samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js) | **[デモを見る](https://hirookagikko.github.io/p5.pave2riso/)**
-
-6つの円を使って、異なるチャンネルの組み合わせをデモンストレーション。
+詳細な使用例は[英語版README](README.md#examples)のExamplesセクションをご覧ください。
 
 ### パターン塗り
 

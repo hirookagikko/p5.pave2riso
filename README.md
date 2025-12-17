@@ -48,7 +48,7 @@ After building, use `dist/p5.pave2riso.js`.
 
 ### HTML Template
 
-*Note: Download p5.riso.js and place it in any location*
+*Note: p5.riso.js is not available on npm. Download from [GitHub](https://github.com/antiboredom/p5.riso) and host locally, or use a CDN service.*
 
 ```html
 <!DOCTYPE html>
@@ -56,15 +56,14 @@ After building, use `dist/p5.pave2riso.js`.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>html sample</title>
+  <title>p5.pave2riso Example</title>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
-  <script src="../libraries/p5.riso.js"></script>
+  <script src="path/to/p5.riso.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
 </head>
-<body style="padding: 0; margin: 0; zoom: 0.5;">
+<body>
   <main></main>
-  <button id="export-btn" type="button" style="position:fixed; top:12px; right:12px; z-index:1000;">Export</button>
-  <script type="module" src="sample.js"></script>
+  <script type="module" src="sketch.js"></script>
 </body>
 </html>
 ```
@@ -95,7 +94,7 @@ window.Path = Path
 window.vec2 = vec2
 ```
 
-Sample code: [samples/sample.html](samples/sample.html) / [samples/sample.js](samples/sample.js) | **[View Demo](https://hirookagikko.github.io/p5.pave2riso/)**
+For complete examples, see the [Examples](#examples) section above.
 
 ### Factory Function (p2r)
 
@@ -174,8 +173,6 @@ The library uses a type-safe pipeline architecture:
 6. **Cleanup** → Release graphics resources
 
 **Type Safety**: Fill and stroke settings use TypeScript discriminated unions. The `type` field determines available configuration options. Ink density values are range-checked (0-100%) using branded types.
-
-See [CLAUDE.md](CLAUDE.md) for detailed component documentation.
 
 ## License
 
