@@ -1,7 +1,81 @@
 /**
  * Common JavaScript for p5.pave2riso example pages
- * Handles navigation, code display, and export functionality
+ * Handles navigation, code display, export functionality, and plates preview
  */
+
+// Riso ink color mapping for plate labels
+const RISO_COLORS = {
+  'red': '#FF665E',
+  'blue': '#0078BF',
+  'yellow': '#FFE800',
+  'green': '#00A95C',
+  'orange': '#FF6C2F',
+  'pink': '#FF48B0',
+  'black': '#333333',
+  'burgundy': '#914E72',
+  'fluorescent pink': '#FF48B0',
+  'fluorescentpink': '#FF48B0',
+  'teal': '#00838A',
+  'hunter green': '#407060',
+  'navy': '#003366',
+  'aqua': '#5EC8E5',
+  'bright red': '#F15060',
+  'risofederal blue': '#3D5588',
+  'purple': '#765BA7',
+  'violet': '#9D7AD2',
+  'coral': '#FF7477',
+  'gold': '#AC936E',
+  'flat gold': '#BB8B41',
+  'copper': '#BD6439',
+  'brown': '#925F52',
+  'light gray': '#888888',
+  'medium blue': '#3255A4',
+  'bright olive green': '#B49F29',
+  'light teal': '#009DA5',
+  'fluorescent orange': '#FF7477',
+  'fluorescentorange': '#FF7477',
+  'crimson': '#E45D50',
+  'marine red': '#D2515E',
+  'grape': '#6C5D80',
+  'bubblegum': '#F984CA',
+  'light mauve': '#E6B5C9',
+  'lagoon': '#2F6165',
+  'sunflower': '#FFB511',
+  'apricot': '#F6A04D',
+  'paprika': '#EE7F4B',
+  'pumpkin': '#FF6F4C',
+  'bright gold': '#E5B01D',
+  'mint': '#82D8D5',
+  'fluorescent yellow': '#FFE916',
+  'fluorescentyellow': '#FFE916',
+  'fluorescent red': '#FF4C65',
+  'fluorescentred': '#FF4C65',
+  'fluorescent green': '#44D62C',
+  'fluorescentgreen': '#44D62C',
+  'lake': '#235BA8',
+  'indigo': '#484D7A',
+  'midnight': '#435060',
+  'mist': '#D5E4C0',
+  'granite': '#A5AAA8',
+  'charcoal': '#70747C',
+  'smoky teal': '#5F8289',
+  'steel': '#375E77',
+  'slate': '#5E695E',
+  'turquoise': '#00AA93',
+  'emerald': '#19975D',
+  'grass': '#397E58',
+  'forest': '#516E5A',
+  'spruce': '#4A635D',
+  'moss': '#68724D',
+  'sea blue': '#0074A2',
+  'melon': '#FFAE3B',
+  'maroon': '#9E4C6E',
+  'wine': '#914E72',
+  'gray': '#928D88',
+  'ivory': '#FFFEF4',
+  'cream': '#FFF5D7',
+  'white': '#FFFFFF'
+}
 
 // Example navigation structure
 const EXAMPLES = [
@@ -95,9 +169,45 @@ function generateNavMenu() {
   }).join('\n')
 }
 
+// Plates preview - shows individual channel separation
+function updatePlatesPreview() {
+  const container = document.getElementById('plates-preview')
+  if (!container || !window.risoChannels) return
+
+  // Clear existing previews
+  container.innerHTML = ''
+
+  window.risoChannels.forEach(ch => {
+    const card = document.createElement('div')
+    card.className = 'plate-card'
+
+    // Channel name label with color dot
+    const label = document.createElement('span')
+    label.className = 'plate-label'
+    const colorName = ch.channelName.toLowerCase()
+    label.style.setProperty('--plate-color', RISO_COLORS[colorName] || '#888')
+    label.textContent = ch.channelName
+
+    // Create canvas copy (grayscale via CSS filter)
+    const preview = document.createElement('canvas')
+    const ctx = preview.getContext('2d')
+    preview.width = ch.width
+    preview.height = ch.height
+    ctx.drawImage(ch.canvas, 0, 0)
+
+    card.appendChild(label)
+    card.appendChild(preview)
+    container.appendChild(card)
+  })
+}
+
+// Export for global access
+window.updatePlatesPreview = updatePlatesPreview
+
 // Export for use in other scripts if needed
 window.p5Pave2RisoExamples = {
   EXAMPLES,
   currentPage,
-  generateNavMenu
+  generateNavMenu,
+  updatePlatesPreview
 }

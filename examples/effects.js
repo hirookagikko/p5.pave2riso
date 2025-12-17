@@ -146,6 +146,7 @@ window.draw = () => {
   drawLabels()
 
   drawRiso()
+  if (window.updatePlatesPreview) window.updatePlatesPreview()
 }
 
 function drawLabels() {

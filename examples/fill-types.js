@@ -5,7 +5,7 @@
  * 1. Solid - Simple ink density
  * 2. Pattern - Procedural patterns using p5.pattern
  * 3. Gradient - Linear/radial/conic gradients
- * 4. Image - Image-based fills
+ * 4. Image - External image fills with grayscale mapping
  */
 
 import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
@@ -19,6 +19,11 @@ let channels = []
 let render
 let testImage
 
+// Preload external image for Image Fill demo
+window.preload = function() {
+  testImage = loadImage('../img/turing-pattern.png')
+}
+
 // Canvas configuration
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
@@ -26,29 +31,6 @@ const GRID_SIZE = 2 // 2x2 grid
 const CELL_SIZE = CANVAS_WIDTH / GRID_SIZE
 const PADDING = 60
 const SHAPE_SIZE = CELL_SIZE - PADDING * 2
-
-// Create a simple procedural image for image fill demo
-function createTestImage(p) {
-  const img = p.createImage(100, 100)
-  img.loadPixels()
-  for (let y = 0; y < img.height; y++) {
-    for (let x = 0; x < img.width; x++) {
-      const index = (y * img.width + x) * 4
-      // Create a radial gradient pattern
-      const dx = x - img.width / 2
-      const dy = y - img.height / 2
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      const maxDist = Math.sqrt(img.width * img.width + img.height * img.height) / 2
-      const value = Math.floor((1 - dist / maxDist) * 255)
-      img.pixels[index] = value
-      img.pixels[index + 1] = value
-      img.pixels[index + 2] = value
-      img.pixels[index + 3] = 255
-    }
-  }
-  img.updatePixels()
-  return img
-}
 
 // Create a rounded rectangle path using Path.rect + Path.fillet
 function createRoundedRect(x, y, w, h, r) {
@@ -62,9 +44,6 @@ window.setup = function() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   pixelDensity(1)
   noLoop()
-
-  // Create test image
-  testImage = createTestImage(window)
 
   // Initialize Riso channels
   channels = [
@@ -105,6 +84,9 @@ window.draw = function() {
 
   // Render all channels
   drawRiso()
+
+  // Update plates preview
+  if (window.updatePlatesPreview) window.updatePlatesPreview()
 }
 
 function drawLabels() {
@@ -212,6 +194,7 @@ function drawImageFill(col, row) {
       type: 'image',
       image: testImage,        // p5.Image object
       fit: 'cover',            // Fill the shape
+      scale: 3,                // Zoom in to show detail
       alignX: 'center',        // Center horizontally
       alignY: 'middle',        // Center vertically
       channelVals: [0, 0, 100] // Yellow channel only

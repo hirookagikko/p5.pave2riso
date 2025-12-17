@@ -229,9 +229,7 @@ header h1 a:hover {
 
 /* Description section above code */
 .description {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(198, 173, 210, 0.3);
+  display: none;
 }
 
 .description p {
@@ -312,4 +310,67 @@ header h1 a:hover {
   .description p {
     font-size: 13px;
   }
+}
+
+/* Plates section - channel separation preview */
+.plates-section {
+  margin-top: 24px;
+}
+
+.plates-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #56B879;
+  margin-bottom: 16px;
+}
+
+.plates-label::before,
+.plates-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(86, 184, 121, 0.5);
+}
+
+.plates-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.plate-card canvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  filter: grayscale(100%);
+}
+
+.plate-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+}
+
+.plate-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--plate-color, #888);
 }

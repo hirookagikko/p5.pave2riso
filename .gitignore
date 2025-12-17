@@ -1,9 +1,31 @@
+# Node
 node_modules/
 *.log
-.DS_Store
-libraries/
+*.tsbuildinfo
 
-# Development plans (internal)
+# OS
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+.claude/
+
+# Claude Code
+CLAUDE.md
+
+# Development files
+samples/
+fonts/
+img/
+libraries/
+debug-*.png
+list.md
+sha1hulud-scan.sh
+
+# Internal docs
 docs/*.md
 !docs/README.md
+!docs/basics.md
 !docs/ot2pave.md
+!docs/getting-started.md

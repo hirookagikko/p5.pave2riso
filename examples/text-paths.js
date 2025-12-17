@@ -110,6 +110,7 @@ function drawText() {
   drawLabel()
 
   drawRiso()
+  if (window.updatePlatesPreview) window.updatePlatesPreview()
 }
 
 function drawLabel() {

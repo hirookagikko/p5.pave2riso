@@ -50,4 +50,5 @@ window.draw = () => {
 
   // 7. Draw all Riso channels to the canvas
   drawRiso()
+  if (window.updatePlatesPreview) window.updatePlatesPreview()
 }

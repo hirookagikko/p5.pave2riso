@@ -130,6 +130,7 @@ window.draw = () => {
 
   // Render all channels
   drawRiso()
+  if (window.updatePlatesPreview) window.updatePlatesPreview()
 }
 
 /**
