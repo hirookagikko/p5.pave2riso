@@ -21,7 +21,6 @@ img/
 libraries/
 debug-*.png
 list.md
-sha1hulud-scan.sh
 
 # Internal docs
 docs/*.md
