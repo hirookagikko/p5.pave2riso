@@ -123,4 +123,4 @@ p5.pave2risoを使うには、以下のライブラリが必要です：
 ### オプション
 
 - [p5.pattern](https://github.com/SYM380/p5.pattern) - パターンFill/Stroke用
-- [Paper.js](http://paperjs.org/) + [paperjs-offset](https://github.com/nicholaswmin/paperjs-offset) - パスのオフセット機能用
+- [Paper.js](http://paperjs.org/) + [paperjs-offset](https://github.com/luz-alphacode/paperjs-offset) - パスのオフセット機能用
