@@ -18,6 +18,7 @@ CLAUDE.md
 samples/
 fonts/
 img/
+!img/turing-pattern.png
 libraries/
 debug-*.png
 list.md
