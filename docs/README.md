@@ -10,7 +10,6 @@ p5.pave2risoは、[Pave.js](https://baku89.com/Dec_9%EF%BC%8C_2024%EF%BC%9A_Pave
 
 - p5.jsでクリエイティブコーディングをしている人
 - リソグラフ印刷に興味がある人
-- p5.riso.jsを使っている/使いたい人
 
 ### 何がうれしいか
 
