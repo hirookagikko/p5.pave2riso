@@ -1,0 +1,12 @@
+title: p5.pave2riso
+description: Pave.jsパスをp5.riso.jsチャンネルに一括展開
+theme: jekyll-theme-primer
+exclude:
+  - src
+  - node_modules
+  - "*.ts"
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - eslint.config.js
+  - docs/release.md

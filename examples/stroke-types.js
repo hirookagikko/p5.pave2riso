@@ -1,16 +1,9 @@
-/**
- * Stroke Types Example
- * Demonstrates the 4 stroke types available in p5.pave2riso
- */
-
 import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
 import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
 import { createP5Pave2Riso } from '../dist/p5.pave2riso.js'
 
-// Create p2r factory with dependency injection (no globals needed!)
 const { p2r } = createP5Pave2Riso({ Path, vec2 })
 
-// Canvas configuration
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 const STROKE_WEIGHT = 8
@@ -18,7 +11,6 @@ const STROKE_WEIGHT = 8
 let channels = []
 let render
 
-// Layout: 2x2 grid
 const COLS = 2
 const ROWS = 2
 const CELL_WIDTH = CANVAS_WIDTH / COLS
@@ -30,18 +22,14 @@ window.setup = () => {
   pixelDensity(1)
   noLoop()
 
-  // Initialize Riso channels
   channels = [
     new Riso('red'),
     new Riso('blue'),
     new Riso('yellow'),
     new Riso('green')
   ]
+  window.risoChannels = channels // for export
 
-  // Expose channels globally for export functionality
-  window.risoChannels = channels
-
-  // Create p2r factory with bound channels and canvas size
   render = p2r({
     channels,
     canvasSize: [CANVAS_WIDTH, CANVAS_HEIGHT]
@@ -52,7 +40,7 @@ window.draw = () => {
   background(255)
   channels.forEach(ch => ch.clear())
 
-  // 1. SOLID STROKE - Red channel (top-left)
+  // Solid
   const circle1 = Path.circle([CELL_WIDTH * 0.5, CELL_HEIGHT * 0.5], SHAPE_RADIUS)
   render({
     path: circle1,
@@ -67,7 +55,7 @@ window.draw = () => {
     mode: 'overprint'
   })
 
-  // 2. DASHED STROKE - Blue channel (top-right)
+  // Dashed
   const circle2 = Path.circle([CELL_WIDTH * 1.5, CELL_HEIGHT * 0.5], SHAPE_RADIUS)
   render({
     path: circle2,
@@ -76,31 +64,32 @@ window.draw = () => {
       type: 'dashed',
       strokeWeight: STROKE_WEIGHT,
       channelVals: [0, 100, 0, 0], // Blue only
-      dashArgs: [20, 10], // 20px dash, 10px gap
+      dashArgs: [20, 10], // dash, gap
       strokeCap: 'round',
       strokeJoin: 'round'
     },
     mode: 'overprint'
   })
 
-  // 3. PATTERN STROKE - Yellow channel (bottom-left)
+  // Pattern
   const circle3 = Path.circle([CELL_WIDTH * 0.5, CELL_HEIGHT * 1.5], SHAPE_RADIUS)
   render({
     path: circle3,
     fill: null,
     stroke: {
       type: 'pattern',
-      strokeWeight: STROKE_WEIGHT * 2, // Thicker to show pattern better
+      strokeWeight: STROKE_WEIGHT * 2,
       channelVals: [0, 0, 100, 0], // Yellow only
-      PTN: 'dot',
-      patternArgs: [6], // 6px dot size
+      PTN: 'stripe',
+      patternAngle: 45,
+      patternArgs: [20],
       strokeCap: 'round',
       strokeJoin: 'round'
     },
     mode: 'overprint'
   })
 
-  // 4. GRADIENT STROKE - Green channel (bottom-right)
+  // Gradient
   const circle4 = Path.circle([CELL_WIDTH * 1.5, CELL_HEIGHT * 1.5], SHAPE_RADIUS)
   render({
     path: circle4,
@@ -111,7 +100,7 @@ window.draw = () => {
       gradientType: 'linear',
       colorStops: [
         {
-          channel: 3, // Green channel
+          channel: 3, // Green
           stops: [
             { position: 0, depth: 100 },
             { position: 50, depth: 20 },
@@ -125,17 +114,11 @@ window.draw = () => {
     mode: 'overprint'
   })
 
-  // Add labels for each stroke type
   drawLabels()
-
-  // Render all channels
   drawRiso()
   if (window.updatePlatesPreview) window.updatePlatesPreview()
 }
 
-/**
- * Draw labels for each stroke type
- */
 function drawLabels() {
   push()
   fill(60)

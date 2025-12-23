@@ -1,12 +1,8 @@
-// Text Paths Example
-// Converting OpenType fonts to vector paths for Risograph printing
-
 import { Path } from 'https://cdn.jsdelivr.net/npm/@baku89/pave@0.7.1/+esm'
 import { vec2 } from 'https://cdn.jsdelivr.net/npm/linearly@0.32.0/+esm'
 import opentype from 'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm'
 import { createP5Pave2Riso, ot2pave } from '../dist/p5.pave2riso.js'
 
-// Create p2r factory with dependency injection (no globals needed!)
 const { p2r } = createP5Pave2Riso({ Path, vec2 })
 
 let channels = []
@@ -20,36 +16,29 @@ window.setup = () => {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   pixelDensity(1)
 
-  // Initialize Riso channels
   channels = [
     new Riso('blue'),
     new Riso('red'),
     new Riso('yellow')
   ]
+  window.risoChannels = channels // for export
 
-  window.risoChannels = channels
-
-  // p2r factory
   render = p2r({
     channels,
     canvasSize: [CANVAS_WIDTH, CANVAS_HEIGHT]
   })
 
-  // Load font and draw
   loadFontAndDraw()
 }
 
 async function loadFontAndDraw() {
   try {
-    // Step 1: Load font using OpenType.js
-    const fontUrl = '../fonts/Zen_Maru_Gothic/ZenMaruGothic-Black.ttf'
+    const fontUrl = '../fonts/BBH_Sans_Bartle/BBHSansBartle-Regular.ttf'
     const response = await fetch(fontUrl)
     const arrayBuffer = await response.arrayBuffer()
     font = opentype.parse(arrayBuffer)
 
     console.log('Font loaded:', font.names.fontFamily)
-
-    // Draw once font is ready
     drawText()
   } catch (error) {
     console.error('Font loading error:', error)
@@ -67,29 +56,20 @@ function drawText() {
 
   const fontSize = 200
   const centerY = CANVAS_HEIGHT / 2 + fontSize * 0.3
-
-  // Text to render
-  const textString = 'RISO'
+  const textString = 'RIS'
   let x = 100
 
-  // Step 2 & 3: Convert each character to Pave path
   for (let i = 0; i < textString.length; i++) {
     const char = textString[i]
-
-    // Get glyph and its path
     const glyph = font.charToGlyph(char)
     const glyphPath = glyph.getPath(x, centerY, fontSize)
-
-    // Convert OpenType commands to Pave path
     const pavePath = ot2pave(glyphPath.commands)
 
-    // Step 4: Render with p2r
-    // Alternate colors for visual interest
     const colorIndex = i % 3
     const colors = [
-      [100, 0, 50],   // Blue + Yellow
-      [50, 100, 0],   // Blue + Red
-      [0, 50, 100]    // Red + Yellow
+      [100, 0, 50],  // B+Y
+      [50, 100, 0],  // B+R
+      [0, 50, 100]   // R+Y
     ]
 
     render({
@@ -102,13 +82,10 @@ function drawText() {
       mode: 'overprint'
     })
 
-    // Advance x position based on character width
     x += glyph.advanceWidth * (fontSize / font.unitsPerEm)
   }
 
-  // Draw workflow label
   drawLabel()
-
   drawRiso()
   if (window.updatePlatesPreview) window.updatePlatesPreview()
 }

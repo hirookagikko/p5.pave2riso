@@ -355,7 +355,6 @@ header h1 a:hover {
   max-width: 100%;
   height: auto;
   background: #fff;
-  filter: grayscale(100%);
 }
 
 .plate-label {

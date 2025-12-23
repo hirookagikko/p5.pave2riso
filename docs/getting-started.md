@@ -1,5 +1,7 @@
 # はじめに
 
+> [動作サンプルを見る](https://hirookagikko.github.io/p5.pave2riso/examples/getting-started.html)
+
 このページでは、p5.pave2risoのセットアップから最初の描画までを説明します。
 
 ---
@@ -8,16 +10,16 @@
 
 ### Pave.jsについて
 
-p5.pave2risoを使うには、まず[Pave.js](https://github.com/baku89/pave)でパスを作る必要があります。
+p5.pave2risoを使うには、まずbaku89さんの[Pave.js](https://github.com/baku89/pave)でパスを作る必要があります。
 
-Pave.jsは、ベクターパスをデータとして扱えるようにするライブラリです。p5.jsの`ellipse()`や`rect()`とは違って、パスを「オブジェクト」として持ち回せるので、後から変形したり、他のパスと合成したりできます。
+Pave.jsは、ベクターパスをデータとして扱えるようにするライブラリです。p5.jsの`ellipse()`や`rect()`とは違ってパスをオブジェクトとして持ち、後から変形したり、他のパスと合成したりできます。
 
-Pave.jsについての詳しい解説は、作者のbaku89さんによる記事をご覧ください：
+Pave.jsについての詳しい解説は、baku89さんによる記事をご覧ください：
 → [Pave.js - baku89.com](https://baku89.com/Dec_9%EF%BC%8C_2024%EF%BC%9A_Pave.js)
 
 ### p5.riso.jsについて
 
-[p5.riso.js](https://antiboredom.github.io/p5.riso/)は、p5.jsでRisograph風の表現を作るためのライブラリです。複数の「チャンネル」（色版）を重ねて印刷するリソグラフの仕組みを再現しています。
+[p5.riso.js](https://antiboredom.github.io/p5.riso/)は、p5.jsでリソグラフの製版用データを作るためのライブラリです。複数の「チャンネル」（インク）を重ねて印刷する仕組みを再現しています。
 
 ---
 
@@ -30,14 +32,12 @@ Pave.jsについての詳しい解説は、作者のbaku89さんによる記事�
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>My p5.pave2riso Sketch</title>
+  <title>My 1st p5.pave2riso</title>
 
   <!-- p5.js -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
-
   <!-- p5.riso.js -->
   <script src="https://cdn.jsdelivr.net/gh/antiboredom/p5.riso@master/lib/p5.riso.js"></script>
-
   <!-- p5.pattern.js（パターン塗りを使う場合） -->
   <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
 </head>
@@ -100,7 +100,6 @@ window.draw = () => {
       type: 'solid',
       channelVals: [100, 50, 0]  // 赤100%, 青50%, 黄0%
     },
-    stroke: null,
     mode: 'overprint'
   })
 
@@ -113,59 +112,40 @@ window.draw = () => {
 
 ## 依存性注入（DI）パターンについて
 
-p5.pave2risoでは、`createP5Pave2Riso()`を使った依存性注入パターンを推奨しています。
+p5.pave2risoでは、`createP5Pave2Riso()`を使った依存性注入パターンを提供しています。グローバル変数（`window.Path`など）を汚染しないようにしています。
 
 ```javascript
 // PathとVec2を明示的に渡す
 const { p2r } = createP5Pave2Riso({ Path, vec2 })
 ```
-
-**メリット：**
-- グローバル変数（`window.Path`など）を汚染しない
-- どのライブラリに依存しているか明確
-- テストしやすい
-- ES Modulesと相性が良い
-
 ---
 
-## channelValsを理解する
+## channelValsについて
 
-ここが**p5.pave2risoの核心**です
+ここがp5.pave2risoの核心かもしれません。
 
 ### リソグラフ印刷の仕組み
 
 リソグラフは「孔版印刷」の一種で、色ごとに別々の「版」を作って重ね刷りします。
-
-```
-赤の版  +  青の版  +  黄の版  =  最終的な印刷物
-```
-
-つまり、1つの図形を印刷するにも、使う色の数だけ版にデータを分ける必要があります。
+そのため、使う色の数だけデータを分けて版を作る必要があります。
 
 ### channelValsで版に展開する
 
-`channelVals`は、**各チャンネル（版）にどれだけインクを乗せるか**を0-100%で指定する配列です。
+`channelVals`は、各チャンネル（版）にどれだけインクを乗せるかを0-100%で指定する配列です。
+たとえば赤、青、黄の3色刷りにする場合、channelsにRED/BLUE/YELLOWのp5.risoオブジェクトを用意した上で下記のように混色を指定できます。
 
 ```javascript
-channelVals: [100, 50, 0]
-//            ↑    ↑   ↑
-//            赤   青  黄
-//           100%  50%  0%
+channelVals:[
+  100, // 赤100%
+  50, // 青50%
+  0 // 黄0%
+]
 ```
 
-この例だと：
-- 赤の版には **100%** のインク（べったり）
-- 青の版には **50%** のインク（薄め）
-- 黄の版には **0%** のインク（何も刷らない）
-
-重ね刷りすると、赤が強くて少し青みがかった紫っぽい色になります。
-
-### なぜこれが便利？
-
-p5.riso.jsを直接使う場合、同じ図形を各チャンネルに個別に描画する必要があります：
+p5.riso.jsを直接使う場合、同じ図形を各チャンネルに個別に描画する必要があります。
 
 ```javascript
-// 普通のp5.riso.js（チャンネルごとに書く）
+// チャンネルごとに図形を描画
 channel1.fill(createInkDepth(100))
 channel1.beginShape()
 // ...頂点を列挙...
@@ -175,31 +155,22 @@ channel2.fill(createInkDepth(50))
 channel2.beginShape()
 // ...同じ頂点を列挙...
 channel2.endShape(CLOSE)
-
-// channel3も同様に...
 ```
 
-p5.pave2risoなら、**1回の呼び出しで全チャンネルに展開**されます：
+p5.pave2risoでは、1回の呼び出しで全チャンネルに展開されます。
 
 ```javascript
-// p5.pave2riso（1回で済む！）
 render({
   path: myPath,
-  fill: { type: 'solid', channelVals: [100, 50, 0] },
-  stroke: null,
+  fill: {
+    type: 'solid',
+    channelVals: [100, 50, 0]
+  },
   mode: 'overprint'
 })
 ```
 
-図形が複雑になればなるほど、この差は大きくなります。Pave.jsのパスをそのまま渡せばOKなので、パス操作と版展開がシームレスにつながります。
-
----
-
-## 次のステップ
-
-- [Fill の種類](fill-types.md) - いろんな塗りつぶし方法を試す
-- [Stroke の種類](stroke-types.md) - 線を描く
-- [モード](modes.md) - 重ね方を変える
+図形が複雑になればなるほど、うれしい部分が大きくなるということになります。Pave.jsのパスをそのまま渡せばOKなので、パス操作と版展開がスルッとつながります。
 
 ---
 
@@ -217,13 +188,8 @@ pave2Riso({
     type: 'solid',
     channelVals: [100, 50, 0]
   },
-  stroke: null,
   mode: 'overprint',
   canvasSize: [width, height],
   channels: [channel1, channel2, channel3]
 })
 ```
-
-ただし、`p2r()`ファクトリを使う方が、共通オプションを一度だけ設定すればよいので便利です。
-
-詳しくは[ユーティリティ](utilities.md)を参照してください。

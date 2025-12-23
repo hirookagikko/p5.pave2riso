@@ -188,12 +188,27 @@ function updatePlatesPreview() {
     label.style.setProperty('--plate-color', RISO_COLORS[colorName] || '#888')
     label.textContent = ch.channelName
 
-    // Create canvas copy (grayscale via CSS filter)
+    // Create grayscale preview: alpha (ink density) → black intensity
     const preview = document.createElement('canvas')
     const ctx = preview.getContext('2d')
     preview.width = ch.width
     preview.height = ch.height
+
+    // Draw original channel to extract pixel data
     ctx.drawImage(ch.canvas, 0, 0)
+    const imageData = ctx.getImageData(0, 0, preview.width, preview.height)
+    const data = imageData.data
+
+    // Convert: alpha value → grayscale (0=white, 255=black)
+    for (let i = 0; i < data.length; i += 4) {
+      const alpha = data[i + 3]
+      const gray = 255 - alpha // ink density → black intensity
+      data[i] = gray     // R
+      data[i + 1] = gray // G
+      data[i + 2] = gray // B
+      data[i + 3] = 255  // fully opaque
+    }
+    ctx.putImageData(imageData, 0, 0)
 
     card.appendChild(label)
     card.appendChild(preview)
