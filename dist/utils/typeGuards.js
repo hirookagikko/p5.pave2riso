@@ -1,8 +1,8 @@
 /**
- * 型ガード関数
+ * Type guard functions
  */
 /**
- * FillConfigの型ガード
+ * Type guards for FillConfig
  */
 export const isSolidFill = (fill) => {
     return fill.type === 'solid';
@@ -17,7 +17,7 @@ export const isImageFill = (fill) => {
     return fill.type === 'image';
 };
 /**
- * StrokeConfigの型ガード
+ * Type guards for StrokeConfig
  */
 export const isSolidStroke = (stroke) => {
     return stroke.type === 'solid';

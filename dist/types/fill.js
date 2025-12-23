@@ -1,5 +1,5 @@
 /**
- * Fill設定のDiscriminated Union型定義
+ * Discriminated Union type definitions for Fill configuration
  */
 export {};
 //# sourceMappingURL=fill.js.map

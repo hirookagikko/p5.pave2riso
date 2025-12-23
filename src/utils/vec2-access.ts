@@ -1,0 +1,86 @@
+/**
+ * Vec2アクセスヘルパー関数
+ *
+ * Linearly.jsのVec2型は配列インデックスでアクセスするが、
+ * TypeScriptの型推論では適切に認識されないため、
+ * eslint-disableの注釈をこのファイルに集約する。
+ *
+ * @see https://github.com/baku89/linearly
+ */
+
+import type { GraphicsPipeline } from '../graphics/GraphicsPipeline.js'
+import type { Vec2 } from '../types/linearly.js'
+
+/**
+ * Vec2から座標を抽出
+ *
+ * @param vec - Vec2オブジェクト
+ * @returns x, y座標
+ * @throws Error if vec is null/undefined or doesn't have valid numeric values
+ */
+export const extractVec2 = (
+  vec: Vec2
+): { x: number; y: number } => {
+  // null/undefined チェック
+  if (!vec) {
+    throw new Error('Invalid Vec2: expected array-like object, got null or undefined')
+  }
+  // 数値チェック
+  const x = vec[0]
+  const y = vec[1]
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    throw new Error(`Invalid Vec2: expected [number, number], got [${typeof x}, ${typeof y}]`)
+  }
+  return { x, y }
+}
+
+/**
+ * GraphicsPipelineからサイズを抽出
+ *
+ * @param pipeline - GraphicsPipeline
+ * @returns width, height
+ */
+export const extractSize = (
+  pipeline: GraphicsPipeline
+): { width: number; height: number } => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const size = pipeline.getSize()
+  const coords = extractVec2(size)
+  return { width: coords.x, height: coords.y }
+}
+
+/**
+ * GraphicsPipelineから位置を抽出
+ *
+ * @param pipeline - GraphicsPipeline
+ * @returns x, y座標
+ */
+export const extractPosition = (
+  pipeline: GraphicsPipeline
+): { x: number; y: number } => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const pos = pipeline.getPosition()
+  return extractVec2(pos)
+}
+
+/**
+ * GraphicsPipelineからストローク用のサイズと位置を抽出
+ * （strokeWeight分のパディングを含む）
+ *
+ * @param pipeline - GraphicsPipeline
+ * @param strokeWeight - ストローク幅
+ * @returns 位置とサイズ（strokeWeight分のパディング込み）
+ */
+export const extractStrokeBounds = (
+  pipeline: GraphicsPipeline,
+  strokeWeight: number
+): { x: number; y: number; width: number; height: number } => {
+  const pos = extractPosition(pipeline)
+  const size = extractSize(pipeline)
+  return {
+    x: pos.x - strokeWeight,
+    y: pos.y - strokeWeight,
+    width: size.width + strokeWeight * 2,
+    height: size.height + strokeWeight * 2
+  }
+}

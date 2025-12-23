@@ -1,7 +1,7 @@
 /**
- * pave2Riso メイン関数
+ * pave2Riso main function
  *
- * Pave pathをRisographチャンネルに変換する
+ * Converts Pave path to Risograph channels
  */
 import { validateOptions } from './validation/validate.js';
 import { GraphicsPipeline } from './graphics/GraphicsPipeline.js';
@@ -14,10 +14,11 @@ import { renderSolidStroke } from './renderers/strokes/solid.js';
 import { renderDashedStroke } from './renderers/strokes/dashed.js';
 import { renderPatternStroke } from './renderers/strokes/pattern.js';
 import { renderGradientStroke } from './renderers/strokes/gradient.js';
+import { shouldApplyStrokePreprocess, extractStrokePreprocessParams } from './utils/stroke-preprocess.js';
 /**
- * Pave pathをRisographチャンネルに変換
+ * Converts Pave path to Risograph channels
  *
- * @param options - 変換オプション
+ * @param options - Conversion options
  *
  * @example
  * pave2Riso({
@@ -56,18 +57,17 @@ export const pave2Riso = (options) => {
                     break;
                 default: {
                     const _exhaustiveCheck = options.fill;
-                    console.warn(`Unknown fill type: ${_exhaustiveCheck.type}`);
+                    throw new TypeError(`Unknown fill type: ${_exhaustiveCheck.type}. ` +
+                        `Supported types: solid, pattern, gradient, image`);
                 }
             }
         }
         // Stroke処理
         if (options.stroke) {
-            // cutout/joinモードの前処理
-            if (options.stroke.type === 'dashed') {
-                applyStrokeModePreprocess(options.mode, pipeline, options.stroke.strokeWeight, options.stroke.dashArgs, options.stroke.strokeCap);
-            }
-            else if (options.stroke.type === 'solid' || options.stroke.type === 'pattern') {
-                applyStrokeModePreprocess(options.mode, pipeline, options.stroke.strokeWeight);
+            // cutout/joinモードの前処理（ヘルパー関数で判定・抽出）
+            if (shouldApplyStrokePreprocess(options.stroke.type, options.mode)) {
+                const params = extractStrokePreprocessParams(options.stroke);
+                applyStrokeModePreprocess(options.mode, pipeline, params.strokeWeight, params.dashArgs, params.strokeCap, params.strokeJoin);
             }
             // Strokeレンダリング
             switch (options.stroke.type) {
@@ -85,7 +85,8 @@ export const pave2Riso = (options) => {
                     break;
                 default: {
                     const _exhaustiveCheck = options.stroke;
-                    console.warn(`Unknown stroke type: ${_exhaustiveCheck.type}`);
+                    throw new TypeError(`Unknown stroke type: ${_exhaustiveCheck.type}. ` +
+                        `Supported types: solid, dashed, pattern, gradient`);
                 }
             }
         }

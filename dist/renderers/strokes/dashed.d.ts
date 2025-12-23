@@ -1,5 +1,7 @@
 /**
  * 破線Strokeレンダラー
+ *
+ * Refactored to use applyEffectPipeline for consistent effect handling.
  */
 import type { DashedStrokeConfig } from '../../types/stroke.js';
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js';

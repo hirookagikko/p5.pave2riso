@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Paths | p5.pave2riso</title>
+  <meta name="description" content="Convert OpenType fonts to vector paths for Risograph printing with p5.pave2riso">
+  <link rel="stylesheet" href="common/example.css">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/antiboredom/p5.riso@master/lib/p5.riso.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SYM380/p5.pattern@master/p5.pattern.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1><a href="../README.md">p5.pave2riso</a></h1>
+    <nav class="example-nav">
+      <button class="nav-toggle" id="nav-toggle" type="button">
+        Examples <span class="menu-icon">&#9662;</span>
+      </button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="fill-types.html">Fill Types</a></li>
+        <li><a href="stroke-types.html">Stroke Types</a></li>
+        <li><a href="print-modes.html">Print Modes</a></li>
+        <li><a href="effects.html">Effects</a></li>
+        <li><a href="text-paths.html">Text Paths</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="canvas-area">
+      <main></main>
+      <div class="plates-section">
+        <div class="plates-label">Plates</div>
+        <div class="plates-grid" id="plates-preview"></div>
+      </div>
+      <button id="export-btn" type="button">Export Riso PNGs</button>
+    </div>
+    <div class="code-area">
+      <div class="description">
+        <p>p5.pave2riso can render text as vector paths using OpenType.js for font loading and the <code>ot2pave()</code> utility for path conversion.</p>
+        <p><strong>Workflow:</strong></p>
+        <ol>
+          <li>Load a font using OpenType.js</li>
+          <li>Get path commands with <code>font.getPath(text, x, y, fontSize)</code></li>
+          <li>Convert to Pave path with <code>ot2pave(commands)</code></li>
+          <li>Render with <code>p2r()</code> like any other path</li>
+        </ol>
+        <p>This approach gives you full control over typography - apply fills, strokes, effects, and path operations to text.</p>
+      </div>
+      <h2>Source Code</h2>
+      <pre><code id="source-code"></code></pre>
+    </div>
+  </div>
+
+  <script type="module" src="text-paths.js"></script>
+  <script type="module" src="common/example.js"></script>
+</body>
+</html>

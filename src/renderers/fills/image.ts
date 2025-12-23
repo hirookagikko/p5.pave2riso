@@ -6,7 +6,9 @@ import type { ImageFillConfig } from '../../types/fill.js'
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js'
 import { createInkDepth } from '../../utils/inkDepth.js'
 import { normalizeAlignX, normalizeAlignY } from '../../utils/alignment.js'
-import { applyFilters, applyEffects } from '../../channels/operations.js'
+import { mergeEffects } from '../../utils/effect-merge.js'
+import { applyEffectPipeline } from '../shared/effect-pipeline.js'
+import { extractSize, extractPosition } from '../../utils/vec2-access.js'
 
 /**
  * 画像フィット計算
@@ -73,15 +75,19 @@ export const renderImageFill = (
   if (!img) return
 
   const options = pipeline.getOptions()
-  const { channels, filter, halftone, dither, mode } = options
+  const { channels, mode } = options
   const path = options.path
-  const gPos = pipeline.getPosition()
-  const gSize = pipeline.getSize()
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const tw = gSize[0] as number
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const th = gSize[1] as number
+  // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+  const { filter, halftone, dither } = mergeEffects(
+    { filter: options.filter, halftone: options.halftone, dither: options.dither },
+    { filter: fill.filter, halftone: fill.halftone, dither: fill.dither }
+  )
+
+  // Vec2ヘルパーで座標を抽出
+  const { width: tw, height: th } = extractSize(pipeline)
+  const { x: gPosX, y: gPosY } = extractPosition(pipeline)
+
   const iw = img.width
   const ih = img.height
 
@@ -100,14 +106,13 @@ export const renderImageFill = (
   const ax = normalizeAlignX(alignX)
   const ay = normalizeAlignY(alignY)
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  let dx = (gPos[0] as number) + (tw - dw) * ax + (offset[0] || 0)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  let dy = (gPos[1] as number) + (th - dh) * ay + (offset[1] || 0)
+  const dx = gPosX + (tw - dw) * ax + (offset[0] || 0)
+  const dy = gPosY + (th - dh) * ay + (offset[1] || 0)
 
   // 画像グラフィックスの作成
   const imgBaseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1])
   imgBaseG.background(255)
+  imgBaseG.drawingContext.save()
   pipeline.drawPathToCanvas(path, imgBaseG.drawingContext)
   imgBaseG.drawingContext.clip()
 
@@ -123,16 +128,23 @@ export const renderImageFill = (
     imgBaseG.image(img, dx, dy, dw, dh)
   }
   imgBaseG.pop()
+  imgBaseG.drawingContext.restore()
 
-  // エフェクト適用
-  const finalG = applyEffects(applyFilters(imgBaseG, filter), halftone, dither)
+  // 自動グレースケール変換（Risograph印刷用）
+  imgBaseG.filter(GRAY)
+
+  // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
+  const { canvasSize } = options
+  const { graphics: processedG, drawX, drawY } = applyEffectPipeline(
+    imgBaseG, filter, halftone, dither, canvasSize, pipeline
+  )
 
   // joinモードの場合は全チャンネルから削除
   if (mode === 'join') {
     channels.forEach((channel) => {
       channel.push()
       channel.blendMode(REMOVE)
-      channel.image(finalG, 0, 0)
+      channel.image(processedG, drawX, drawY)
       channel.pop()
     })
   }
@@ -143,7 +155,7 @@ export const renderImageFill = (
     if (channelVal !== undefined && channelVal > 0) {
       channel.push()
       channel.fill(createInkDepth(channelVal))
-      channel.image(finalG, 0, 0)
+      channel.image(processedG, drawX, drawY)
       channel.pop()
     }
   })

@@ -1,5 +1,7 @@
 /**
  * ベタ塗りStrokeレンダラー
+ *
+ * Refactored to use applyEffectPipeline for consistent effect handling.
  */
 import type { SolidStrokeConfig } from '../../types/stroke.js';
 import type { GraphicsPipeline } from '../../graphics/GraphicsPipeline.js';

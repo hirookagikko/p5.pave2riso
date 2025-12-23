@@ -2,7 +2,11 @@
  * パターンFillレンダラー
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
-import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/operations.js';
+import { ensurePTNAvailable } from '../../channels/operations.js';
+import { degreesToRadians } from '../../utils/angleConverter.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
+import { applyEffectPipeline } from '../shared/effect-pipeline.js';
+import { extractSize, extractPosition } from '../../utils/vec2-access.js';
 /**
  * パターンFillをレンダリング
  *
@@ -12,41 +16,43 @@ import { applyFilters, applyEffects, ensurePTNAvailable } from '../../channels/o
 export const renderPatternFill = (fill, pipeline) => {
     ensurePTNAvailable();
     const options = pipeline.getOptions();
-    const { channels, filter, halftone, dither, mode } = options;
+    const { channels, mode } = options;
     const path = options.path;
-    const gPos = pipeline.getPosition();
-    const gSize = pipeline.getSize();
+    // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
+    // Vec2ヘルパーで座標を抽出
+    const { width: gSizeWidth, height: gSizeHeight } = extractSize(pipeline);
+    const { x: gPosX, y: gPosY } = extractPosition(pipeline);
     // パターングラフィックスの作成
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const patG = pipeline.createGraphics(gSize[0], gSize[1]);
+    const patG = pipeline.createGraphics(gSizeWidth, gSizeHeight);
     patG.background(255);
     patG.noStroke();
-    patG.patternAngle(fill.patternAngle ?? 0);
+    // patternAngleは度数法で指定されているのでラジアンに変換
+    patG.patternAngle(degreesToRadians(fill.patternAngle ?? 0));
     const patternFn = PTN[fill.PTN];
     if (!patternFn) {
         throw new Error(`Pattern '${fill.PTN}' not found in PTN object`);
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
     patG.pattern(patternFn(...fill.patternArgs));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    patG.rectPattern(0, 0, gSize[0], gSize[1]);
-    // フィルター適用
-    const filteredPatG = applyFilters(patG, filter);
-    // ベースグラフィックスにパターンを適用
-    let baseG = pipeline.getBaseGraphics();
+    patG.rectPattern(0, 0, gSizeWidth, gSizeHeight);
+    // ベースグラフィックスにパターンを適用（クリップ後にfilter適用するためここではfilterなし）
+    const baseG = pipeline.getBaseGraphics();
+    baseG.drawingContext.save();
     pipeline.drawPathToCanvas(path, baseG.drawingContext);
     baseG.drawingContext.clip();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    baseG.image(filteredPatG, gPos[0], gPos[1]);
-    // エフェクト適用
-    baseG = applyEffects(baseG, halftone, dither);
-    pipeline.setBaseGraphics(baseG);
+    baseG.image(patG, gPosX, gPosY);
+    baseG.drawingContext.restore();
+    // エフェクトパイプライン適用（フィルター → 対角線バッファ → halftone/dither）
+    const { canvasSize } = options;
+    const { graphics: processedG, drawX, drawY } = applyEffectPipeline(baseG, filter, halftone, dither, canvasSize, pipeline);
+    pipeline.setBaseGraphics(processedG);
     // joinモードの場合は全チャンネルから削除
     if (mode === 'join') {
         channels.forEach((channel) => {
             channel.push();
             channel.blendMode(REMOVE);
-            channel.image(baseG, 0, 0);
+            channel.image(processedG, drawX, drawY);
             channel.pop();
         });
     }
@@ -56,7 +62,7 @@ export const renderPatternFill = (fill, pipeline) => {
         if (channelVal !== undefined && channelVal > 0) {
             channel.push();
             channel.fill(createInkDepth(channelVal));
-            channel.image(baseG, 0, 0);
+            channel.image(processedG, drawX, drawY);
             channel.pop();
         }
     });

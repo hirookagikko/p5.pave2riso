@@ -1,12 +1,12 @@
 /**
- * 入力バリデーション
+ * Input validation
  */
 import type { Pave2RisoOptions } from '../types/core.js';
 /**
- * Pave2RisoOptionsの妥当性を検証
+ * Validates Pave2RisoOptions
  *
- * @param options - 検証するオプション
- * @throws {TypeError} 必須パラメータが不足または無効な場合
+ * @param options - Options to validate
+ * @throws {TypeError} If required parameters are missing or invalid
  */
 export declare const validateOptions: (options: Pave2RisoOptions) => void;
 //# sourceMappingURL=validate.d.ts.map

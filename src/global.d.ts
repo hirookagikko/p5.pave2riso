@@ -1,7 +1,7 @@
 /**
- * グローバル型定義
+ * Global type definitions
  *
- * p5.jsとその他のグローバル変数の型定義
+ * Type definitions for p5.js and other global variables
  */
 
 /// <reference types="p5" />
@@ -43,8 +43,12 @@ declare global {
     vec2: {
       of(x: number, y: number): unknown
     }
-    halftoneImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
-    ditherImage?(graphics: p5.Graphics, ...args: number[]): p5.Graphics
+    halftoneImage?(graphics: p5.Graphics, ...args: (string | number)[]): p5.Graphics
+    ditherImage?(graphics: p5.Graphics, ...args: (string | number)[]): p5.Graphics
+    // p5.js angle mode
+    _angleMode?: string
+    DEGREES?: string
+    RADIANS?: string
   }
 
   // p5.jsグローバル関数
@@ -59,9 +63,15 @@ declare global {
   // p5.js定数
   const BLEND: string
   const REMOVE: string
+  const MULTIPLY: string
   const ROUND: string
   const SQUARE: string
   const PROJECT: string
+  const DEGREES: string
+  const RADIANS: string
+  const MITER: string
+  const BEVEL: string
+  const GRAY: string
 
   // p5.pattern型定義
   interface PTNObject {
@@ -96,6 +106,7 @@ declare global {
       noStroke(): void
       strokeWeight(weight: number): void
       strokeCap(cap: string): void
+      strokeJoin(join: string): void
 
       // 画像操作
       image(img: p5.Graphics | p5.Image, x: number, y: number, w?: number, h?: number): void

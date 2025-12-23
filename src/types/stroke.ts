@@ -1,117 +1,242 @@
 /**
- * Stroke設定のDiscriminated Union型定義
+ * Discriminated Union type definitions for Stroke configuration
  */
 
-import type { ColorStop, GradientType } from './fill.js'
+import type { ColorStop, GradientType, GradientDirection } from './fill.js'
+import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js'
+import type { DashPattern } from './branded.js'
 
 /**
- * ストロークキャップスタイル
+ * Stroke cap style (shape of line ends)
  */
 export type StrokeCap = 'round' | 'square' | 'butt'
 
 /**
- * ベタ塗りStroke設定
+ * Stroke join style (shape of line corners)
+ */
+export type StrokeJoin = 'miter' | 'bevel' | 'round'
+
+/**
+ * Solid stroke configuration
  */
 export interface SolidStrokeConfig {
   type: 'solid'
 
   /**
-   * ストロークの太さ（ピクセル）
+   * Stroke weight (pixels)
    */
   strokeWeight: number
 
   /**
-   * 各チャンネルのインク濃度（0-100）
+   * Ink density for each channel (0-100)
    */
   channelVals: number[]
 
   /**
-   * ストロークキャップスタイル
+   * Stroke cap style (shape of line ends)
    */
   strokeCap?: StrokeCap
+
+  /**
+   * Stroke join style (shape of line corners)
+   */
+  strokeJoin?: StrokeJoin
+
+  /**
+   * Filter configuration
+   */
+  filter?: FilterConfig | FilterConfig[] | null
+
+  /**
+   * Halftone configuration
+   */
+  halftone?: HalftoneConfig | null
+
+  /**
+   * Dither configuration
+   */
+  dither?: DitherConfig | null
 }
 
 /**
- * 破線Stroke設定
+ * Dashed stroke configuration
  */
 export interface DashedStrokeConfig {
   type: 'dashed'
 
   /**
-   * ストロークの太さ（ピクセル）
+   * Stroke weight (pixels)
    */
   strokeWeight: number
 
   /**
-   * 各チャンネルのインク濃度（0-100）
+   * Ink density for each channel (0-100)
    */
   channelVals: number[]
 
   /**
-   * 破線パターン [lineLength, gapLength]
+   * Dash pattern [lineLength, gapLength]
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
    */
-  dashArgs: number[]
+  dashArgs: DashPattern
 
   /**
-   * ストロークキャップスタイル
+   * Stroke cap style (shape of line ends)
    */
   strokeCap: StrokeCap
+
+  /**
+   * Stroke join style (shape of line corners)
+   */
+  strokeJoin?: StrokeJoin
+
+  /**
+   * Filter configuration
+   */
+  filter?: FilterConfig | FilterConfig[] | null
+
+  /**
+   * Halftone configuration
+   */
+  halftone?: HalftoneConfig | null
+
+  /**
+   * Dither configuration
+   */
+  dither?: DitherConfig | null
 }
 
 /**
- * パターンStroke設定
+ * Pattern stroke configuration
  */
 export interface PatternStrokeConfig {
   type: 'pattern'
 
   /**
-   * ストロークの太さ（ピクセル）
+   * Stroke weight (pixels)
    */
   strokeWeight: number
 
   /**
-   * パターン名（PTNオブジェクトのキー）
+   * Ink density for each channel (0-100)
+   */
+  channelVals: number[]
+
+  /**
+   * Pattern name (key in PTN object)
    */
   PTN: string
 
   /**
-   * パターン関数への引数
+   * Arguments for pattern function
    */
   patternArgs: unknown[]
 
   /**
-   * パターンの回転角度（度数法）
+   * Pattern rotation angle (in degrees)
+   * @example
+   * patternAngle: 45  // 45 degree rotation
+   * patternAngle: 90  // 90 degree rotation
    */
   patternAngle?: number
+
+  /**
+   * Dash pattern [lineLength, gapLength]
+   * When specified, creates a dashed pattern stroke
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
+   */
+  dashArgs?: DashPattern
+
+  /**
+   * Stroke cap style (shape of line ends)
+   */
+  strokeCap?: StrokeCap
+
+  /**
+   * Stroke join style (shape of line corners)
+   */
+  strokeJoin?: StrokeJoin
+
+  /**
+   * Filter configuration
+   */
+  filter?: FilterConfig | FilterConfig[] | null
+
+  /**
+   * Halftone configuration
+   */
+  halftone?: HalftoneConfig | null
+
+  /**
+   * Dither configuration
+   */
+  dither?: DitherConfig | null
 }
 
 /**
- * グラデーションStroke設定
+ * Gradient stroke configuration
  */
 export interface GradientStrokeConfig {
   type: 'gradient'
 
   /**
-   * ストロークの太さ（ピクセル）
+   * Stroke weight (pixels)
    */
   strokeWeight: number
 
   /**
-   * グラデーションタイプ
+   * Gradient type
    */
   gradientType: GradientType
 
   /**
-   * カラーストップ
+   * Gradient direction (linear gradient only)
+   */
+  gradientDirection?: GradientDirection
+
+  /**
+   * Color stops
    */
   colorStops: ColorStop[]
+
+  /**
+   * Dash pattern [lineLength, gapLength]
+   * When specified, creates a dashed gradient stroke
+   * @example dashArgs: [10, 5] // 10px line, 5px gap
+   */
+  dashArgs?: DashPattern
+
+  /**
+   * Stroke cap style (shape of line ends)
+   */
+  strokeCap?: StrokeCap
+
+  /**
+   * Stroke join style (shape of line corners)
+   */
+  strokeJoin?: StrokeJoin
+
+  /**
+   * Filter configuration
+   */
+  filter?: FilterConfig | FilterConfig[] | null
+
+  /**
+   * Halftone configuration
+   */
+  halftone?: HalftoneConfig | null
+
+  /**
+   * Dither configuration
+   */
+  dither?: DitherConfig | null
 }
 
 /**
- * Stroke設定のDiscriminated Union
+ * Discriminated Union for Stroke configuration
  *
- * typeフィールドでどのStroke方式かを判別し、
- * TypeScriptが適切にnarrowingを行える
+ * The type field determines the stroke method,
+ * allowing TypeScript to properly narrow the type
  */
 export type StrokeConfig =
   | SolidStrokeConfig

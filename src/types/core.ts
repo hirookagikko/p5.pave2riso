@@ -1,76 +1,135 @@
 /**
- * コア型定義
+ * Core type definitions
  */
 
 import type { FillConfig } from './fill.js'
 import type { StrokeConfig } from './stroke.js'
 import type { FilterConfig, HalftoneConfig, DitherConfig } from './effects.js'
+import type { PavePath } from './pave.js'
+
+export type { PavePath }
 
 /**
- * レンダリングモード
+ * Rendering mode
  */
 export type RenderMode = 'overprint' | 'cutout' | 'join'
 
 /**
- * Pave Pathオブジェクト（@baku89/pave）
- * 実際の型定義はpaveライブラリから提供されるが、
- * ここでは簡易的な型として定義
+ * Pave.js curve vertex (structured format)
+ * Represents a point on a path with command and optional bezier handles
  */
-export interface PavePath {
-  [key: string]: unknown
+export interface PaveCurveVertex {
+  /** Vertex coordinates [x, y] */
+  point: [number, number]
+  /** Command type: L=line, C=bezier curve, M=move, Z=close */
+  command: 'L' | 'C' | 'M' | 'Z'
+  /** Bezier curve control points [[cp1x, cp1y], [cp2x, cp2y]] (only when command is 'C') */
+  args?: [[number, number], [number, number]]
 }
 
 /**
- * pave2Riso関数のオプション
+ * Pave.js legacy vertex (x/y object format)
+ * Used in some legacy Pave.js operations
+ */
+export interface PaveCurveVertexXY {
+  /** X coordinate */
+  x: number
+  /** Y coordinate */
+  y: number
+}
+
+/**
+ * Pave.js curve point (simple array format)
+ * Basic [x, y] coordinate
+ */
+export type PaveCurvePoint = [number, number]
+
+/**
+ * Pave.js curve element
+ * Can be any of the supported vertex formats
+ */
+export type PaveCurveElement = PaveCurveVertex | PaveCurveVertexXY | PaveCurvePoint
+
+/**
+ * Pave.js curve segment (structured format with vertices array)
+ * A single curve within a path, containing vertices and closed state
+ */
+export interface PaveCurveSegment {
+  /** Array of vertices */
+  vertices: PaveCurveVertex[]
+  /** Whether the path is closed */
+  closed: boolean
+}
+
+/**
+ * Pave.js curve type
+ * Can be a structured segment or an array of curve elements
+ */
+export type PaveCurve = PaveCurveSegment | PaveCurveElement[]
+
+/**
+ * Type guard to check if a value has curves property
+ */
+export function hasCurves(path: unknown): path is { curves: PaveCurve[] } {
+  return (
+    typeof path === 'object' &&
+    path !== null &&
+    'curves' in path &&
+    Array.isArray((path as { curves: unknown }).curves)
+  )
+}
+
+/**
+ * Options for pave2Riso function
  */
 export interface Pave2RisoOptions {
   /**
-   * Pave pathオブジェクト
+   * Pave path object
    */
   path: PavePath
 
   /**
-   * Stroke設定（nullの場合はストロークなし）
+   * Stroke configuration (null for no stroke)
    */
   stroke: StrokeConfig | null
 
   /**
-   * Fill設定（nullの場合は塗りつぶしなし）
+   * Fill configuration (null for no fill)
    */
   fill: FillConfig | null
 
   /**
-   * レンダリングモード
+   * Rendering mode
    */
   mode: RenderMode
 
   /**
-   * キャンバスサイズ [width, height]
+   * Canvas size [width, height]
    */
   canvasSize: [number, number]
 
   /**
-   * Risographチャンネル（p5.Graphicsオブジェクトの配列）
+   * Risograph channels (array of p5.Graphics objects)
    */
   channels: p5.Graphics[]
 
   /**
-   * フィルター設定（配列または単一のフィルター）
+   * Filter configuration (array or single filter)
    */
   filter?: FilterConfig | FilterConfig[] | null
 
   /**
-   * ハーフトーン設定
+   * Halftone configuration
    */
   halftone?: HalftoneConfig | null
 
   /**
-   * ディザー設定
+   * Dither configuration
    */
   dither?: DitherConfig | null
 
   /**
-   * クリッピングパス（オプション）
+   * Clipping path (optional)
    */
   clippingPath?: PavePath | null
 }

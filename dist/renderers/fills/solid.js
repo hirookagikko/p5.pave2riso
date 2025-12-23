@@ -1,8 +1,70 @@
 /**
  * ベタ塗りFillレンダラー
+ *
+ * Refactored to eliminate code duplication between JOIN mode and normal mode
+ * by extracting common patterns into helper functions.
  */
 import { createInkDepth } from '../../utils/inkDepth.js';
-import { applyFilters, applyEffects } from '../../channels/operations.js';
+import { mergeEffects } from '../../utils/effect-merge.js';
+import { applyEffectPipeline, hasEffects } from '../shared/effect-pipeline.js';
+/**
+ * JOINモードでチャンネルから削除（エフェクトあり）
+ */
+const applyJoinModeWithGraphics = (channels, processedG, drawX, drawY) => {
+    channels.forEach((channel) => {
+        channel.push();
+        channel.blendMode(REMOVE);
+        channel.image(processedG, drawX, drawY);
+        channel.blendMode(BLEND);
+        channel.pop();
+    });
+};
+/**
+ * JOINモードでチャンネルから削除（直接描画）
+ */
+const applyJoinModeDirect = (channels, pipeline) => {
+    const path = pipeline.getOptions().path;
+    channels.forEach((channel) => {
+        channel.push();
+        channel.erase();
+        channel.noStroke();
+        pipeline.drawPathToCanvas(path, channel.drawingContext);
+        channel.drawingContext.fill();
+        channel.noErase();
+        channel.pop();
+    });
+};
+/**
+ * チャンネルにインクを適用（エフェクトあり）
+ */
+const applyToChannelsWithGraphics = (channels, channelVals, processedG, drawX, drawY) => {
+    channels.forEach((channel, i) => {
+        const channelVal = channelVals[i];
+        if (channelVal !== undefined && channelVal > 0) {
+            channel.push();
+            channel.fill(createInkDepth(channelVal));
+            channel.image(processedG, drawX, drawY);
+            channel.pop();
+        }
+    });
+};
+/**
+ * チャンネルにインクを適用（直接描画）
+ */
+const applyToChannelsDirect = (channels, channelVals, pipeline) => {
+    const path = pipeline.getOptions().path;
+    channels.forEach((channel, i) => {
+        const channelVal = channelVals[i];
+        if (channelVal !== undefined && channelVal > 0) {
+            channel.push();
+            channel.fill(createInkDepth(channelVal));
+            channel.noStroke();
+            pipeline.drawPathToCanvas(path, channel.drawingContext);
+            channel.drawingContext.fill();
+            channel.pop();
+        }
+    });
+};
 /**
  * ベタ塗りFillをレンダリング
  *
@@ -11,166 +73,37 @@ import { applyFilters, applyEffects } from '../../channels/operations.js';
  */
 export const renderSolidFill = (fill, pipeline) => {
     const options = pipeline.getOptions();
-    const { channels, filter, halftone, dither, mode } = options;
+    const { channels, mode, canvasSize } = options;
     const path = options.path;
-    // JOINモードの場合は全チャンネルから削除
-    if (mode === 'join') {
-        if (filter) {
-            // フィルター適用パス
-            let eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-            eraseG.background(255);
-            eraseG.fill(0);
-            eraseG.noStroke();
-            pipeline.drawPathToCanvas(path, eraseG.drawingContext);
-            eraseG.drawingContext.fill();
-            eraseG = applyFilters(eraseG, filter);
-            eraseG = applyEffects(eraseG, halftone, dither);
-            channels.forEach((channel) => {
-                channel.push();
-                channel.fill(255);
-                channel.noStroke();
-                channel.blendMode(REMOVE);
-                channel.image(eraseG, 0, 0);
-                channel.blendMode(BLEND);
-                channel.pop();
-            });
-        }
-        else if (halftone && typeof window.halftoneImage === 'function') {
-            // ハーフトーン適用パス
-            const eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-            eraseG.push();
-            eraseG.background(255);
-            eraseG.noStroke();
-            eraseG.fill(0);
-            pipeline.drawPathToCanvas(path, eraseG.drawingContext);
-            eraseG.drawingContext.fill();
-            eraseG.pop();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-            const halftoned = window.halftoneImage(eraseG, ...halftone.halftoneArgs);
-            channels.forEach((channel) => {
-                channel.push();
-                channel.blendMode(REMOVE);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                channel.image(halftoned, 0, 0);
-                channel.blendMode(BLEND);
-                channel.pop();
-            });
-        }
-        else if (dither && typeof window.ditherImage === 'function') {
-            // ディザー適用パス
-            const eraseG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-            eraseG.push();
-            eraseG.background(255);
-            eraseG.noStroke();
-            eraseG.fill(0);
-            pipeline.drawPathToCanvas(path, eraseG.drawingContext);
-            eraseG.drawingContext.fill();
-            eraseG.pop();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-            const dithered = window.ditherImage(eraseG, ...dither.ditherArgs);
-            channels.forEach((channel) => {
-                channel.push();
-                channel.blendMode(REMOVE);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                channel.image(dithered, 0, 0);
-                channel.blendMode(BLEND);
-                channel.pop();
-            });
-        }
-        else {
-            // 通常のカットアウト
-            channels.forEach((channel) => {
-                channel.push();
-                channel.fill(255);
-                channel.erase();
-                channel.noStroke();
-                pipeline.drawPathToCanvas(path, channel.drawingContext);
-                channel.drawingContext.fill();
-                channel.noErase();
-                channel.pop();
-            });
-        }
-    }
-    if (filter) {
-        // フィルター適用パス
-        let baseG = pipeline.getBaseGraphics();
-        baseG.push();
+    // トップレベルとfill内のエフェクトをマージ（fill内が優先）
+    const { filter, halftone, dither } = mergeEffects({ filter: options.filter, halftone: options.halftone, dither: options.dither }, { filter: fill.filter, halftone: fill.halftone, dither: fill.dither });
+    // エフェクトが指定されているかチェック
+    const effectsPresent = hasEffects(filter, halftone, dither);
+    if (effectsPresent) {
+        // エフェクトあり: グラフィックスバッファ経由で処理
+        const baseG = pipeline.createGraphics(canvasSize[0], canvasSize[1]);
+        baseG.background(255);
         baseG.noStroke();
         baseG.fill(0);
         pipeline.drawPathToCanvas(path, baseG.drawingContext);
         baseG.drawingContext.fill();
-        baseG.pop();
-        baseG = applyFilters(baseG, filter);
-        baseG = applyEffects(baseG, halftone, dither);
-        pipeline.setBaseGraphics(baseG);
-        channels.forEach((channel, i) => {
-            const channelVal = fill.channelVals[i];
-            if (channelVal !== undefined && channelVal > 0) {
-                channel.push();
-                channel.fill(createInkDepth(channelVal));
-                channel.image(baseG, 0, 0);
-                channel.pop();
-            }
-        });
-    }
-    else if (halftone && typeof window.halftoneImage === 'function') {
-        // ハーフトーン専用パス
-        const solidG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-        solidG.push();
-        solidG.background(255);
-        solidG.noStroke();
-        solidG.fill(0);
-        pipeline.drawPathToCanvas(path, solidG.drawingContext);
-        solidG.drawingContext.fill();
-        solidG.pop();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-        const halftoned = window.halftoneImage(solidG, ...halftone.halftoneArgs);
-        channels.forEach((channel, i) => {
-            const channelVal = fill.channelVals[i];
-            if (channelVal !== undefined && channelVal > 0) {
-                channel.push();
-                channel.fill(createInkDepth(channelVal));
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                channel.image(halftoned, 0, 0);
-                channel.pop();
-            }
-        });
-    }
-    else if (dither && typeof window.ditherImage === 'function') {
-        // ディザー専用パス
-        const solidG = pipeline.createGraphics(options.canvasSize[0], options.canvasSize[1]);
-        solidG.push();
-        solidG.background(255);
-        solidG.noStroke();
-        solidG.fill(0);
-        pipeline.drawPathToCanvas(path, solidG.drawingContext);
-        solidG.drawingContext.fill();
-        solidG.pop();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-        const dithered = window.ditherImage(solidG, ...dither.ditherArgs);
-        channels.forEach((channel, i) => {
-            const channelVal = fill.channelVals[i];
-            if (channelVal !== undefined && channelVal > 0) {
-                channel.push();
-                channel.fill(createInkDepth(channelVal));
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                channel.image(dithered, 0, 0);
-                channel.pop();
-            }
-        });
+        // エフェクトパイプライン適用
+        const { graphics: processedG, drawX, drawY } = applyEffectPipeline(baseG, filter, halftone, dither, canvasSize, pipeline);
+        // JOINモード処理
+        if (mode === 'join') {
+            applyJoinModeWithGraphics(channels, processedG, drawX, drawY);
+        }
+        // 各チャンネルに適用
+        applyToChannelsWithGraphics(channels, fill.channelVals, processedG, drawX, drawY);
     }
     else {
-        // 通常パス（エフェクトなし）
-        channels.forEach((channel, i) => {
-            const channelVal = fill.channelVals[i];
-            if (channelVal !== undefined && channelVal > 0) {
-                channel.push();
-                channel.fill(createInkDepth(channelVal));
-                pipeline.drawPathToCanvas(path, channel.drawingContext);
-                channel.drawingContext.fill();
-                channel.pop();
-            }
-        });
+        // エフェクトなし: 直接描画
+        // JOINモード処理
+        if (mode === 'join') {
+            applyJoinModeDirect(channels, pipeline);
+        }
+        // 各チャンネルに適用
+        applyToChannelsDirect(channels, fill.channelVals, pipeline);
     }
 };
 //# sourceMappingURL=solid.js.map
