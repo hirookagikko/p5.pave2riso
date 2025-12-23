@@ -29,3 +29,8 @@ docs/*.md
 !docs/ot2pave.md
 !docs/getting-started.md
 !docs/release.md
+!docs/fill-types.md
+!docs/stroke-types.md
+!docs/effects.md
+!docs/modes.md
+!docs/utilities.md
