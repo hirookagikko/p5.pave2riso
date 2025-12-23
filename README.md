@@ -1,3 +1,5 @@
+![p5.pave2riso](img/pave2riso-title.png)
+
 # p5.pave2riso
 
 ## Overview
