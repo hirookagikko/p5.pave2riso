@@ -173,3 +173,7 @@ stroke: {
 - `filter` - フィルター（[詳細](effects.md#filter)）
 - `halftone` - ハーフトーン（[詳細](effects.md#halftone)）
 - `dither` - ディザ（[詳細](effects.md#dither)）
+
+---
+
+[< Fill の種類](fill-types.md) | [次: エフェクト >](effects.md)

@@ -214,3 +214,7 @@ pave2Riso({
 ```
 
 この場合、FillとStroke両方にハーフトーンが適用されます。
+
+---
+
+[< Stroke の種類](stroke-types.md) | [次: モード >](modes.md)

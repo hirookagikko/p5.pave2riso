@@ -214,3 +214,7 @@ fill: {
   halftone: { halftoneArgs: [4, 45, 1] }  // ハーフトーンを適用
 }
 ```
+
+---
+
+[< はじめに](getting-started.md) | [次: Stroke の種類 >](stroke-types.md)

@@ -193,3 +193,7 @@ pave2Riso({
   channels: [channel1, channel2, channel3]
 })
 ```
+
+---
+
+[次: Fill の種類 >](fill-types.md)

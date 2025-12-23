@@ -237,3 +237,7 @@ const expanded = PathOffset(myPath, 10)
 ```javascript
 const inkValue = createInkDepth(50)  // 50% → 128
 ```
+
+---
+
+[< モード](modes.md)
