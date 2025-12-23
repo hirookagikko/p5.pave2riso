@@ -25,10 +25,8 @@ list.md
 # Internal docs
 docs/*.md
 !docs/README.md
-!docs/basics.md
 !docs/ot2pave.md
 !docs/getting-started.md
-!docs/release.md
 !docs/fill-types.md
 !docs/stroke-types.md
 !docs/effects.md
