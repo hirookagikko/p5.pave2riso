@@ -1,0 +1,42 @@
+{
+  "name": "ot2pave",
+  "version": "0.1.0",
+  "description": "OpenType.js to Pave.js path converter",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "opentype",
+    "pave",
+    "font",
+    "path",
+    "vector",
+    "typography",
+    "creative-coding"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ot2pave"
+  },
+  "peerDependencies": {
+    "@baku89/pave": ">=0.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@baku89/pave": {
+      "optional": false
+    }
+  }
+}
