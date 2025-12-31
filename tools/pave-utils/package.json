@@ -1,0 +1,39 @@
+{
+  "name": "pave-utils",
+  "version": "0.1.0",
+  "description": "Path utilities for Pave.js (PathOffset, PathRemoveHoles)",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "pave",
+    "paper",
+    "path",
+    "offset",
+    "vector",
+    "typography",
+    "creative-coding"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/pave-utils"
+  },
+  "peerDependencies": {
+    "@baku89/pave": ">=0.7.0",
+    "paper": "0.12.4",
+    "paperjs-offset": ">=1.0.0"
+  }
+}
