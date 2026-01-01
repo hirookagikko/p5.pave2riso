@@ -82,6 +82,11 @@ export interface PaveUtilsDeps {
 }
 
 /**
+ * Boolean operation function type (two paths → one path)
+ */
+export type BooleanOpFunction = (pathA: PavePath, pathB: PavePath) => PavePath
+
+/**
  * PathOffset function type
  */
 export type PathOffsetFunction = (
@@ -104,6 +109,46 @@ export type CleanupFunction = () => void
  * Return type of createPaveUtils
  */
 export interface PaveUtilsInstance {
+  // Boolean operations
+
+  /**
+   * Unite two paths (boolean OR operation)
+   *
+   * @param pathA - First path
+   * @param pathB - Second path
+   * @returns United path containing combined area
+   */
+  PathUnite: BooleanOpFunction
+
+  /**
+   * Subtract pathB from pathA (boolean NOT operation)
+   *
+   * @param pathA - Base path to subtract from
+   * @param pathB - Path to subtract
+   * @returns Subtracted path
+   */
+  PathSubtract: BooleanOpFunction
+
+  /**
+   * Compute the intersection of two paths (boolean AND operation)
+   *
+   * @param pathA - First path
+   * @param pathB - Second path
+   * @returns Intersection path (overlapping area only)
+   */
+  PathIntersect: BooleanOpFunction
+
+  /**
+   * Compute the symmetric difference of two paths (boolean XOR operation)
+   *
+   * @param pathA - First path
+   * @param pathB - Second path
+   * @returns Symmetric difference (areas in either but not both)
+   */
+  PathExclude: BooleanOpFunction
+
+  // Path manipulation
+
   /**
    * Offset a path by a given distance
    *
@@ -121,6 +166,8 @@ export interface PaveUtilsInstance {
    * @returns New path with only solid (outer) contours
    */
   PathRemoveHoles: PathRemoveHolesFunction
+
+  // Utilities
 
   /**
    * Cleanup Paper.js resources to prevent memory leaks

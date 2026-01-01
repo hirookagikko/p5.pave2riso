@@ -429,7 +429,177 @@ export function createPaveUtils(deps) {
   }
 
   // ============================================
-  // Public API
+  // Public API - Boolean Operations
+  // ============================================
+
+  /**
+   * Unite two paths (boolean OR operation)
+   *
+   * @param {object} pathA - First path
+   * @param {object} pathB - Second path
+   * @returns {object} United path, or empty path on error
+   *
+   * @example
+   * const circle1 = Path.circle([100, 100], 50)
+   * const circle2 = Path.circle([150, 100], 50)
+   * const combined = PathUnite(circle1, circle2)
+   */
+  function PathUnite(pathA, pathB) {
+    const emptyPath = createEmptyPath()
+
+    if (!pathA || !pathB) {
+      console.warn('PathUnite: pathA or pathB is invalid.')
+      return emptyPath
+    }
+
+    try {
+      const result = Path.unite([pathA, pathB])
+      if (!result || !hasCurves(result)) {
+        console.warn('PathUnite: Result path is invalid.')
+        return emptyPath
+      }
+      return result
+    } catch (e) {
+      console.warn('PathUnite: Path union failed.', e)
+      return emptyPath
+    }
+  }
+
+  /**
+   * Subtract pathB from pathA (boolean NOT operation)
+   *
+   * @param {object} pathA - Base path to subtract from
+   * @param {object} pathB - Path to subtract
+   * @returns {object} Subtracted path, or empty path on error
+   *
+   * @example
+   * const circle = Path.circle([100, 100], 50)
+   * const hole = Path.circle([100, 100], 20)
+   * const ring = PathSubtract(circle, hole)
+   */
+  function PathSubtract(pathA, pathB) {
+    const emptyPath = createEmptyPath()
+
+    if (!pathA || !pathB) {
+      console.warn('PathSubtract: pathA or pathB is invalid.')
+      return emptyPath
+    }
+
+    try {
+      const result = Path.subtract(pathA, [pathB])
+      if (!result || !hasCurves(result)) {
+        console.warn('PathSubtract: Result path is invalid.')
+        return emptyPath
+      }
+      return result
+    } catch (e) {
+      if (e instanceof TypeError && e.message.includes('Cannot read properties of undefined')) {
+        console.warn('PathSubtract: Path subtraction failed. Returning empty path.')
+        return emptyPath
+      }
+      throw e
+    }
+  }
+
+  /**
+   * Compute the intersection of two paths (boolean AND operation)
+   *
+   * @param {object} pathA - First path
+   * @param {object} pathB - Second path
+   * @returns {object} Intersection path, or empty path if no intersection
+   *
+   * @example
+   * const circle = Path.circle([100, 100], 50)
+   * const rect = Path.rect([75, 75], [50, 50])
+   * const overlap = PathIntersect(circle, rect)
+   */
+  function PathIntersect(pathA, pathB) {
+    const emptyPath = createEmptyPath()
+
+    if (!pathA || !pathB) {
+      console.warn('PathIntersect: pathA or pathB is invalid.')
+      return emptyPath
+    }
+
+    try {
+      const diff = Path.subtract(pathA, [pathB])
+      if (!diff || !hasCurves(diff) || diff.curves.length === 0) {
+        console.warn('PathIntersect: Difference is empty or path is invalid.')
+        return emptyPath
+      }
+      const intersected = Path.subtract(pathA, [diff])
+      return intersected
+    } catch (e) {
+      if (e instanceof TypeError && e.message.includes('Cannot read properties of undefined')) {
+        // Check if paths completely overlap or are completely separate
+        try {
+          const united = Path.unite([pathA, pathB])
+          if (hasCurves(united) && hasCurves(pathA) && united.curves.length === pathA.curves.length) {
+            console.warn('PathIntersect: Paths completely overlap. Returning original path.')
+            return pathA
+          } else {
+            console.warn('PathIntersect: Paths do not overlap. Returning empty path.')
+            return emptyPath
+          }
+        } catch (uniteError) {
+          console.warn('PathIntersect: Intersection check failed. Returning empty path.')
+          return emptyPath
+        }
+      }
+      throw e
+    }
+  }
+
+  /**
+   * Compute the symmetric difference of two paths (boolean XOR operation)
+   *
+   * @param {object} pathA - First path
+   * @param {object} pathB - Second path
+   * @returns {object} Symmetric difference path (areas in either but not both)
+   *
+   * @example
+   * const circle1 = Path.circle([100, 100], 50)
+   * const circle2 = Path.circle([130, 100], 50)
+   * const crescents = PathExclude(circle1, circle2)
+   */
+  function PathExclude(pathA, pathB) {
+    const emptyPath = createEmptyPath()
+
+    if (!pathA || !pathB) {
+      console.warn('PathExclude: pathA or pathB is invalid.')
+      return emptyPath
+    }
+
+    const united = PathUnite(pathA, pathB)
+    if (!united || !hasCurves(united)) {
+      console.warn('PathExclude: United path is invalid.')
+      return emptyPath
+    }
+
+    const intersected = PathIntersect(pathA, pathB)
+    if (!intersected || !hasCurves(intersected)) {
+      console.warn('PathExclude: Intersected path is invalid.')
+      return emptyPath
+    }
+
+    try {
+      const excluded = Path.subtract(united, [intersected])
+      if (!excluded || !hasCurves(excluded)) {
+        console.warn('PathExclude: Excluded path is invalid.')
+        return emptyPath
+      }
+      return excluded
+    } catch (e) {
+      if (e instanceof TypeError && e.message.includes('Cannot read properties of undefined')) {
+        console.warn('PathExclude: Intersection covers entire area. Returning empty path.')
+        return emptyPath
+      }
+      throw e
+    }
+  }
+
+  // ============================================
+  // Public API - Path Manipulation
   // ============================================
 
   /**
@@ -518,8 +688,15 @@ export function createPaveUtils(deps) {
   }
 
   return {
+    // Boolean operations
+    PathUnite,
+    PathSubtract,
+    PathIntersect,
+    PathExclude,
+    // Path manipulation
     PathOffset,
     PathRemoveHoles,
+    // Utilities
     cleanup
   }
 }
