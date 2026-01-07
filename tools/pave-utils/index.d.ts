@@ -90,6 +90,26 @@ export interface PaveUtilsDeps {
 export type BooleanOpFunction = (pathA: PavePath, pathB: PavePath) => PavePath;
 
 /**
+ * Options for PathIntersect
+ */
+export interface PathIntersectOptions {
+	/**
+	 * Suppress console warnings
+	 * @default false
+	 */
+	silent?: boolean;
+}
+
+/**
+ * PathIntersect function type (with optional silent mode)
+ */
+export type PathIntersectFunction = (
+	pathA: PavePath,
+	pathB: PavePath,
+	options?: PathIntersectOptions,
+) => PavePath;
+
+/**
  * isPathsOverlap function type
  */
 export type IsPathsOverlapFunction = (
@@ -145,9 +165,10 @@ export interface PaveUtilsInstance {
 	 *
 	 * @param pathA - First path
 	 * @param pathB - Second path
+	 * @param options - Optional settings (e.g., { silent: true })
 	 * @returns Intersection path (overlapping area only)
 	 */
-	PathIntersect: BooleanOpFunction;
+	PathIntersect: PathIntersectFunction;
 
 	/**
 	 * Compute the symmetric difference of two paths (boolean XOR operation)

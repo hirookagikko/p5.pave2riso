@@ -537,6 +537,8 @@ export function createPaveUtils(deps) {
 	 *
 	 * @param {object} pathA - First path
 	 * @param {object} pathB - Second path
+	 * @param {object} options - Optional settings
+	 * @param {boolean} options.silent - Suppress console warnings
 	 * @returns {object} Intersection path, or empty path if no intersection
 	 *
 	 * @example
@@ -544,18 +546,22 @@ export function createPaveUtils(deps) {
 	 * const rect = Path.rect([75, 75], [50, 50])
 	 * const overlap = PathIntersect(circle, rect)
 	 */
-	function PathIntersect(pathA, pathB) {
+	function PathIntersect(pathA, pathB, options = {}) {
+		const { silent = false } = options;
 		const emptyPath = createEmptyPath();
 
 		if (!pathA || !pathB) {
-			console.warn("PathIntersect: pathA or pathB is invalid.");
+			if (!silent) console.warn("PathIntersect: pathA or pathB is invalid.");
 			return emptyPath;
 		}
 
 		try {
 			const diff = Path.subtract(pathA, [pathB]);
 			if (!diff || !hasCurves(diff) || diff.curves.length === 0) {
-				console.warn("PathIntersect: Difference is empty or path is invalid.");
+				if (!silent)
+					console.warn(
+						"PathIntersect: Difference is empty or path is invalid.",
+					);
 				return emptyPath;
 			}
 			const intersected = Path.subtract(pathA, [diff]);
@@ -573,20 +579,23 @@ export function createPaveUtils(deps) {
 						hasCurves(pathA) &&
 						united.curves.length === pathA.curves.length
 					) {
-						console.warn(
-							"PathIntersect: Paths completely overlap. Returning original path.",
-						);
+						if (!silent)
+							console.warn(
+								"PathIntersect: Paths completely overlap. Returning original path.",
+							);
 						return pathA;
 					} else {
-						console.warn(
-							"PathIntersect: Paths do not overlap. Returning empty path.",
-						);
+						if (!silent)
+							console.warn(
+								"PathIntersect: Paths do not overlap. Returning empty path.",
+							);
 						return emptyPath;
 					}
 				} catch (uniteError) {
-					console.warn(
-						"PathIntersect: Intersection check failed. Returning empty path.",
-					);
+					if (!silent)
+						console.warn(
+							"PathIntersect: Intersection check failed. Returning empty path.",
+						);
 					return emptyPath;
 				}
 			}
@@ -667,7 +676,7 @@ export function createPaveUtils(deps) {
 			return false;
 		}
 
-		const intersection = PathIntersect(pathA, pathB);
+		const intersection = PathIntersect(pathA, pathB, { silent: true });
 
 		if (!hasCurves(intersection) || intersection.curves.length === 0) {
 			return false;
