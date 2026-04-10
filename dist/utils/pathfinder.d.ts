@@ -4,7 +4,7 @@
  * These functions provide safe wrappers around pave.js Path operations
  * with comprehensive error handling and edge case detection.
  */
-import type { PavePath } from '../types/core.js';
+import type { PavePath } from "../types/core.js";
 /**
  * Computes the intersection of two paths (boolean AND operation)
  *
@@ -163,9 +163,9 @@ export declare const PathOffset: (path: PavePath, distance: number, options?: {
 /**
  * Remove all holes from a path, keeping only the outer contours
  *
- * This function analyzes the winding direction of each sub-path and removes
- * any that are detected as holes (counter-clockwise winding in a Y-down
- * coordinate system).
+ * Uses Path.area() to determine winding direction of each sub-curve:
+ * - Positive area = clockwise = outer contour (keep)
+ * - Negative area = counter-clockwise = hole (remove)
  *
  * Useful after PathOffset operations on text where you want to fill the
  * holes of letters like 'e', 'o', 'a', 'd', etc.

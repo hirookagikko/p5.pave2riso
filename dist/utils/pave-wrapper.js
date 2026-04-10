@@ -43,9 +43,9 @@ export function resetPath() {
 export function getPath() {
     if (cachedPath)
         return cachedPath;
-    if (typeof Path !== 'undefined')
+    if (typeof Path !== "undefined")
         return Path;
-    throw new Error('Path from pave.js is not available. Make sure pave.js is loaded or use createP5Pave2Riso() to inject dependencies.');
+    throw new Error("Path from pave.js is not available. Make sure pave.js is loaded or use createP5Pave2Riso() to inject dependencies.");
 }
 /**
  * Type-safe wrapper for Path.bounds
@@ -163,5 +163,18 @@ export function unitePaths(paths) {
 export function subtractPaths(path, subtrahends) {
     const Path = getPath();
     return Path.subtract(path, subtrahends);
+}
+/**
+ * Type-safe wrapper for Path.area
+ *
+ * Returns the signed area of a closed path.
+ * Positive = clockwise (outer contour), Negative = counter-clockwise (hole).
+ *
+ * @param path - Path to measure (should be closed)
+ * @returns Signed area
+ */
+export function getPathArea(path) {
+    const Path = getPath();
+    return Path.area(path);
 }
 //# sourceMappingURL=pave-wrapper.js.map

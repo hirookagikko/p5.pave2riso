@@ -4,8 +4,8 @@
  * These functions provide safe wrappers around pave.js Path operations
  * with comprehensive error handling and edge case detection.
  */
-import { createCircle, subtractPaths, unitePaths, getPathBounds, getPath } from './pave-wrapper.js';
-import { getPaper, getPaperOffset } from './paper-wrapper.js';
+import { createCircle, subtractPaths, unitePaths, getPathBounds, getPathArea, getPath, } from "./pave-wrapper.js";
+import { getPaper, getPaperOffset } from "./paper-wrapper.js";
 // External dependencies for PathOffset (loaded via CDN or via DI)
 // paper.js 0.12.4: https://cdn.jsdelivr.net/npm/paper@0.12.4/+esm
 // paperjs-offset 1.0.8: https://cdn.jsdelivr.net/npm/paperjs-offset@1.0.8/+esm
@@ -14,7 +14,10 @@ import { getPaper, getPaperOffset } from './paper-wrapper.js';
  * Type guard to check if a path has curves
  */
 function hasCurves(path) {
-    return path !== null && typeof path === 'object' && 'curves' in path && Array.isArray(path.curves);
+    return (path !== null &&
+        typeof path === "object" &&
+        "curves" in path &&
+        Array.isArray(path.curves));
 }
 /**
  * Computes the intersection of two paths (boolean AND operation)
@@ -56,12 +59,15 @@ export const PathIntersect = (pathA, pathB) => {
     }
     catch (e) {
         // Path.subtractでエラーが発生した場合（完全重複、完全分離など）
-        if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
+        if (e instanceof TypeError &&
+            e.message.includes("Cannot read properties of undefined")) {
             // Path.uniteで完全重複か完全分離かを判定
             try {
                 const united = unitePaths([pathA, pathB]);
                 // 結合後のcurves数が元のpathAと同じなら完全重複
-                if (hasCurves(united) && hasCurves(pathA) && united.curves.length === pathA.curves.length) {
+                if (hasCurves(united) &&
+                    hasCurves(pathA) &&
+                    united.curves.length === pathA.curves.length) {
                     console.warn("PathIntersect: Paths completely overlap. Returning original path.");
                     return pathA;
                 }
@@ -120,7 +126,8 @@ export const PathSubtract = (pathA, pathB) => {
     }
     catch (e) {
         // Path.subtractでエラーが発生した場合
-        if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
+        if (e instanceof TypeError &&
+            e.message.includes("Cannot read properties of undefined")) {
             console.warn("PathSubtract: Path subtraction failed. Returning empty path.");
             return emptyPath;
         }
@@ -217,7 +224,8 @@ export const PathExclude = (pathA, pathB) => {
     }
     catch (e) {
         // Path.subtractでエラーが発生した場合（完全重複など）
-        if (e instanceof TypeError && e.message.includes("Cannot read properties of undefined")) {
+        if (e instanceof TypeError &&
+            e.message.includes("Cannot read properties of undefined")) {
             console.warn("PathExclude: Intersection covers entire area. Returning empty path.");
             return emptyPath;
         }
@@ -291,7 +299,7 @@ function ensurePaperInitialized() {
         return false;
     }
     if (!paperInitialized) {
-        paperCanvas = document.createElement('canvas');
+        paperCanvas = document.createElement("canvas");
         paperInstance.setup(paperCanvas);
         paperInitialized = true;
     }
@@ -320,7 +328,7 @@ export function cleanupPaperResources() {
         paperCanvas.width = 0;
         paperCanvas.height = 0;
         // Clear any 2D context to release associated resources
-        const ctx = paperCanvas.getContext('2d');
+        const ctx = paperCanvas.getContext("2d");
         if (ctx) {
             ctx.clearRect(0, 0, 0, 0);
         }
@@ -341,7 +349,7 @@ function paveToPaper(pavePath) {
         const PathGlobal = getPath();
         const pathData = PathGlobal.toSVGString(pavePath);
         if (!pathData) {
-            console.warn('PathOffset: Empty path data');
+            console.warn("PathOffset: Empty path data");
             return null;
         }
         // Create a full SVG element for proper import
@@ -370,7 +378,7 @@ function paveToPaper(pavePath) {
         return resultPath;
     }
     catch (e) {
-        console.warn('PathOffset: Pave→Paper conversion failed', e);
+        console.warn("PathOffset: Pave→Paper conversion failed", e);
         return null;
     }
 }
@@ -392,7 +400,7 @@ function paperToPave(paperPath) {
                 continue;
             const point = [seg.point.x, seg.point.y];
             if (i === 0) {
-                vertices.push({ point, command: 'L' });
+                vertices.push({ point, command: "L" });
             }
             else {
                 const prevSeg = segments[i - 1];
@@ -402,16 +410,16 @@ function paperToPave(paperPath) {
                 if (hasHandles) {
                     const cp1 = [
                         prevSeg.point.x + prevSeg.handleOut.x,
-                        prevSeg.point.y + prevSeg.handleOut.y
+                        prevSeg.point.y + prevSeg.handleOut.y,
                     ];
                     const cp2 = [
                         seg.point.x + seg.handleIn.x,
-                        seg.point.y + seg.handleIn.y
+                        seg.point.y + seg.handleIn.y,
                     ];
-                    vertices.push({ point, command: 'C', args: [cp1, cp2] });
+                    vertices.push({ point, command: "C", args: [cp1, cp2] });
                 }
                 else {
-                    vertices.push({ point, command: 'L' });
+                    vertices.push({ point, command: "L" });
                 }
             }
         }
@@ -425,13 +433,17 @@ function paperToPave(paperPath) {
                 if (hasHandles) {
                     const cp1 = [
                         lastSeg.point.x + lastSeg.handleOut.x,
-                        lastSeg.point.y + lastSeg.handleOut.y
+                        lastSeg.point.y + lastSeg.handleOut.y,
                     ];
                     const cp2 = [
                         firstSeg.point.x + firstSeg.handleIn.x,
-                        firstSeg.point.y + firstSeg.handleIn.y
+                        firstSeg.point.y + firstSeg.handleIn.y,
                     ];
-                    vertices[0] = { point: firstVertex.point, command: 'C', args: [cp1, cp2] };
+                    vertices[0] = {
+                        point: firstVertex.point,
+                        command: "C",
+                        args: [cp1, cp2],
+                    };
                 }
             }
         }
@@ -482,22 +494,22 @@ export const PathOffset = (path, distance, options) => {
     const paperInstance = getPaper();
     const paperOffsetInstance = getPaperOffset();
     if (!paperInstance) {
-        console.warn('PathOffset: paper.js 0.12.4 is not loaded. Returning original path.');
+        console.warn("PathOffset: paper.js 0.12.4 is not loaded. Returning original path.");
         return path;
     }
     if (!paperOffsetInstance) {
-        console.warn('PathOffset: paperjs-offset is not loaded. Returning original path.');
+        console.warn("PathOffset: paperjs-offset is not loaded. Returning original path.");
         return path;
     }
     // Ensure Paper.js is initialized
     if (!ensurePaperInitialized()) {
-        console.warn('PathOffset: Failed to initialize Paper.js. Returning original path.');
+        console.warn("PathOffset: Failed to initialize Paper.js. Returning original path.");
         return path;
     }
     // Convert Pave path to Paper.js path
     const paperPath = paveToPaper(path);
     if (!paperPath) {
-        console.warn('PathOffset: Failed to convert path. Returning original path.');
+        console.warn("PathOffset: Failed to convert path. Returning original path.");
         return path;
     }
     try {
@@ -508,7 +520,7 @@ export const PathOffset = (path, distance, options) => {
         return result;
     }
     catch (e) {
-        console.warn('PathOffset: Offset operation failed', e);
+        console.warn("PathOffset: Offset operation failed", e);
         return path;
     }
 };
@@ -516,78 +528,11 @@ export const PathOffset = (path, distance, options) => {
 // PathRemoveHoles: Remove holes from a path
 // ============================================
 /**
- * Determines the winding direction of a single curve using the Shoelace formula
- *
- * In a coordinate system where Y-axis points down (like pave.js/p5.js):
- * - Positive signed area = Counter-clockwise (CCW) = hole
- * - Negative signed area = Clockwise (CW) = solid
- *
- * @param curve - Single curve from a Pave path
- * @returns Signed area (positive = CCW/hole, negative = CW/solid)
- * @internal
- */
-function getCurveWindingDirection(curve) {
-    let signedArea = 0;
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    // Handle structured curve (with vertices property)
-    if (curve && typeof curve === 'object' && 'vertices' in curve && Array.isArray(curve.vertices)) {
-        const vertices = curve.vertices;
-        for (let j = 0; j < vertices.length; j++) {
-            const current = vertices[j];
-            const next = vertices[(j + 1) % vertices.length];
-            if (!current?.point || !next?.point)
-                continue;
-            const x1 = current.point[0];
-            const y1 = current.point[1];
-            const x2 = next.point[0];
-            const y2 = next.point[1];
-            signedArea += (x1 * y2 - x2 * y1);
-        }
-    }
-    // Handle array format curve
-    else if (Array.isArray(curve)) {
-        for (let j = 0; j < curve.length; j++) {
-            const segment = curve[j];
-            const nextSegment = curve[(j + 1) % curve.length];
-            let x1, y1;
-            let x2, y2;
-            if (Array.isArray(segment) && segment.length >= 2) {
-                x1 = segment[0];
-                y1 = segment[1];
-            }
-            else if (segment && typeof segment === 'object') {
-                const seg = segment;
-                x1 = seg.x ?? seg[0];
-                y1 = seg.y ?? seg[1];
-            }
-            if (Array.isArray(nextSegment) && nextSegment.length >= 2) {
-                x2 = nextSegment[0];
-                y2 = nextSegment[1];
-            }
-            else if (nextSegment && typeof nextSegment === 'object') {
-                const nextSeg = nextSegment;
-                x2 = nextSeg.x ?? nextSeg[0];
-                y2 = nextSeg.y ?? nextSeg[1];
-            }
-            if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
-                signedArea += (x1 * y2 - x2 * y1);
-            }
-        }
-    }
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-    // Y軸が下向きの座標系では符号が逆になる
-    return -(signedArea / 2);
-}
-/**
  * Remove all holes from a path, keeping only the outer contours
  *
- * This function analyzes the winding direction of each sub-path and removes
- * any that are detected as holes (counter-clockwise winding in a Y-down
- * coordinate system).
+ * Uses Path.area() to determine winding direction of each sub-curve:
+ * - Positive area = clockwise = outer contour (keep)
+ * - Negative area = counter-clockwise = hole (remove)
  *
  * Useful after PathOffset operations on text where you want to fill the
  * holes of letters like 'e', 'o', 'a', 'd', etc.
@@ -604,213 +549,41 @@ function getCurveWindingDirection(curve) {
  * ```
  */
 export const PathRemoveHoles = (path) => {
+    // External library interface (pave.js)
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
     const emptyPath = createCircle([0, 0], 0);
-    // Validate input
     if (!path || !hasCurves(path) || path.curves.length === 0) {
-        console.warn('PathRemoveHoles: Invalid path provided');
+        console.warn("PathRemoveHoles: Invalid path provided");
         return emptyPath;
     }
-    // Single curve - no holes possible
     if (path.curves.length === 1) {
         return path;
     }
-    // Log Pave.js curves info
-    console.log(`PathRemoveHoles: Pave path has ${path.curves.length} curves`);
-    for (let i = 0; i < Math.min(path.curves.length, 10); i++) {
-        const curve = path.curves[i];
-        const vertexCount = curve?.vertices?.length || 0;
-        console.log(`  Pave curve ${i}: vertices=${vertexCount}, closed=${curve?.closed}`);
+    const outerCurves = [];
+    for (let i = 0; i < path.curves.length; i++) {
+        const subPath = { curves: [path.curves[i]] };
+        const area = getPathArea(subPath);
+        if (area > 0) {
+            outerCurves.push(path.curves[i]);
+        }
     }
-    // Use Paper.js for accurate area calculation if available
-    const paperInstance = getPaper();
-    console.log('PathRemoveHoles: Paper.js available:', !!paperInstance, 'initialized:', paperInstance ? ensurePaperInitialized() : false);
-    if (paperInstance && ensurePaperInitialized()) {
-        return removeHolesWithPaper(path, emptyPath);
+    // If all areas were negative, flip assumption
+    if (outerCurves.length === 0) {
+        for (let i = 0; i < path.curves.length; i++) {
+            const subPath = { curves: [path.curves[i]] };
+            const area = getPathArea(subPath);
+            if (area < 0) {
+                outerCurves.push(path.curves[i]);
+            }
+        }
     }
-    // Fallback: use Shoelace formula (less accurate for bezier curves)
-    console.log('PathRemoveHoles: Using Shoelace fallback');
-    return removeHolesWithShoelace(path, emptyPath);
+    if (outerCurves.length === 0) {
+        return emptyPath;
+    }
+    if (outerCurves.length === path.curves.length) {
+        return path;
+    }
+    return { curves: outerCurves };
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
 };
-/**
- * Recursively collect all Path children from a Paper.js item
- * This handles CompoundPath, Group, and nested structures
- * @internal
- */
-function collectAllPaperPaths(item, paths, depth = 0) {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const itemAny = item;
-    const indent = '  '.repeat(depth);
-    console.log(`${indent}collectAllPaperPaths: className=${itemAny.className}, hasSegments=${!!itemAny.segments}, segmentCount=${itemAny.segments?.length || 0}, childCount=${itemAny.children?.length || 0}`);
-    // Check if this is a Path (not CompoundPath)
-    if (itemAny.className === 'Path' && itemAny.segments && itemAny.segments.length > 0) {
-        paths.push(item);
-        return;
-    }
-    // If it has children, recurse into them
-    if (itemAny.children && itemAny.children.length > 0) {
-        for (const child of itemAny.children) {
-            collectAllPaperPaths(child, paths, depth + 1);
-        }
-    }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-}
-/**
- * Convert Pave path to array of individual Paper.js paths
- * Uses Paper.js native parsing to properly separate all subpaths
- * @internal
- */
-function paveToSeparatePaperPaths(pavePath) {
-    const paperInstance = getPaper();
-    if (!paperInstance) {
-        return [];
-    }
-    try {
-        const PathGlobal = getPath();
-        const pathData = PathGlobal.toSVGString(pavePath);
-        if (!pathData) {
-            return [];
-        }
-        // Import SVG into Paper.js
-        const svgString = `<svg><path d="${pathData}"/></svg>`;
-        const imported = paperInstance.project.importSVG(svgString);
-        // Collect all Path children recursively
-        const paperPaths = [];
-        collectAllPaperPaths(imported, paperPaths);
-        console.log(`PathRemoveHoles: Paper.js found ${paperPaths.length} path children`);
-        // Clone paths before removing the imported group
-        const clonedPaths = [];
-        for (const p of paperPaths) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            clonedPaths.push(p.clone());
-        }
-        // Remove the imported group
-        imported.remove();
-        return clonedPaths;
-    }
-    catch (e) {
-        console.warn('PathRemoveHoles: Pave→Paper conversion failed', e);
-        return [];
-    }
-}
-/**
- * Remove holes using pure containment-based detection
- * A path is an outer contour if it's not fully contained by any other path
- * A path is a hole if it's contained within another path
- * @internal
- */
-function removeHolesWithPaper(path, emptyPath) {
-    const paperInstance = getPaper();
-    if (!paperInstance) {
-        return path;
-    }
-    // Convert Pave path to individual Paper.js paths
-    const allPaths = paveToSeparatePaperPaths(path);
-    console.log(`PathRemoveHoles: Found ${allPaths.length} individual paths`);
-    if (allPaths.length <= 1) {
-        // Cleanup and return original
-        for (const p of allPaths)
-            p.remove();
-        return path;
-    }
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    // Debug: show clockwise and area for each path
-    for (let i = 0; i < allPaths.length; i++) {
-        const p = allPaths[i];
-        console.log(`  Path ${i}: clockwise=${p.clockwise}, area=${p.area?.toFixed(2)}`);
-    }
-    // SIMPLE STRATEGY: Remove ALL counter-clockwise paths as holes
-    // clockwise=true → OUTER (keep)
-    // clockwise=false → HOLE (remove)
-    // Note: Gaps between paths (inter-row spaces) are NOT holes - they're just empty space
-    const outerPaths = [];
-    let ccwCount = 0;
-    for (let i = 0; i < allPaths.length; i++) {
-        const currentPath = allPaths[i];
-        if (currentPath.clockwise) {
-            outerPaths.push(allPaths[i]);
-        }
-        else {
-            ccwCount++;
-        }
-    }
-    console.log(`  Keeping ${outerPaths.length} CW paths, removing ${ccwCount} CCW paths`);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-    // If no outer paths found, return empty
-    if (outerPaths.length === 0) {
-        console.warn('PathRemoveHoles: No outer paths found');
-        for (const p of allPaths)
-            p.remove();
-        return emptyPath;
-    }
-    // If all paths are outer, return original (no holes detected)
-    if (outerPaths.length === allPaths.length) {
-        console.log('PathRemoveHoles: No holes detected, returning original path');
-        for (const p of allPaths)
-            p.remove();
-        return path;
-    }
-    console.log(`PathRemoveHoles: Removed ${allPaths.length - outerPaths.length} holes, kept ${outerPaths.length} paths`);
-    // Build new CompoundPath with only outer paths
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const CompoundPath = paperInstance.CompoundPath;
-    const newCompound = new CompoundPath();
-    for (const p of outerPaths) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cloned = p.clone();
-        newCompound.addChild(cloned);
-    }
-    console.log(`PathRemoveHoles: Built CompoundPath with ${outerPaths.length} outer paths`);
-    // Convert back to Pave
-    const result = paperToPave(newCompound);
-    // Log the result structure
-    if (result && result.curves) {
-        console.log(`PathRemoveHoles: Result has ${result.curves.length} curves`);
-    }
-    // Cleanup all paths
-    for (const p of allPaths)
-        p.remove();
-    newCompound.remove();
-    return result || emptyPath;
-}
-/**
- * Remove holes using Shoelace formula (fallback when Paper.js unavailable)
- * @internal
- */
-function removeHolesWithShoelace(path, emptyPath) {
-    const curves = path.curves;
-    if (!curves) {
-        return emptyPath;
-    }
-    // Calculate winding for all curves
-    const curveInfo = [];
-    for (let i = 0; i < curves.length; i++) {
-        const curve = curves[i];
-        if (!curve)
-            continue;
-        const winding = getCurveWindingDirection(curve);
-        curveInfo.push({ index: i, winding, absWinding: Math.abs(winding) });
-    }
-    // Find the largest curve by absolute area
-    const maxAbsWinding = Math.max(...curveInfo.map(c => c.absWinding));
-    const largestCurve = curveInfo.find(c => c.absWinding === maxAbsWinding);
-    if (!largestCurve) {
-        return path;
-    }
-    const outerSign = largestCurve.winding >= 0 ? 1 : -1;
-    // Filter: keep curves with the same sign as the outer contour
-    const solidCurves = [];
-    for (const info of curveInfo) {
-        const curve = curves[info.index];
-        if (!curve)
-            continue;
-        const sameSign = (info.winding >= 0) === (outerSign > 0) || info.winding === 0;
-        if (sameSign) {
-            solidCurves.push(curve);
-        }
-    }
-    if (solidCurves.length === 0) {
-        return emptyPath;
-    }
-    return { curves: solidCurves };
-}
 //# sourceMappingURL=pathfinder.js.map

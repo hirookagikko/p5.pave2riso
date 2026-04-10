@@ -6,7 +6,7 @@
  *
  * @module utils/pave-wrapper
  */
-import type { PavePath, PavePathStatic } from '../types/pave.js';
+import type { PavePath, PavePathStatic } from "../types/pave.js";
 /**
  * Inject Path dependency
  *
@@ -121,4 +121,14 @@ export declare function unitePaths(paths: PavePath[]): PavePath;
  * @returns Subtracted path
  */
 export declare function subtractPaths(path: PavePath, subtrahends: PavePath[]): PavePath;
+/**
+ * Type-safe wrapper for Path.area
+ *
+ * Returns the signed area of a closed path.
+ * Positive = clockwise (outer contour), Negative = counter-clockwise (hole).
+ *
+ * @param path - Path to measure (should be closed)
+ * @returns Signed area
+ */
+export declare function getPathArea(path: PavePath): number;
 //# sourceMappingURL=pave-wrapper.d.ts.map
